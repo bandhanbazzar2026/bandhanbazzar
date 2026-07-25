@@ -45,26 +45,88 @@
     }
 
     .header-banner {
-      background: linear-gradient(135deg, #fff8e7 0%, #ffeec2 100%);
-      padding: 25px;
+      background: linear-gradient(180deg, #fefcf7 0%, #f7efdd 100%);
+      padding: 20px 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 25px;
+      border-bottom: 2px solid #e2d3b7;
+      flex-wrap: wrap;
+    }
+
+    /* LOGO STYLING */
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header-logo {
+      height: 120px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0px 3px 6px rgba(0,0,0,0.15));
+    }
+
+    /* TEXT GROUP STYLING */
+    .header-text-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
-      border-bottom: 2px solid var(--border-color);
     }
 
-    .header-banner h1 {
-      color: var(--dark-gold);
-      font-size: 32px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 5px;
+    /* 3D GOLD 'BANDHAN' TEXT */
+    .title-bandhan {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      line-height: 1;
+      background: linear-gradient(180deg, #ffe082 0%, #d4af37 40%, #8e6d10 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.3));
+      font-family: 'Cinzel', 'Trajan Pro', 'Georgia', serif;
+    }
+
+    /* RED & GOLD 'BAZAAR' WITH SIDE LINES */
+    .title-bazaar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 4px 0 8px 0;
+      width: 100%;
+    }
+
+    .title-bazaar-row .line {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #b8860b, transparent);
+    }
+
+    .title-bazaar {
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      line-height: 1;
+      color: #c0232b;
+      text-shadow: 1px 1px 0px #ffe082, 2px 2px 0px #7a1015;
+      font-family: 'Cinzel', 'Trajan Pro', 'Georgia', serif;
+    }
+
+    /* TAGLINE PILL / BADGE */
+    .tagline-badge {
+      background: #ffffff;
+      border: 1.5px solid #d4af37;
+      border-radius: 20px;
+      padding: 4px 18px;
+      font-size: 11px;
       font-weight: 800;
-    }
-
-    .header-banner p.subtitle {
-      font-size: 13px;
-      letter-spacing: 1.5px;
-      color: #666;
-      font-weight: 600;
+      color: #111;
+      letter-spacing: 1px;
+      box-shadow: 0px 2px 5px rgba(0,0,0,0.08);
+      margin-top: 2px;
     }
 
     .header-info {
@@ -271,13 +333,6 @@
       text-decoration: underline;
     }
 
-    .banner-footer-img {
-      width: 100%;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-
     #statusMessage {
       padding: 12px;
       margin-top: 15px;
@@ -290,111 +345,26 @@
     .status-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
     .status-error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
 
-    .header-banner {
-  background: linear-gradient(180deg, #fefcf7 0%, #f7efdd 100%);
-  padding: 20px 25px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 25px;
-  border-bottom: 2px solid #e2d3b7;
-  flex-wrap: wrap;
-}
-
-/* LOGO STYLING */
-.logo-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.header-logo {
-  height: 120px;
-  width: auto;
-  object-fit: contain;
-  filter: drop-shadow(0px 3px 6px rgba(0,0,0,0.15));
-}
-
-/* TEXT GROUP STYLING */
-.header-text-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-/* 3D GOLD 'BANDHAN' TEXT */
-.title-bandhan {
-  font-size: 42px;
-  font-weight: 900;
-  letter-spacing: 3px;
-  line-height: 1;
-  background: linear-gradient(180deg, #ffe082 0%, #d4af37 40%, #8e6d10 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.3));
-  font-family: 'Cinzel', 'Trajan Pro', 'Georgia', serif;
-}
-
-/* RED & GOLD 'BAZAAR' WITH SIDE LINES */
-.title-bazaar-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 4px 0 8px 0;
-  width: 100%;
-}
-
-.title-bazaar-row .line {
-  flex: 1;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #b8860b, transparent);
-}
-
-.title-bazaar {
-  font-size: 34px;
-  font-weight: 900;
-  letter-spacing: 4px;
-  line-height: 1;
-  color: #c0232b;
-  text-shadow: 1px 1px 0px #ffe082, 2px 2px 0px #7a1015;
-  font-family: 'Cinzel', 'Trajan Pro', 'Georgia', serif;
-}
-
-/* TAGLINE PILL / BADGE */
-.tagline-badge {
-  background: #ffffff;
-  border: 1.5px solid #d4af37;
-  border-radius: 20px;
-  padding: 4px 18px;
-  font-size: 11px;
-  font-weight: 800;
-  color: #111;
-  letter-spacing: 1px;
-  box-shadow: 0px 2px 5px rgba(0,0,0,0.08);
-  margin-top: 2px;
-}
-
-@media (max-width: 580px) {
-  .header-banner {
-    flex-direction: column;
-    gap: 12px;
-    padding: 15px;
-  }
-  .header-logo {
-    height: 90px;
-  }
-  .title-bandhan {
-    font-size: 32px;
-  }
-  .title-bazaar {
-    font-size: 26px;
-  }
-  .tagline-badge {
-    font-size: 9px;
-    padding: 3px 12px;
-  }
-}
+    @media (max-width: 580px) {
+      .header-banner {
+        flex-direction: column;
+        gap: 12px;
+        padding: 15px;
+      }
+      .header-logo {
+        height: 90px;
+      }
+      .title-bandhan {
+        font-size: 32px;
+      }
+      .title-bazaar {
+        font-size: 26px;
+      }
+      .tagline-badge {
+        font-size: 9px;
+        padding: 3px 12px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -404,25 +374,23 @@
     
     <!-- HEADER SECTION -->
     <div class="header-card">
-  <div class="header-banner">
-    <!-- LOGO IMAGE (Replace 'logo.png' with your actual logo image file/URL) -->
-    <div class="logo-container">
-      <img src="assets/logo.png" alt="Bandhan Bazaar Logo" class="header-logo">
-    </div>
+      <div class="header-banner">
+        <div class="logo-container">
+          <img src="assets/logo.png" alt="Bandhan Bazaar Logo" class="header-logo">
+        </div>
 
-    <!-- HEADER TITLE & TAGLINE -->
-    <div class="header-text-group">
-      <h1 class="title-bandhan">BANDHAN</h1>
-      <div class="title-bazaar-row">
-        <span class="line"></span>
-        <h1 class="title-bazaar">BAZAAR</h1>
-        <span class="line"></span>
+        <div class="header-text-group">
+          <h1 class="title-bandhan">BANDHAN</h1>
+          <div class="title-bazaar-row">
+            <span class="line"></span>
+            <h1 class="title-bazaar">BAZAAR</h1>
+            <span class="line"></span>
+          </div>
+          <div class="tagline-badge">
+            UNITING BUSINESS, CELEBRATING CONNECTIONS
+          </div>
+        </div>
       </div>
-      <div class="tagline-badge">
-        UNITING BUSINESS, CELEBRATING CONNECTIONS
-      </div>
-    </div>
-  </div>
       <div class="header-info">
         <h2>Exhibition Stall Registration Form</h2>
         <p><strong>Event Timing:</strong> August 26th to 28th, 2026</p>
@@ -438,7 +406,7 @@
     <div class="form-card">
       <div class="form-group">
         <label>Owner's Name <span class="required-asterisk">*</span></label>
-        <input type="text" class="form-control" name="ownerName" required placeholder="Enter full name">
+        <input type="text" class="form-control" name="ownerName" id="ownerName" required placeholder="Enter full name">
       </div>
 
       <div class="form-group">
@@ -453,7 +421,7 @@
 
       <div class="form-group">
         <label>Contact Details (WhatsApp Number) <span class="required-asterisk">*</span></label>
-        <input type="tel" class="form-control" name="whatsappNo" required placeholder="10-digit WhatsApp number">
+        <input type="tel" class="form-control" name="whatsappNo" id="whatsappNo" required placeholder="10-digit WhatsApp number">
       </div>
 
       <div class="form-group">
@@ -684,9 +652,9 @@
 <!-- Firebase SDK v10 Integration -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  // 🔹 Replace with your Firebase Configuration Keys
+  // Firebase Configuration Keys
   const firebaseConfig = {
     apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
     authDomain: "bandhanbazaarevent2026.firebaseapp.com",
@@ -700,17 +668,97 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app, "default");
 
+  // 🔹 CLOUDINARY CONFIGURATION
+  const CLOUDINARY_CLOUD_NAME = "iaycutxm";
+  const CLOUDINARY_UPLOAD_PRESET = "bandhan_photos";
+
   // Set today's default date
   document.getElementById('submissionDate').valueAsDate = new Date();
 
-  // Utility to convert File to Base64 String
-  const fileToBase64 = (file) => new Promise((resolve, reject) => {
-    if(!file) resolve(null);
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
-  });
+  // Helper: Sanitize string for folder & document IDs
+  function sanitizeString(str) {
+    if (!str) return "unknown";
+    return str.trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
+  }
+
+  // ⚡ AUTOMATIC IMAGE COMPRESSOR FUNCTION
+  async function compressImage(file) {
+    if (!file || !file.type.startsWith('image/')) return file;
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const maxWidth = 1920;
+          const maxHeight = 1920;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              resolve(file);
+              return;
+            }
+            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            });
+            resolve(compressedFile);
+          }, 'image/jpeg', 0.7);
+        };
+        img.onerror = () => resolve(file);
+      };
+      reader.onerror = () => resolve(file);
+    });
+  }
+
+  // Utility to Upload File directly to Cloudinary in a specific USER FOLDER
+  async function uploadToCloudinary(file, userFolderPath, fileTypeName) {
+    if (!file) return "";
+
+    const fileToUpload = await compressImage(file);
+
+    const formData = new FormData();
+    formData.append("file", fileToUpload);
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+    formData.append("folder", `bandhan_bazaar_2026/${userFolderPath}`);
+    formData.append("public_id", `${fileTypeName}_${Date.now()}`);
+
+    const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error?.message || "Cloudinary upload failed");
+    }
+
+    const data = await response.json();
+    return data.secure_url;
+  }
 
   // Form Submit Handler
   const form = document.getElementById('stallForm');
@@ -720,34 +768,41 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Disable button & show loading state
     submitBtn.disabled = true;
     submitBtn.innerText = "Submitting Data...";
     statusMessage.style.display = "block";
     statusMessage.className = "";
     statusMessage.style.color = "#555";
-    statusMessage.innerText = "Processing your registration and uploading files...";
+    statusMessage.innerText = "Uploading files and saving registration...";
 
     try {
-      // Gather Form Data
       const formData = new FormData(form);
-      
-      // Selected Business Categories
+
+      const rawOwnerName = formData.get('ownerName') || 'unknown';
+      const rawPhone = formData.get('whatsappNo') || 'no_phone';
+
+      const cleanOwner = sanitizeString(rawOwnerName);
+      const cleanPhone = sanitizeString(rawPhone);
+      const timestamp = Date.now();
+
+      const userFolderPath = `${cleanOwner}_${cleanPhone}`;
+      const customDocumentId = `${cleanOwner}_${cleanPhone}_${timestamp}`;
+
+      const paymentScreenshotFile = document.getElementById('paymentScreenshot').files[0];
+      const businessCardFile = document.getElementById('businessCard').files[0];
+      const idProofFile = document.getElementById('idProof').files[0];
+
+      const [paymentScreenshotUrl, businessCardUrl, idProofUrl] = await Promise.all([
+        uploadToCloudinary(paymentScreenshotFile, userFolderPath, "payment_screenshot"),
+        uploadToCloudinary(businessCardFile, userFolderPath, "business_card"),
+        uploadToCloudinary(idProofFile, userFolderPath, "id_proof")
+      ]);
+
       const businessCategories = [];
       document.querySelectorAll('input[name="businessCategory"]:checked').forEach(el => {
         businessCategories.push(el.value);
       });
 
-      // Convert File Uploads to Base64 Strings for direct Firestore Storage
-      const paymentScreenshotFile = document.getElementById('paymentScreenshot').files[0];
-      const businessCardFile = document.getElementById('businessCard').files[0];
-      const idProofFile = document.getElementById('idProof').files[0];
-
-      const paymentScreenshotBase64 = await fileToBase64(paymentScreenshotFile);
-      const businessCardBase64 = await fileToBase64(businessCardFile);
-      const idProofBase64 = await fileToBase64(idProofFile);
-
-      // Build Document Payload
       const submissionPayload = {
         ownerName: formData.get('ownerName'),
         companyName: formData.get('companyName'),
@@ -770,28 +825,31 @@
         paymentStatus: formData.get('paymentStatus'),
         transactionId: formData.get('transactionId') || '',
         submissionDate: formData.get('submissionDate'),
+        cloudinaryFolder: `bandhan_bazaar_2026/${userFolderPath}`,
         uploads: {
-          paymentScreenshot: paymentScreenshotBase64,
-          businessCard: businessCardBase64,
-          idProof: idProofBase64
+          paymentScreenshot: paymentScreenshotUrl,
+          businessCard: businessCardUrl,
+          idProof: idProofUrl
         },
         submittedAt: new Date().toISOString()
       };
 
-      // Save into Firebase Firestore Collection
-      await addDoc(collection(db, "StallRegistrations"), submissionPayload);
+      await setDoc(doc(db, "StallRegistrations", customDocumentId), submissionPayload);
 
-      // Success Response
+      // Success Message Display
       statusMessage.className = "status-success";
-      statusMessage.innerText = "✅ Registration submitted successfully! Organizers will contact you soon.";
+      statusMessage.innerText = "✅ Registration submitted successfully! Redirecting to main website...";
       form.reset();
-      document.getElementById('submissionDate').valueAsDate = new Date();
+
+      // 🔄 REDIRECT TO MAIN WEBSITE AFTER 1.5 SECONDS
+      setTimeout(() => {
+        window.location.href = "http://bandhanbazaar.in/";
+      }, 1500);
 
     } catch (error) {
-      console.error("Firestore submission error:", error);
+      console.error("Submission error:", error);
       statusMessage.className = "status-error";
       statusMessage.innerText = "❌ Error submitting form: " + error.message;
-    } finally {
       submitBtn.disabled = false;
       submitBtn.innerText = "Submit Registration";
     }
