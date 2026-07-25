@@ -688,16 +688,17 @@
 
   // 🔹 Replace with your Firebase Configuration Keys
   const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
+    authDomain: "bandhanbazaarevent2026.firebaseapp.com",
+    projectId: "bandhanbazaarevent2026",
+    storageBucket: "bandhanbazaarevent2026.firebasestorage.app",
+    messagingSenderId: "430230410068",
+    appId: "1:430230410068:web:963bc22ebbe3d17faa2ec1",
+    measurementId: "G-DVGBL2Z7BQ"
   };
 
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  const db = getFirestore(app, "default");
 
   // Set today's default date
   document.getElementById('submissionDate').valueAsDate = new Date();
