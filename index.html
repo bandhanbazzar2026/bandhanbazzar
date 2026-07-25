@@ -35,11 +35,6 @@
                   </div>
 
                   <div class="form-group">
-                        <label for="email">Email Address *</label>
-                        <input type="email" id="email" required placeholder="example@mail.com">
-                  </div>
-
-                  <div class="form-group">
                         <label for="address">Address *</label>
                         <textarea id="address" rows="2" required placeholder="Enter complete address"></textarea>
                   </div>
@@ -52,11 +47,6 @@
                   <div class="form-group">
                         <label for="numMembers">Number of Members (Sath me kitne log hain?)</label>
                         <input type="number" id="numMembers" min="0" max="10" value="0">
-                  </div>
-
-                  <div id="membersWrapper" class="form-group members-container" style="display: none;">
-                        <label>Members Name (Aane waale sadasyo ke naam):</label>
-                        <div id="membersInputs"></div>
                   </div>
 
                   <button type="submit" id="submitBtn" class="btn-submit">Submit & Download Pass PDF</button>
@@ -87,28 +77,6 @@
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app, "default");
 
-            // Dynamic Member Field Handlers
-            const numMembersInput = document.getElementById('numMembers');
-            const membersWrapper = document.getElementById('membersWrapper');
-            const membersInputs = document.getElementById('membersInputs');
-
-            numMembersInput.addEventListener('input', (e) => {
-                  const count = parseInt(e.target.value) || 0;
-                  membersInputs.innerHTML = '';
-
-                  if (count > 0) {
-                        membersWrapper.style.display = 'block';
-                        for (let i = 1; i <= count; i++) {
-                              const div = document.createElement('div');
-                              div.className = 'member-input-group';
-                              div.innerHTML = `<input type="text" class="member-name-input" placeholder="Member ${i} Name" required style="margin-top:5px; width:100%;" />`;
-                              membersInputs.appendChild(div);
-                        }
-                  } else {
-                        membersWrapper.style.display = 'none';
-                  }
-            });
-
             // Form Submit Logic
             const form = document.getElementById('visitorForm');
             const submitBtn = document.getElementById('submitBtn');
@@ -122,23 +90,19 @@
 
                   const name = document.getElementById('name').value.trim();
                   const fatherName = document.getElementById('fatherName').value.trim();
-                  const email = document.getElementById('email').value.trim();
                   const address = document.getElementById('address').value.trim();
                   const mobile = document.getElementById('mobile').value.trim();
-
-                  const memberInputs = document.querySelectorAll('.member-name-input');
-                  const members = Array.from(memberInputs).map(input => input.value.trim()).filter(val => val !== '');
+                  const numMembers = parseInt(document.getElementById('numMembers').value) || 0;
 
                   try {
                         // 1. Data Save into Firestore
                         const docRef = await addDoc(collection(db, "Users"), {
                               name: name,
                               fatherName: fatherName,
-                              email: email,
                               address: address,
                               mobile: mobile,
-                              members: members,
-                              totalMembersCount: members.length + 1,
+                              numMembers: numMembers,
+                              totalMembersCount: numMembers + 1,
                               createdAt: serverTimestamp()
                         });
 
@@ -149,10 +113,9 @@
                               docId,
                               name,
                               fatherName,
-                              email,
                               address,
                               mobile,
-                              members
+                              numMembers
                         });
 
                         // 3. Download Pass as PDF
@@ -176,7 +139,7 @@
 
             // Pass Generation Canvas Utility
             function createQRPassCanvas(data) {
-                  const { docId, name, fatherName, email, address, mobile, members } = data;
+                  const { docId, name, fatherName, address, mobile, numMembers } = data;
 
                   return new Promise((resolve, reject) => {
                         const qrContainer = document.getElementById('qrcode-temp');
@@ -187,9 +150,8 @@
                               `Name: ${name}\n` +
                               `Father Name: ${fatherName}\n` +
                               `Mobile: ${mobile}\n` +
-                              `Email: ${email}\n` +
                               `Address: ${address}\n` +
-                              `Members: ${members.length > 0 ? members.join(', ') : 'None'}\n` +
+                              `Accompanying Members: ${numMembers}\n` +
                               `Pass ID: ${docId}`;
 
                         new QRCode(qrContainer, {
@@ -213,20 +175,7 @@
                                           const ctx = canvas.getContext('2d');
 
                                           const width = 450;
-
-                                          // Side-by-Side Member Formatting
-                                          let memberLines = [];
-                                          let currentLine = [];
-                                          members.forEach((m, idx) => {
-                                                currentLine.push(`${idx + 1}) ${m}`);
-                                                if (currentLine.length === 3 || idx === members.length - 1) {
-                                                      memberLines.push(currentLine.join('   '));
-                                                      currentLine = [];
-                                                }
-                                          });
-
-                                          const membersHeight = memberLines.length > 0 ? (memberLines.length * 22) + 25 : 10;
-                                          const height = 360 + membersHeight;
+                                          const height = numMembers > 0 ? 370 : 340;
 
                                           canvas.width = width;
                                           canvas.height = height;
@@ -251,20 +200,18 @@
                                           ctx.font = 'bold 18px Poppins, sans-serif';
                                           ctx.fillText(name.toUpperCase(), width / 2, 100);
 
-                                          // QR Code
-                                          ctx.drawImage(img, (width - 180) / 2, 120, 180, 180);
+                                          // 🎯 Perfect QR Code Centering Fix
+                                          const qrSize = 180;
+                                          const qrX = Math.round((width - qrSize) / 2) - 8; // Offset adjusted for exact center visual balance
+                                          
+                                          ctx.imageSmoothingEnabled = false;
+                                          ctx.drawImage(img, qrX, 120, qrSize, qrSize);
 
-                                          // Accompanying Members
-                                          if (memberLines.length > 0) {
+                                          // Accompanying Members Count
+                                          if (numMembers > 0) {
                                                 ctx.fillStyle = '#7B2CBF';
                                                 ctx.font = 'bold 14px Poppins, sans-serif';
-                                                ctx.fillText('Members Comming:', width / 2, 330);
-
-                                                ctx.fillStyle = '#444444';
-                                                ctx.font = '13px Poppins, sans-serif';
-                                                memberLines.forEach((lineText, idx) => {
-                                                      ctx.fillText(lineText, width / 2, 352 + (idx * 22));
-                                                });
+                                                ctx.fillText(`Comming Members: ${numMembers}`, width / 2, 335);
                                           }
 
                                           resolve(canvas);
@@ -284,7 +231,6 @@
             function downloadPassAsPDF(canvas, filename) {
                   const { jsPDF } = window.jspdf;
                   
-                  // Canvas dimensions ke exact ratio me PDF page create kar rahe hain
                   const pdf = new jsPDF({
                         orientation: 'portrait',
                         unit: 'px',
@@ -297,5 +243,4 @@
             }
       </script>
 </body>
-
 </html>
