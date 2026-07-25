@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Bandhan Bazaar - Visitor Registration</title>
+
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      <link rel="stylesheet" href="style.css">
+
+      <!-- QR Code Library -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+      <!-- jsPDF Library for PDF Generation -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+
+      <div class="form-card">
+            <div class="form-header">
+                  <h2>BANDHAN BAZAAR</h2>
+                  <p>Visitor Pass Registration</p>
+            </div>
+
+            <form id="visitorForm">
+                  <div class="form-group">
+                        <label for="name">Name (Aapka Naam) *</label>
+                        <input type="text" id="name" required placeholder="Enter full name">
+                  </div>
+
+                  <div class="form-group">
+                        <label for="fatherName">Father's Name *</label>
+                        <input type="text" id="fatherName" required placeholder="Enter father's name">
+                  </div>
+
+                  <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" required placeholder="example@mail.com">
+                  </div>
+
+                  <div class="form-group">
+                        <label for="address">Address *</label>
+                        <textarea id="address" rows="2" required placeholder="Enter complete address"></textarea>
+                  </div>
+
+                  <div class="form-group">
+                        <label for="mobile">Mobile No *</label>
+                        <input type="tel" id="mobile" pattern="[0-9]{10}" required placeholder="10-digit mobile number">
+                  </div>
+
+                  <div class="form-group">
+                        <label for="numMembers">Number of Members (Sath me kitne log hain?)</label>
+                        <input type="number" id="numMembers" min="0" max="10" value="0">
+                  </div>
+
+                  <div id="membersWrapper" class="form-group members-container" style="display: none;">
+                        <label>Members Name (Aane waale sadasyo ke naam):</label>
+                        <div id="membersInputs"></div>
+                  </div>
+
+                  <button type="submit" id="submitBtn" class="btn-submit">Submit & Download Pass PDF</button>
+                  <div id="statusMsg" class="status-msg"></div>
+            </form>
+      </div>
+
+      <!-- QR Code Processing Canvas Container -->
+      <div id="qrcode-temp" style="display:none;"></div>
+      <canvas id="cardCanvas" style="display:none;"></canvas>
+
+      <!-- Firebase Logic & Form Handling Single Module -->
+      <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+            import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+            const firebaseConfig = {
+                  apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
+                  authDomain: "bandhanbazaarevent2026.firebaseapp.com",
+                  projectId: "bandhanbazaarevent2026",
+                  storageBucket: "bandhanbazaarevent2026.firebasestorage.app",
+                  messagingSenderId: "430230410068",
+                  appId: "1:430230410068:web:963bc22ebbe3d17faa2ec1",
+                  measurementId: "G-DVGBL2Z7BQ"
+            };
+
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app, "default");
+
+            // Dynamic Member Field Handlers
+            const numMembersInput = document.getElementById('numMembers');
+            const membersWrapper = document.getElementById('membersWrapper');
+            const membersInputs = document.getElementById('membersInputs');
+
+            numMembersInput.addEventListener('input', (e) => {
+                  const count = parseInt(e.target.value) || 0;
+                  membersInputs.innerHTML = '';
+
+                  if (count > 0) {
+                        membersWrapper.style.display = 'block';
+                        for (let i = 1; i <= count; i++) {
+                              const div = document.createElement('div');
+                              div.className = 'member-input-group';
+                              div.innerHTML = `<input type="text" class="member-name-input" placeholder="Member ${i} Name" required style="margin-top:5px; width:100%;" />`;
+                              membersInputs.appendChild(div);
+                        }
+                  } else {
+                        membersWrapper.style.display = 'none';
+                  }
+            });
+
+            // Form Submit Logic
+            const form = document.getElementById('visitorForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const statusMsg = document.getElementById('statusMsg');
+
+            form.addEventListener('submit', async (e) => {
+                  e.preventDefault();
+                  submitBtn.disabled = true;
+                  statusMsg.style.color = "#7b2cbf";
+                  statusMsg.innerText = "Processing... Data save ho raha hai aur PDF generate ho rahi hai.";
+
+                  const name = document.getElementById('name').value.trim();
+                  const fatherName = document.getElementById('fatherName').value.trim();
+                  const email = document.getElementById('email').value.trim();
+                  const address = document.getElementById('address').value.trim();
+                  const mobile = document.getElementById('mobile').value.trim();
+
+                  const memberInputs = document.querySelectorAll('.member-name-input');
+                  const members = Array.from(memberInputs).map(input => input.value.trim()).filter(val => val !== '');
+
+                  try {
+                        // 1. Data Save into Firestore
+                        const docRef = await addDoc(collection(db, "Users"), {
+                              name: name,
+                              fatherName: fatherName,
+                              email: email,
+                              address: address,
+                              mobile: mobile,
+                              members: members,
+                              totalMembersCount: members.length + 1,
+                              createdAt: serverTimestamp()
+                        });
+
+                        const docId = docRef.id;
+
+                        // 2. Generate Pass on Canvas
+                        const canvas = await createQRPassCanvas({
+                              docId,
+                              name,
+                              fatherName,
+                              email,
+                              address,
+                              mobile,
+                              members
+                        });
+
+                        // 3. Download Pass as PDF
+                        downloadPassAsPDF(canvas, `Bandhan_Bazaar_Pass_${name.replace(/\s+/g, '_')}.pdf`);
+
+                        statusMsg.style.color = "green";
+                        statusMsg.innerText = "Success! Data save ho chuka hai aur PDF Pass download ho gaya hai. Redirecting...";
+
+                        // 4. Redirect after 3 Seconds
+                        setTimeout(() => {
+                              window.location.href = "https://bandhanbazaar.in/";
+                        }, 3000);
+
+                  } catch (error) {
+                        console.error("Submission Error: ", error);
+                        statusMsg.style.color = "red";
+                        statusMsg.innerText = "Error: " + (error.message || "Failed to submit. Check Firestore Rules!");
+                        submitBtn.disabled = false;
+                  }
+            });
+
+            // Pass Generation Canvas Utility
+            function createQRPassCanvas(data) {
+                  const { docId, name, fatherName, email, address, mobile, members } = data;
+
+                  return new Promise((resolve, reject) => {
+                        const qrContainer = document.getElementById('qrcode-temp');
+                        qrContainer.innerHTML = '';
+
+                        // Plain Text Format for QR Code
+                        const qrTextData = `BANDHAN BAZAAR PASS\n` +
+                              `Name: ${name}\n` +
+                              `Father Name: ${fatherName}\n` +
+                              `Mobile: ${mobile}\n` +
+                              `Email: ${email}\n` +
+                              `Address: ${address}\n` +
+                              `Members: ${members.length > 0 ? members.join(', ') : 'None'}\n` +
+                              `Pass ID: ${docId}`;
+
+                        new QRCode(qrContainer, {
+                              text: qrTextData,
+                              width: 180,
+                              height: 180,
+                              correctLevel: QRCode.CorrectLevel.L
+                        });
+
+                        let checkCount = 0;
+                        const interval = setInterval(() => {
+                              const qrImg = qrContainer.querySelector('img');
+                              checkCount++;
+
+                              if (qrImg && qrImg.src) {
+                                    clearInterval(interval);
+
+                                    const img = new Image();
+                                    img.onload = () => {
+                                          const canvas = document.getElementById('cardCanvas');
+                                          const ctx = canvas.getContext('2d');
+
+                                          const width = 450;
+
+                                          // Side-by-Side Member Formatting
+                                          let memberLines = [];
+                                          let currentLine = [];
+                                          members.forEach((m, idx) => {
+                                                currentLine.push(`${idx + 1}) ${m}`);
+                                                if (currentLine.length === 3 || idx === members.length - 1) {
+                                                      memberLines.push(currentLine.join('   '));
+                                                      currentLine = [];
+                                                }
+                                          });
+
+                                          const membersHeight = memberLines.length > 0 ? (memberLines.length * 22) + 25 : 10;
+                                          const height = 360 + membersHeight;
+
+                                          canvas.width = width;
+                                          canvas.height = height;
+
+                                          // Canvas Background
+                                          ctx.fillStyle = '#FFFFFF';
+                                          ctx.fillRect(0, 0, width, height);
+
+                                          // Header Banner
+                                          ctx.fillStyle = '#7B2CBF';
+                                          ctx.fillRect(0, 0, width, 65);
+                                          ctx.fillStyle = '#E5A93C';
+                                          ctx.fillRect(0, 61, width, 4);
+
+                                          ctx.fillStyle = '#FFFFFF';
+                                          ctx.font = 'bold 20px Poppins, sans-serif';
+                                          ctx.textAlign = 'center';
+                                          ctx.fillText('BANDHAN BAZAAR PASS', width / 2, 40);
+
+                                          // Name
+                                          ctx.fillStyle = '#2B2B2B';
+                                          ctx.font = 'bold 18px Poppins, sans-serif';
+                                          ctx.fillText(name.toUpperCase(), width / 2, 100);
+
+                                          // QR Code
+                                          ctx.drawImage(img, (width - 180) / 2, 120, 180, 180);
+
+                                          // Accompanying Members
+                                          if (memberLines.length > 0) {
+                                                ctx.fillStyle = '#7B2CBF';
+                                                ctx.font = 'bold 14px Poppins, sans-serif';
+                                                ctx.fillText('Members Comming:', width / 2, 330);
+
+                                                ctx.fillStyle = '#444444';
+                                                ctx.font = '13px Poppins, sans-serif';
+                                                memberLines.forEach((lineText, idx) => {
+                                                      ctx.fillText(lineText, width / 2, 352 + (idx * 22));
+                                                });
+                                          }
+
+                                          resolve(canvas);
+                                    };
+                                    img.src = qrImg.src;
+                              }
+
+                              if (checkCount > 30) {
+                                    clearInterval(interval);
+                                    reject(new Error("QR code generation timed out."));
+                              }
+                        }, 100);
+                  });
+            }
+
+            // 🔹 PDF Download Function using jsPDF
+            function downloadPassAsPDF(canvas, filename) {
+                  const { jsPDF } = window.jspdf;
+                  
+                  // Canvas dimensions ke exact ratio me PDF page create kar rahe hain
+                  const pdf = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'px',
+                        format: [canvas.width, canvas.height]
+                  });
+
+                  const imgData = canvas.toDataURL('image/png');
+                  pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                  pdf.save(filename);
+            }
+      </script>
+</body>
+
+</html>

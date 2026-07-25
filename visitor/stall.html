@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exhibition Stall Registration Form - Bandhan Bazaar</title>
+  <style>
+    :root {
+      --primary-gold: #c59b27;
+      --dark-gold: #8e6d10;
+      --bg-cream: #f9f6f0;
+      --card-bg: #ffffff;
+      --text-dark: #2c2c2c;
+      --border-color: #e0d7c6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-cream);
+      color: var(--text-dark);
+      padding: 20px 10px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 780px;
+    }
+
+    /* HEADER STYLES */
+    .header-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+      border-top: 10px solid var(--primary-gold);
+    }
+
+    .header-banner {
+      background: linear-gradient(135deg, #fff8e7 0%, #ffeec2 100%);
+      padding: 25px;
+      text-align: center;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .header-banner h1 {
+      color: var(--dark-gold);
+      font-size: 32px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+      font-weight: 800;
+    }
+
+    .header-banner p.subtitle {
+      font-size: 13px;
+      letter-spacing: 1.5px;
+      color: #666;
+      font-weight: 600;
+    }
+
+    .header-info {
+      padding: 25px;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .header-info h2 {
+      font-size: 22px;
+      margin-bottom: 12px;
+      color: #111;
+    }
+
+    .header-info p {
+      margin-bottom: 6px;
+      color: #444;
+    }
+
+    /* CARD SECTION STYLES */
+    .form-card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+      border: 1px solid var(--border-color);
+    }
+
+    .form-card h3 {
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #111;
+      font-weight: 600;
+    }
+
+    .required-asterisk {
+      color: #d93025;
+      margin-left: 3px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary-gold);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    /* GRID / CHECKBOXES */
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .checkbox-item, .radio-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .checkbox-item input, .radio-item input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary-gold);
+      cursor: pointer;
+    }
+
+    /* STALL MATRIX TABLE */
+    .matrix-table-wrapper {
+      overflow-x: auto;
+      margin-top: 15px;
+    }
+
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .matrix-table th, .matrix-table td {
+      padding: 12px 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .matrix-table th {
+      background: #faf7f2;
+      font-weight: 600;
+    }
+
+    .matrix-table td:first-child {
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .matrix-table input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary-gold);
+      cursor: pointer;
+    }
+
+    /* PAYMENT METHOD CARDS */
+    .payment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    .payment-card-box {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      background: #fafafa;
+    }
+
+    .payment-card-box img {
+      max-width: 100%;
+      height: 120px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    .payment-card-box .details {
+      font-size: 12px;
+      color: #555;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    /* FILE UPLOAD STYLES */
+    .file-input-wrapper {
+      margin-top: 8px;
+    }
+
+    .file-input-wrapper input[type="file"] {
+      font-size: 13px;
+    }
+
+    /* BUTTONS & FOOTER */
+    .actions-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 25px;
+      margin-bottom: 40px;
+    }
+
+    .btn-submit {
+      background-color: var(--dark-gold);
+      color: #fff;
+      border: none;
+      padding: 12px 35px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-submit:hover {
+      background-color: #6e540b;
+    }
+
+    .btn-clear {
+      background: none;
+      border: none;
+      color: var(--dark-gold);
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-clear:hover {
+      text-decoration: underline;
+    }
+
+    .banner-footer-img {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    #statusMessage {
+      padding: 12px;
+      margin-top: 15px;
+      border-radius: 6px;
+      display: none;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .status-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+    .status-error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+
+    .header-banner {
+  background: linear-gradient(180deg, #fefcf7 0%, #f7efdd 100%);
+  padding: 20px 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+  border-bottom: 2px solid #e2d3b7;
+  flex-wrap: wrap;
+}
+
+/* LOGO STYLING */
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-logo {
+  height: 120px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0px 3px 6px rgba(0,0,0,0.15));
+}
+
+/* TEXT GROUP STYLING */
+.header-text-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* 3D GOLD 'BANDHAN' TEXT */
+.title-bandhan {
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  line-height: 1;
+  background: linear-gradient(180deg, #ffe082 0%, #d4af37 40%, #8e6d10 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.3));
+  font-family: 'Cinzel', 'Trajan Pro', 'Georgia', serif;
+}
+
+/* RED & GOLD 'BAZAAR' WITH SIDE LINES */
+.title-bazaar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 8px 0;
+  width: 100%;
+}
+
+.title-bazaar-row .line {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #b8860b, transparent);
+}
+
+.title-bazaar {
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  line-height: 1;
+  color: #c0232b;
+  text-shadow: 1px 1px 0px #ffe082, 2px 2px 0px #7a1015;
+  font-family: 'Cinzel', 'Trajan Pro', 'Georgia', serif;
+}
+
+/* TAGLINE PILL / BADGE */
+.tagline-badge {
+  background: #ffffff;
+  border: 1.5px solid #d4af37;
+  border-radius: 20px;
+  padding: 4px 18px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #111;
+  letter-spacing: 1px;
+  box-shadow: 0px 2px 5px rgba(0,0,0,0.08);
+  margin-top: 2px;
+}
+
+@media (max-width: 580px) {
+  .header-banner {
+    flex-direction: column;
+    gap: 12px;
+    padding: 15px;
+  }
+  .header-logo {
+    height: 90px;
+  }
+  .title-bandhan {
+    font-size: 32px;
+  }
+  .title-bazaar {
+    font-size: 26px;
+  }
+  .tagline-badge {
+    font-size: 9px;
+    padding: 3px 12px;
+  }
+}
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <form id="stallForm">
+    
+    <!-- HEADER SECTION -->
+    <div class="header-card">
+  <div class="header-banner">
+    <!-- LOGO IMAGE (Replace 'logo.png' with your actual logo image file/URL) -->
+    <div class="logo-container">
+      <img src="assets/logo.png" alt="Bandhan Bazaar Logo" class="header-logo">
+    </div>
+
+    <!-- HEADER TITLE & TAGLINE -->
+    <div class="header-text-group">
+      <h1 class="title-bandhan">BANDHAN</h1>
+      <div class="title-bazaar-row">
+        <span class="line"></span>
+        <h1 class="title-bazaar">BAZAAR</h1>
+        <span class="line"></span>
+      </div>
+      <div class="tagline-badge">
+        UNITING BUSINESS, CELEBRATING CONNECTIONS
+      </div>
+    </div>
+  </div>
+      <div class="header-info">
+        <h2>Exhibition Stall Registration Form</h2>
+        <p><strong>Event Timing:</strong> August 26th to 28th, 2026</p>
+        <p><strong>Event Address:</strong> Raja Park Jhala Garden, Bajrang Baag Road, Pali, Rajasthan 306401, India</p>
+        <p><strong>Contact us at:</strong> +91 73399 55551, +91 94689 01143, +91 93718 10001</p>
+        <p><strong>Email us:</strong> bazaarbandhan@gmail.com</p>
+        <p><strong>Website:</strong> bandhanbazaar.in</p>
+        <p><strong>Instagram:</strong> bandhan_bazar</p>
+      </div>
+    </div>
+
+    <!-- OWNER & COMPANY DETAILS -->
+    <div class="form-card">
+      <div class="form-group">
+        <label>Owner's Name <span class="required-asterisk">*</span></label>
+        <input type="text" class="form-control" name="ownerName" required placeholder="Enter full name">
+      </div>
+
+      <div class="form-group">
+        <label>Company Name <span class="required-asterisk">*</span></label>
+        <input type="text" class="form-control" name="companyName" required placeholder="Enter company name">
+      </div>
+
+      <div class="form-group">
+        <label>Complete Address <span class="required-asterisk">*</span></label>
+        <textarea class="form-control" name="completeAddress" required placeholder="Enter complete address"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Contact Details (WhatsApp Number) <span class="required-asterisk">*</span></label>
+        <input type="tel" class="form-control" name="whatsappNo" required placeholder="10-digit WhatsApp number">
+      </div>
+
+      <div class="form-group">
+        <label>Alternative Mobile No</label>
+        <input type="tel" class="form-control" name="altMobileNo" placeholder="Alternative mobile number">
+      </div>
+
+      <div class="form-group">
+        <label>Email <span class="required-asterisk">*</span></label>
+        <input type="email" class="form-control" name="email" required placeholder="Your email address">
+      </div>
+    </div>
+
+    <!-- BUSINESS CATEGORIES -->
+    <div class="form-card">
+      <h3>Business Category <span class="required-asterisk">*</span></h3>
+      <div class="checkbox-grid">
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Fashion & Apparel"> Fashion & Apparel</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Women's Wear"> Women's Wear</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Men's Wear"> Men's Wear</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Kids Wear"> Kids Wear</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Footwear"> Footwear</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Gold & Silver Jewellery"> Gold & Silver Jewellery</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Artificial Jewellery"> Artificial Jewellery</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Handicrafts"> Handicrafts</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Home Decor"> Home Decor</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Kitchenware"> Kitchenware</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Gift Items"> Gift Items</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Cosmetics & Beauty Products"> Cosmetics & Beauty Products</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Bags & Accessories"> Bags & Accessories</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Electronics & Gadgets"> Electronics & Gadgets</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Books & Stationery"> Books & Stationery</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Food & Beverages"> Food & Beverages</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Organic Products"> Organic Products</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Health & Wellness"> Health & Wellness</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Toys & Games"> Toys & Games</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Furnishing & Textile"> Furnishing & Textile</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Mobile Accessories"> Mobile Accessories</label>
+        <label class="checkbox-item"><input type="checkbox" name="businessCategory" value="Other"> Other (Please Specify)</label>
+      </div>
+      <div style="margin-top: 12px;">
+        <input type="text" class="form-control" name="otherCategory" placeholder="If Other, specify here...">
+      </div>
+    </div>
+
+    <!-- PRODUCT DESCRIPTION & NUMBER OF STALLS -->
+    <div class="form-card">
+      <div class="form-group">
+        <label>Full description of product to be sold <span class="required-asterisk">*</span></label>
+        <textarea class="form-control" name="productDescription" required placeholder="Describe your products..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Total Number of Stalls Required <span class="required-asterisk">*</span></label>
+        <input type="number" min="1" max="10" class="form-control" name="numberOfStalls" required placeholder="e.g. 1">
+      </div>
+    </div>
+
+    <!-- PREFERRED STALL MATRIX -->
+    <div class="form-card">
+      <h3>Preferred Stall for 3 Days <span class="required-asterisk">*</span></h3>
+      <p style="font-size: 12px; color: #666; margin-bottom: 12px; line-height: 1.5;">
+        Stall numbers will be allocated by the Organizing Committee. To check the availability of a preferred stall, please contact 9371810001. Preferred stall allocation will be confirmed only upon receipt of full advance payment.
+      </p>
+
+      <div class="matrix-table-wrapper">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>Stall Type & Size</th>
+              <th>0</th>
+              <th>1</th>
+              <th>2</th>
+              <th>3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Regular 6X8 Ft. Size Stall<br><span style="color:var(--dark-gold);">10,000/- Only</span></td>
+              <td><input type="radio" name="stall_regular_6x8" value="0" checked></td>
+              <td><input type="radio" name="stall_regular_6x8" value="1"></td>
+              <td><input type="radio" name="stall_regular_6x8" value="2"></td>
+              <td><input type="radio" name="stall_regular_6x8" value="3"></td>
+            </tr>
+            <tr>
+              <td>Regular 8X8 Ft. Size Stall<br><span style="color:var(--dark-gold);">10,000/- Only</span></td>
+              <td><input type="radio" name="stall_regular_8x8" value="0" checked></td>
+              <td><input type="radio" name="stall_regular_8x8" value="1"></td>
+              <td><input type="radio" name="stall_regular_8x8" value="2"></td>
+              <td><input type="radio" name="stall_regular_8x8" value="3"></td>
+            </tr>
+            <tr>
+              <td>Corner 6X8 Ft. Size Stall<br><span style="color:var(--dark-gold);">14,000/- Only</span></td>
+              <td><input type="radio" name="stall_corner_6x8" value="0" checked></td>
+              <td><input type="radio" name="stall_corner_6x8" value="1"></td>
+              <td><input type="radio" name="stall_corner_6x8" value="2"></td>
+              <td><input type="radio" name="stall_corner_6x8" value="3"></td>
+            </tr>
+            <tr>
+              <td>Corner 8X8 Ft. Size Stall<br><span style="color:var(--dark-gold);">14,000/- Only</span></td>
+              <td><input type="radio" name="stall_corner_8x8" value="0" checked></td>
+              <td><input type="radio" name="stall_corner_8x8" value="1"></td>
+              <td><input type="radio" name="stall_corner_8x8" value="2"></td>
+              <td><input type="radio" name="stall_corner_8x8" value="3"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EXTRA REQUIREMENTS -->
+    <div class="form-card">
+      <div class="form-group">
+        <label>Any Extra Requirements (Payable Extra)</label>
+        <textarea class="form-control" name="extraRequirements" placeholder="e.g. Extra Tables, Chairs, Power sockets, Spotlights..."></textarea>
+      </div>
+    </div>
+
+    <!-- PAYMENT METHOD -->
+    <div class="form-card">
+      <h3>Payment Method <span class="required-asterisk">*</span></h3>
+      <div class="payment-grid">
+        
+        <div class="payment-card-box">
+          <label class="radio-item" style="justify-content: center; margin-bottom: 8px;">
+            <input type="radio" name="paymentMethod" value="UPI" required> <strong>UPI Payment</strong>
+          </label>
+          <div class="details">
+            <strong>UPI ID:</strong><br>mateshwaripublicity.ibz@icici
+          </div>
+        </div>
+
+        <div class="payment-card-box">
+          <label class="radio-item" style="justify-content: center; margin-bottom: 8px;">
+            <input type="radio" name="paymentMethod" value="Bank Transfer" required> <strong>Bank Transfer</strong>
+          </label>
+          <div class="details">
+            <strong>Bank:</strong> ICICI BANK<br>
+            <strong>Name:</strong> Mateshwari Publicity<br>
+            <strong>A/c:</strong> 065405500988<br>
+            <strong>IFSC:</strong> ICIC0000654
+          </div>
+        </div>
+
+        <div class="payment-card-box">
+          <label class="radio-item" style="justify-content: center; margin-bottom: 8px;">
+            <input type="radio" name="paymentMethod" value="Cash Payment" required> <strong>Cash Payment</strong>
+          </label>
+          <div class="details">
+            Pay directly in cash to the organizers upon confirmation.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PAYMENT STATUS & UPLOADS -->
+    <div class="form-card">
+      <div class="form-group">
+        <label>Payment Status <span class="required-asterisk">*</span></label>
+        <p style="font-size: 12px; color: #888; margin-bottom: 8px;">Minimum 50% Advance Payment Compulsory</p>
+        <div style="display: flex; gap: 20px;">
+          <label class="radio-item"><input type="radio" name="paymentStatus" value="50% Advance Paid" required> 50% Advance Paid</label>
+          <label class="radio-item"><input type="radio" name="paymentStatus" value="Fully Paid" required> Fully Paid</label>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 15px;">
+        <label>Transaction ID / Reference Number (If paid online)</label>
+        <input type="text" class="form-control" name="transactionId" placeholder="Enter Reference/UPI Trans ID">
+      </div>
+
+      <div class="form-group">
+        <label>Upload Payment Screenshot <span class="required-asterisk">*</span></label>
+        <p style="font-size: 11px; color: #777;">Max file size: 5 MB</p>
+        <div class="file-input-wrapper">
+          <input type="file" id="paymentScreenshot" accept="image/*" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Upload Business Card (Optional)</label>
+        <p style="font-size: 11px; color: #777;">Max file size: 5 MB</p>
+        <div class="file-input-wrapper">
+          <input type="file" id="businessCard" accept="image/*,.pdf">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Upload ID Proof (Government ID / PAN / Other) <span class="required-asterisk">*</span></label>
+        <p style="font-size: 11px; color: #777;">Max file size: 5 MB</p>
+        <div class="file-input-wrapper">
+          <input type="file" id="idProof" accept="image/*,.pdf" required>
+        </div>
+      </div>
+    </div>
+
+    <!-- DECLARATION & DATE -->
+    <div class="form-card">
+      <div class="form-group">
+        <label class="checkbox-item" style="align-items: flex-start;">
+          <input type="checkbox" name="declaration" required style="margin-top: 3px;">
+          <span style="font-size: 13px; line-height: 1.5;">
+            <strong>Declaration <span class="required-asterisk">*</span></strong><br>
+            I hereby declare that all the information provided by me is true and correct to the best of my knowledge. I agree to abide by all the rules and regulations of the exhibition. I understand and agree that in the event any dispute, disagreement, or unforeseen situation during the exhibition, the decision of the Exhibition Organizing Committee/Judging Panel shall be final and binding on all participants. I understand that the registration fee is non-refundable. I also agree to comply with all instructions issued by the organizers during the event.
+          </span>
+        </label>
+      </div>
+
+      <div class="form-group" style="margin-top: 20px; max-width: 250px;">
+        <label>Date <span class="required-asterisk">*</span></label>
+        <input type="date" class="form-control" name="submissionDate" id="submissionDate" required>
+      </div>
+    </div>
+
+    <!-- STATUS DISPLAY -->
+    <div id="statusMessage"></div>
+
+    <!-- ACTIONS -->
+    <div class="actions-row">
+      <button type="submit" id="submitBtn" class="btn-submit">Submit Registration</button>
+      <button type="reset" class="btn-clear">Clear form</button>
+    </div>
+
+  </form>
+</div>
+
+<!-- Firebase SDK v10 Integration -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // 🔹 Replace with your Firebase Configuration Keys
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Set today's default date
+  document.getElementById('submissionDate').valueAsDate = new Date();
+
+  // Utility to convert File to Base64 String
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    if(!file) resolve(null);
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
+
+  // Form Submit Handler
+  const form = document.getElementById('stallForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const statusMessage = document.getElementById('statusMessage');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Disable button & show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Submitting Data...";
+    statusMessage.style.display = "block";
+    statusMessage.className = "";
+    statusMessage.style.color = "#555";
+    statusMessage.innerText = "Processing your registration and uploading files...";
+
+    try {
+      // Gather Form Data
+      const formData = new FormData(form);
+      
+      // Selected Business Categories
+      const businessCategories = [];
+      document.querySelectorAll('input[name="businessCategory"]:checked').forEach(el => {
+        businessCategories.push(el.value);
+      });
+
+      // Convert File Uploads to Base64 Strings for direct Firestore Storage
+      const paymentScreenshotFile = document.getElementById('paymentScreenshot').files[0];
+      const businessCardFile = document.getElementById('businessCard').files[0];
+      const idProofFile = document.getElementById('idProof').files[0];
+
+      const paymentScreenshotBase64 = await fileToBase64(paymentScreenshotFile);
+      const businessCardBase64 = await fileToBase64(businessCardFile);
+      const idProofBase64 = await fileToBase64(idProofFile);
+
+      // Build Document Payload
+      const submissionPayload = {
+        ownerName: formData.get('ownerName'),
+        companyName: formData.get('companyName'),
+        completeAddress: formData.get('completeAddress'),
+        whatsappNo: formData.get('whatsappNo'),
+        altMobileNo: formData.get('altMobileNo') || '',
+        email: formData.get('email'),
+        businessCategories: businessCategories,
+        otherCategory: formData.get('otherCategory') || '',
+        productDescription: formData.get('productDescription'),
+        numberOfStalls: formData.get('numberOfStalls'),
+        preferredStalls: {
+          regular_6x8: formData.get('stall_regular_6x8'),
+          regular_8x8: formData.get('stall_regular_8x8'),
+          corner_6x8: formData.get('stall_corner_6x8'),
+          corner_8x8: formData.get('stall_corner_8x8')
+        },
+        extraRequirements: formData.get('extraRequirements') || '',
+        paymentMethod: formData.get('paymentMethod'),
+        paymentStatus: formData.get('paymentStatus'),
+        transactionId: formData.get('transactionId') || '',
+        submissionDate: formData.get('submissionDate'),
+        uploads: {
+          paymentScreenshot: paymentScreenshotBase64,
+          businessCard: businessCardBase64,
+          idProof: idProofBase64
+        },
+        submittedAt: new Date().toISOString()
+      };
+
+      // Save into Firebase Firestore Collection
+      await addDoc(collection(db, "StallRegistrations"), submissionPayload);
+
+      // Success Response
+      statusMessage.className = "status-success";
+      statusMessage.innerText = "✅ Registration submitted successfully! Organizers will contact you soon.";
+      form.reset();
+      document.getElementById('submissionDate').valueAsDate = new Date();
+
+    } catch (error) {
+      console.error("Firestore submission error:", error);
+      statusMessage.className = "status-error";
+      statusMessage.innerText = "❌ Error submitting form: " + error.message;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Submit Registration";
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,122 @@
+:root {
+  --primary-purple: #7b2cbf;
+  --accent-gold: #e5a93c;
+  --gold-hover: #d4af37;
+  --bg-gradient: linear-gradient(135deg, #3c096c 0%, #7b2cbf 100%);
+  --text-dark: #2b2b2b;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background: var(--bg-gradient);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.form-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 550px;
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.form-header {
+  background: var(--primary-purple);
+  color: #ffffff;
+  text-align: center;
+  padding: 25px 20px;
+  border-bottom: 4px solid var(--accent-gold);
+}
+
+.form-header h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.form-header p {
+  font-size: 0.9rem;
+  color: #f1f1f1;
+  margin-top: 4px;
+}
+
+form {
+  padding: 25px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: var(--primary-purple);
+  box-shadow: 0 0 6px rgba(123, 44, 191, 0.2);
+}
+
+.members-container {
+  background: #fffdf5;
+  border: 1px dashed var(--accent-gold);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.btn-submit {
+  width: 100%;
+  background: var(--accent-gold);
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  box-shadow: 0 4px 12px rgba(229, 169, 60, 0.4);
+}
+
+.btn-submit:hover {
+  background: var(--gold-hover);
+}
+
+.btn-submit:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+}
+
+.status-msg {
+  margin-top: 15px;
+  text-align: center;
+  font-weight: 500;
+  color: var(--primary-purple);
+  font-size: 0.9rem;
+}
