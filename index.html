@@ -54,8 +54,8 @@
             </form>
       </div>
 
-      <!-- QR Code Processing Canvas Container -->
-      <div id="qrcode-temp" style="display:none;"></div>
+      <!-- QR Code Processing Container (Mobile Fix: Off-screen instead of display:none) -->
+      <div id="qrcode-temp" style="position: fixed; left: -9999px; top: -9999px;"></div>
       <canvas id="cardCanvas" style="display:none;"></canvas>
 
       <!-- Firebase Logic & Form Handling Single Module -->
@@ -137,7 +137,7 @@
                   }
             });
 
-            // Pass Generation Canvas Utility
+            // Pass Generation Canvas Utility (Optimized for Mobile)
             function createQRPassCanvas(data) {
                   const { docId, name, fatherName, address, mobile, numMembers } = data;
 
@@ -163,71 +163,84 @@
 
                         let checkCount = 0;
                         const interval = setInterval(() => {
-                              const qrImg = qrContainer.querySelector('img');
                               checkCount++;
 
-                              if (qrImg && qrImg.src) {
+                              const qrCanvas = qrContainer.querySelector('canvas');
+                              const qrImg = qrContainer.querySelector('img');
+
+                              if (qrCanvas || (qrImg && qrImg.src)) {
                                     clearInterval(interval);
 
-                                    const img = new Image();
-                                    img.onload = () => {
-                                          const canvas = document.getElementById('cardCanvas');
-                                          const ctx = canvas.getContext('2d');
+                                    const renderPass = (sourceElement) => {
+                                          try {
+                                                const canvas = document.getElementById('cardCanvas');
+                                                const ctx = canvas.getContext('2d');
 
-                                          const width = 450;
-                                          const height = numMembers > 0 ? 370 : 340;
+                                                const width = 450;
+                                                const height = numMembers > 0 ? 370 : 340;
 
-                                          canvas.width = width;
-                                          canvas.height = height;
+                                                canvas.width = width;
+                                                canvas.height = height;
 
-                                          // Canvas Background
-                                          ctx.fillStyle = '#FFFFFF';
-                                          ctx.fillRect(0, 0, width, height);
+                                                // Canvas Background
+                                                ctx.fillStyle = '#FFFFFF';
+                                                ctx.fillRect(0, 0, width, height);
 
-                                          // Header Banner
-                                          ctx.fillStyle = '#7B2CBF';
-                                          ctx.fillRect(0, 0, width, 65);
-                                          ctx.fillStyle = '#E5A93C';
-                                          ctx.fillRect(0, 61, width, 4);
-
-                                          ctx.fillStyle = '#FFFFFF';
-                                          ctx.font = 'bold 20px Poppins, sans-serif';
-                                          ctx.textAlign = 'center';
-                                          ctx.fillText('BANDHAN BAZAAR PASS', width / 2, 40);
-
-                                          // Name
-                                          ctx.fillStyle = '#2B2B2B';
-                                          ctx.font = 'bold 18px Poppins, sans-serif';
-                                          ctx.fillText(name.toUpperCase(), width / 2, 100);
-
-                                          // 🎯 Perfect QR Code Centering Fix
-                                          const qrSize = 180;
-                                          const qrX = Math.round((width - qrSize) / 2) - 8; // Offset adjusted for exact center visual balance
-                                          
-                                          ctx.imageSmoothingEnabled = false;
-                                          ctx.drawImage(img, qrX, 120, qrSize, qrSize);
-
-                                          // Accompanying Members Count
-                                          if (numMembers > 0) {
+                                                // Header Banner
                                                 ctx.fillStyle = '#7B2CBF';
-                                                ctx.font = 'bold 14px Poppins, sans-serif';
-                                                ctx.fillText(`Comming Members: ${numMembers}`, width / 2, 335);
-                                          }
+                                                ctx.fillRect(0, 0, width, 65);
+                                                ctx.fillStyle = '#E5A93C';
+                                                ctx.fillRect(0, 61, width, 4);
 
-                                          resolve(canvas);
+                                                ctx.fillStyle = '#FFFFFF';
+                                                ctx.font = 'bold 20px Poppins, sans-serif';
+                                                ctx.textAlign = 'center';
+                                                ctx.fillText('BANDHAN BAZAAR PASS', width / 2, 40);
+
+                                                // Name
+                                                ctx.fillStyle = '#2B2B2B';
+                                                ctx.font = 'bold 18px Poppins, sans-serif';
+                                                ctx.fillText(name.toUpperCase(), width / 2, 100);
+
+                                                // QR Code Center Alignment
+                                                const qrSize = 180;
+                                                const qrX = Math.round((width - qrSize) / 2);
+
+                                                ctx.imageSmoothingEnabled = false;
+                                                ctx.drawImage(sourceElement, qrX, 120, qrSize, qrSize);
+
+                                                // Accompanying Members Count
+                                                if (numMembers > 0) {
+                                                      ctx.fillStyle = '#7B2CBF';
+                                                      ctx.font = 'bold 14px Poppins, sans-serif';
+                                                      ctx.fillText(`Accompanying Members: ${numMembers}`, width / 2, 335);
+                                                }
+
+                                                resolve(canvas);
+                                          } catch (err) {
+                                                reject(err);
+                                          }
                                     };
-                                    img.src = qrImg.src;
+
+                                    // Direct canvas draw if available (Instant on mobile)
+                                    if (qrCanvas) {
+                                          renderPass(qrCanvas);
+                                    } else if (qrImg) {
+                                          const img = new Image();
+                                          img.onload = () => renderPass(img);
+                                          img.src = qrImg.src;
+                                    }
                               }
 
-                              if (checkCount > 30) {
+                              if (checkCount > 50) {
                                     clearInterval(interval);
-                                    reject(new Error("QR code generation timed out."));
+                                    reject(new Error("QR code generation timed out. Please try again."));
                               }
                         }, 100);
                   });
             }
 
-            // 🔹 PDF Download Function using jsPDF
+            // PDF Download Function using jsPDF
             function downloadPassAsPDF(canvas, filename) {
                   const { jsPDF } = window.jspdf;
                   
@@ -243,4 +256,5 @@
             }
       </script>
 </body>
+
 </html>
