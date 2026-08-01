@@ -440,7 +440,9 @@
       color: #444;
     }
 
-    .form-group input[type="text"] {
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group select {
       width: 100%;
       padding: 10px;
       border: 1px solid #ccc;
@@ -449,7 +451,9 @@
       transition: border-color 0.2s;
     }
 
-    .form-group input[type="text"]:focus {
+    .form-group input[type="text"]:focus,
+    .form-group input[type="number"]:focus,
+    .form-group select:focus {
       border-color: #28a745;
       outline: none;
     }
@@ -564,9 +568,9 @@
     <div class="modal-content">
       <span class="close-btn" id="closeModal">&times;</span>
       <h2>Complete Payment</h2>
-      <p style="margin-top: 5px;">Total Payable Amount: <strong>₹<span id="modalAmount">0</span></strong></p>
+      <p style="margin-top: 5px;">Total Stall Amount: <strong>₹<span id="modalAmount">0</span></strong></p>
 
-      <div class="payment-qr">
+      <div class="payment-qr" id="paymentQrBlock">
         <p style="font-size: 13px; color: #666; margin-top: 8px;">Scan & Pay via UPI / QR Code</p>
         <img src="assets/UPI.jpeg" alt="Payment QR Code" />
       </div>
@@ -578,14 +582,30 @@
           <input type="text" id="userName" placeholder="e.g. Rahul Sharma" required />
         </div>
 
-        <!-- 2. UPI Transaction ID Input Field -->
+        <!-- 2. Payment Method Dropdown -->
         <div class="form-group">
+          <label for="paymentMethod">Payment Method *</label>
+          <select id="paymentMethod" required>
+            <option value="UPI">UPI / Online Payment</option>
+            <option value="Cash">Cash Payment</option>
+          </select>
+        </div>
+
+        <!-- 3. Paying Amount Input Field -->
+        <div class="form-group">
+          <label for="paidAmount">Paying Amount (₹) *</label>
+          <input type="number" id="paidAmount" placeholder="Enter paying amount" min="1" required />
+          <small id="pendingAmountInfo" style="font-weight: 600; font-size: 12px; margin-top: 4px; display: block; color: #dc3545;"></small>
+        </div>
+
+        <!-- 4. UPI Transaction ID Input Field (Shown for UPI) -->
+        <div class="form-group" id="upiTxnGroup">
           <label for="transactionId">UPI Transaction ID / UTR Number *</label>
           <input type="text" id="transactionId" placeholder="e.g. 320918239012" required />
         </div>
 
-        <!-- 3. Payment Screenshot Upload -->
-        <div class="form-group">
+        <!-- 5. Payment Screenshot Upload Field (Shown for UPI) -->
+        <div class="form-group" id="upiProofGroup">
           <label for="proofFile">Upload Payment Screenshot Proof *</label>
           <input type="file" id="proofFile" accept="image/*" required />
         </div>
@@ -733,9 +753,57 @@
     const proofForm = document.getElementById('proofForm');
 
     const userNameInput = document.getElementById('userName');
+    const paymentMethodSelect = document.getElementById('paymentMethod');
+    const paidAmountInput = document.getElementById('paidAmount');
+    const pendingAmountInfo = document.getElementById('pendingAmountInfo');
+    const upiTxnGroup = document.getElementById('upiTxnGroup');
+    const upiProofGroup = document.getElementById('upiProofGroup');
     const transactionIdInput = document.getElementById('transactionId');
     const proofFileInput = document.getElementById('proofFile');
     const submitProofBtn = document.getElementById('submitProofBtn');
+    const paymentQrBlock = document.getElementById('paymentQrBlock');
+
+    // Toggle Payment Method (Cash / UPI)
+    function handlePaymentMethodChange() {
+      const isUpi = paymentMethodSelect.value === 'UPI';
+      if (isUpi) {
+        upiTxnGroup.style.display = 'flex';
+        upiProofGroup.style.display = 'flex';
+        paymentQrBlock.style.display = 'block';
+        transactionIdInput.required = true;
+        proofFileInput.required = true;
+      } else {
+        upiTxnGroup.style.display = 'none';
+        upiProofGroup.style.display = 'none';
+        paymentQrBlock.style.display = 'none';
+        transactionIdInput.required = false;
+        proofFileInput.required = false;
+        transactionIdInput.value = '';
+        proofFileInput.value = '';
+      }
+    }
+
+    paymentMethodSelect.addEventListener('change', handlePaymentMethodChange);
+
+    // Live Pending Amount Calculation
+    function calculatePendingAmount() {
+      const total = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+      const paid = parseFloat(paidAmountInput.value) || 0;
+      const pending = total - paid;
+
+      if (pending > 0) {
+        pendingAmountInfo.innerText = `Pending Due Amount: ₹${pending.toLocaleString('en-IN')}`;
+        pendingAmountInfo.style.color = '#dc3545';
+      } else if (pending < 0) {
+        pendingAmountInfo.innerText = `Paying amount cannot exceed Total Amount!`;
+        pendingAmountInfo.style.color = 'red';
+      } else {
+        pendingAmountInfo.innerText = `Full payment complete (₹0 Pending).`;
+        pendingAmountInfo.style.color = '#28a745';
+      }
+    }
+
+    paidAmountInput.addEventListener('input', calculatePendingAmount);
 
     // Render Layout UI
     function renderMap() {
@@ -845,6 +913,9 @@
       checkoutBtn.addEventListener('click', () => {
         const total = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
         modalAmount.innerText = total.toLocaleString('en-IN');
+        paidAmountInput.value = total; // Default value to total amount
+        handlePaymentMethodChange();
+        calculatePendingAmount();
         paymentModal.style.display = 'flex';
       });
 
@@ -857,40 +928,61 @@
         e.preventDefault();
 
         const userName = userNameInput.value.trim();
-        const transactionId = transactionIdInput.value.trim();
-        const file = proofFileInput.files[0];
+        const paymentMethod = paymentMethodSelect.value;
+        const totalAmount = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+        const paidAmount = parseFloat(paidAmountInput.value) || 0;
+        const pendingAmount = Math.max(0, totalAmount - paidAmount);
 
         if (!userName) return alert("Please enter your Full Name!");
-        if (!transactionId) return alert("Please enter the Transaction ID / UTR Number!");
-        if (!file) return alert("Please select a screenshot file!");
+        if (paidAmount <= 0) return alert("Please enter a valid paying amount!");
+        if (paidAmount > totalAmount) return alert("Paying amount cannot exceed the Total Amount!");
+
+        let proofUrl = "";
+        let transactionId = "CASH_PAYMENT";
 
         submitProofBtn.disabled = true;
-        submitProofBtn.innerText = "Uploading Proof & Submitting...";
+        submitProofBtn.innerText = "Submitting Booking Request...";
 
         try {
-          const cleanName = userName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-          const cleanTxId = transactionId.toLowerCase().replace(/[^a-z0-9]/g, '_');
+          // If payment method is UPI, require transaction ID & Cloudinary Upload
+          if (paymentMethod === 'UPI') {
+            const txnIdVal = transactionIdInput.value.trim();
+            const file = proofFileInput.files[0];
 
-          const userFolderPath = `bandhan_bazaar_2026/${cleanName}_${cleanTxId}`;
+            if (!txnIdVal) {
+              submitProofBtn.disabled = false;
+              submitProofBtn.innerText = "Submit Booking Proof";
+              return alert("Please enter the Transaction ID / UTR Number!");
+            }
+            if (!file) {
+              submitProofBtn.disabled = false;
+              submitProofBtn.innerText = "Submit Booking Proof";
+              return alert("Please select a screenshot file!");
+            }
 
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-          formData.append('folder', userFolderPath);
+            transactionId = txnIdVal;
+            const cleanName = userName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const cleanTxId = transactionId.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            const userFolderPath = `bandhan_bazaar_2026/${cleanName}_${cleanTxId}`;
 
-          const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-            method: 'POST',
-            body: formData
-          });
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+            formData.append('folder', userFolderPath);
 
-          if (!cloudRes.ok) {
-            throw new Error("Failed to upload image to Cloudinary. Check preset settings.");
+            const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+              method: 'POST',
+              body: formData
+            });
+
+            if (!cloudRes.ok) {
+              throw new Error("Failed to upload image to Cloudinary. Check preset settings.");
+            }
+
+            const cloudData = await cloudRes.json();
+            proofUrl = cloudData.secure_url;
           }
 
-          const cloudData = await cloudRes.json();
-          const proofUrl = cloudData.secure_url;
-
-          const totalAmount = selectedSeats.reduce((sum, s) => sum + s.price, 0);
           const seatIds = selectedSeats.map(s => s.id);
 
           // Save Booking Details with STATUS = 'pending'
@@ -899,6 +991,9 @@
             userName: userName,
             seats: seatIds,
             totalAmount: totalAmount,
+            paidAmount: paidAmount,
+            pendingAmount: pendingAmount,
+            paymentMethod: paymentMethod,
             transactionId: transactionId,
             proofUrl: proofUrl,
             status: 'pending',
@@ -913,7 +1008,7 @@
           }
 
           renderMap();
-          alert("Payment proof submitted successfully! Your stall booking is now PENDING ADMIN VERIFICATION.");
+          alert(`Booking submitted successfully!\nPaid: ₹${paidAmount.toLocaleString('en-IN')} | Pending: ₹${pendingAmount.toLocaleString('en-IN')}\nStatus: PENDING ADMIN VERIFICATION.`);
           selectedSeats = [];
           updateSummary();
           paymentModal.style.display = 'none';
