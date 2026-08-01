@@ -5,6 +5,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard - Bandhan Bazaar Stall Approvals</title>
+  
+  <!-- Excel Export Library (SheetJS) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -20,7 +24,7 @@
     }
 
     .container {
-      max-width: 1400px;
+      max-width: 1450px;
       margin: 0 auto;
     }
 
@@ -33,11 +37,32 @@
       padding: 20px 25px;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      flex-wrap: wrap;
+      gap: 15px;
     }
 
     header h1 {
       font-size: 24px;
       color: #1a252f;
+    }
+
+    .export-btn {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+
+    .export-btn:hover {
+      background-color: #218838;
     }
 
     .stats-container {
@@ -86,13 +111,14 @@
       padding: 10px 15px;
       border: 1px solid #ced4da;
       border-radius: 6px;
-      width: 300px;
+      width: 320px;
       font-size: 14px;
     }
 
     .filter-tabs {
       display: flex;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
     .tab-btn {
@@ -128,9 +154,10 @@
     }
 
     th, td {
-      padding: 14px 18px;
+      padding: 14px 16px;
       border-bottom: 1px solid #e9ecef;
-      font-size: 14px;
+      font-size: 13px;
+      vertical-align: middle;
     }
 
     th {
@@ -140,6 +167,7 @@
       text-transform: uppercase;
       font-size: 12px;
       letter-spacing: 0.5px;
+      white-space: nowrap;
     }
 
     tr:hover {
@@ -148,9 +176,9 @@
 
     .badge {
       display: inline-block;
-      padding: 5px 12px;
+      padding: 5px 10px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: bold;
       text-transform: uppercase;
     }
@@ -161,8 +189,8 @@
     .badge-method { background-color: #e2e3e5; color: #383d41; }
 
     .proof-img {
-      width: 70px;
-      height: 70px;
+      width: 60px;
+      height: 60px;
       object-fit: cover;
       border-radius: 6px;
       border: 1px solid #dee2e6;
@@ -176,18 +204,24 @@
 
     .action-btn-group {
       display: flex;
-      gap: 8px;
+      flex-direction: column;
+      gap: 6px;
     }
 
     .btn {
-      padding: 8px 14px;
+      padding: 6px 12px;
       border: none;
       border-radius: 5px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: bold;
       cursor: pointer;
       transition: background 0.2s;
+      text-align: center;
+      text-decoration: none;
     }
+
+    .btn-view { background-color: #17a2b8; color: white; }
+    .btn-view:hover { background-color: #138496; }
 
     .btn-approve { background-color: #28a745; color: white; }
     .btn-approve:hover { background-color: #218838; }
@@ -195,13 +229,77 @@
     .btn-reject { background-color: #dc3545; color: white; }
     .btn-reject:hover { background-color: #c82333; }
 
-    /* Modal for Image Zoom */
+    .btn-delete { background-color: #6c757d; color: white; }
+    .btn-delete:hover { background-color: #343a40; }
+
+    /* Modal Styling */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      max-width: 750px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #6c757d;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .detail-item {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #e9ecef;
+    }
+
+    .detail-item label {
+      font-size: 11px;
+      font-weight: bold;
+      color: #6c757d;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .detail-item p {
+      font-size: 14px;
+      color: #212529;
+      word-break: break-word;
+    }
+
     .image-modal {
       display: none;
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.85);
-      z-index: 1000;
+      z-index: 1100;
       justify-content: center;
       align-items: center;
     }
@@ -219,6 +317,9 @@
   <div class="container">
     <header>
       <h1>Bandhan Bazaar - Admin Stall Verification Dashboard</h1>
+      <button id="downloadExcelBtn" class="export-btn">
+        📊 Download Full Excel Report
+      </button>
     </header>
 
     <!-- Stats Bar -->
@@ -243,7 +344,7 @@
 
     <!-- Controls Bar -->
     <div class="table-controls">
-      <input type="text" id="searchInput" class="search-input" placeholder="Search Name, Txn ID, Method or Seat..." />
+      <input type="text" id="searchInput" class="search-input" placeholder="Search Name, Company, Phone, Seat, Txn ID..." />
       
       <div class="filter-tabs">
         <button class="tab-btn active" data-filter="pending">Pending Requests</button>
@@ -259,24 +360,39 @@
         <thead>
           <tr>
             <th>Date & Time</th>
-            <th>Full Name</th>
+            <th>Full Name / Company</th>
+            <th>Contact & Email</th>
             <th>Stalls</th>
-            <th>Total Amount</th>
-            <th>Paid Amount</th>
-            <th>Pending Amount</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Pending</th>
             <th>Method</th>
-            <th>UPI Txn ID / UTR</th>
+            <th>Txn ID / UTR</th>
             <th>Payment Proof</th>
+            <th>ID Proof</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="adminTableBody">
           <tr>
-            <td colspan="11" style="text-align: center; color: #777;">Loading bookings...</td>
+            <td colspan="13" style="text-align: center; color: #777;">Loading bookings...</td>
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Full Details View Modal -->
+  <div id="detailsModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="document.getElementById('detailsModal').style.display='none'">&times;</span>
+      <h2 style="margin-bottom: 5px; color: #1a252f;" id="modalCustomerName">Customer Details</h2>
+      <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Complete information submitted during stall registration</p>
+      
+      <div class="details-grid" id="modalDetailsBody">
+        <!-- Dynamic Content Injected Here -->
+      </div>
     </div>
   </div>
 
@@ -287,7 +403,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
@@ -311,6 +427,7 @@
     const countApprovedEl = document.getElementById('countApproved');
     const totalRevenueEl = document.getElementById('totalRevenue');
     const totalPendingAmountEl = document.getElementById('totalPendingAmount');
+    const downloadExcelBtn = document.getElementById('downloadExcelBtn');
 
     // Live Snapshot Listener for Bookings
     onSnapshot(collection(db, "bookings"), (snapshot) => {
@@ -328,7 +445,6 @@
         if (data.status === 'pending') pendingCount++;
         if (data.status === 'approved') {
           approvedCount++;
-          // Sum paid amount & pending amount
           const paidVal = data.paidAmount !== undefined ? data.paidAmount : (data.totalAmount || 0);
           const pendingVal = data.pendingAmount !== undefined ? data.pendingAmount : 0;
           
@@ -355,6 +471,9 @@
         const matchesFilter = (currentFilter === 'all') || (b.status === currentFilter);
         const matchesSearch = (
           (b.userName && b.userName.toLowerCase().includes(searchTerm)) ||
+          (b.companyName && b.companyName.toLowerCase().includes(searchTerm)) ||
+          (b.whatsappNumber && b.whatsappNumber.toLowerCase().includes(searchTerm)) ||
+          (b.emailAddress && b.emailAddress.toLowerCase().includes(searchTerm)) ||
           (b.transactionId && b.transactionId.toLowerCase().includes(searchTerm)) ||
           (b.paymentMethod && b.paymentMethod.toLowerCase().includes(searchTerm)) ||
           (b.seats && b.seats.join(', ').toLowerCase().includes(searchTerm))
@@ -363,7 +482,7 @@
       });
 
       if (filtered.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #888;">No ${currentFilter} bookings found.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="13" style="text-align: center; color: #888;">No ${currentFilter} bookings found.</td></tr>`;
         return;
       }
 
@@ -381,35 +500,80 @@
         const pendingAmt = item.pendingAmount !== undefined ? item.pendingAmount : Math.max(0, totalAmt - paidAmt);
         const method = item.paymentMethod || 'UPI';
 
-        const proofCell = item.proofUrl ? `
-          <img src="${item.proofUrl}" class="proof-img" onclick="openModal('${item.proofUrl}')" alt="Proof Screenshot" />
-        ` : `<span style="color:#888; font-size:12px;">N/A (${method})</span>`;
+        const paymentProof = item.paymentProofUrl || item.proofUrl;
+        const proofCell = paymentProof ? `
+          <img src="${paymentProof}" class="proof-img" onclick="openModal('${paymentProof}')" alt="Payment Proof" />
+        ` : `<span style="color:#888; font-size:11px;">N/A (${method})</span>`;
+
+        const idProofCell = item.idProofUrl ? `
+          <a href="${item.idProofUrl}" target="_blank" class="btn btn-view" style="padding: 4px 8px; font-size: 11px;">View ID</a>
+        ` : `<span style="color:#888; font-size:11px;">N/A</span>`;
 
         row.innerHTML = `
           <td>${formattedDate}</td>
-          <td><b>${item.userName || 'N/A'}</b></td>
-          <td><b>${(item.seats || []).join(', ')}</b></td>
+          <td><b>${item.userName || 'N/A'}</b><br><small style="color:#6c757d;">${item.companyName || ''}</small></td>
+          <td>📞 ${item.whatsappNumber || 'N/A'}<br><small style="color:#6c757d;">✉️ ${item.emailAddress || 'N/A'}</small></td>
+          <td><b style="color:#007bff;">${(item.seats || []).join(', ')}</b></td>
           <td>₹${totalAmt.toLocaleString('en-IN')}</td>
           <td style="color:#28a745; font-weight:bold;">₹${paidAmt.toLocaleString('en-IN')}</td>
           <td style="color:${pendingAmt > 0 ? '#dc3545' : '#28a745'}; font-weight:bold;">₹${pendingAmt.toLocaleString('en-IN')}</td>
           <td><span class="badge badge-method">${method}</span></td>
           <td><code>${item.transactionId || 'N/A'}</code></td>
           <td>${proofCell}</td>
+          <td>${idProofCell}</td>
           <td><span class="badge badge-${item.status}">${item.status}</span></td>
           <td>
-            ${item.status === 'pending' ? `
-              <div class="action-btn-group">
+            <div class="action-btn-group">
+              <button class="btn btn-view" onclick="window.viewDetails('${item.id}')">View Details</button>
+              ${item.status === 'pending' ? `
                 <button class="btn btn-approve" onclick="window.approveBooking('${item.id}', '${(item.seats || []).join(',')}')">Approve</button>
                 <button class="btn btn-reject" onclick="window.rejectBooking('${item.id}', '${(item.seats || []).join(',')}')">Reject</button>
-              </div>
-            ` : `
-              <span style="color:#888; font-size:12px;">No Action Required</span>
-            `}
+              ` : ''}
+              <button class="btn btn-delete" onclick="window.deleteBooking('${item.id}', '${(item.seats || []).join(',')}')">Delete</button>
+            </div>
           </td>
         `;
         tableBody.appendChild(row);
       });
     }
+
+    // View Details Modal Trigger
+    window.viewDetails = (bookingId) => {
+      const item = allBookings.find(b => b.id === bookingId);
+      if (!item) return;
+
+      document.getElementById('modalCustomerName').innerText = item.userName || 'Customer Details';
+      const body = document.getElementById('modalDetailsBody');
+
+      const cats = Array.isArray(item.businessCategories) ? item.businessCategories.join(', ') : (item.businessCategories || 'N/A');
+      const totalAmt = item.totalAmount || 0;
+      const paidAmt = item.paidAmount !== undefined ? item.paidAmount : totalAmt;
+      const pendingAmt = item.pendingAmount !== undefined ? item.pendingAmount : Math.max(0, totalAmt - paidAmt);
+      const paymentProof = item.paymentProofUrl || item.proofUrl;
+
+      body.innerHTML = `
+        <div class="detail-item"><label>Full Name</label><p>${item.userName || 'N/A'}</p></div>
+        <div class="detail-item"><label>Company / Brand</label><p>${item.companyName || 'N/A'}</p></div>
+        <div class="detail-item"><label>WhatsApp Number</label><p>${item.whatsappNumber || 'N/A'}</p></div>
+        <div class="detail-item"><label>Alternative Contact</label><p>${item.altMobileNumber || 'N/A'}</p></div>
+        <div class="detail-item"><label>Email Address</label><p>${item.emailAddress || 'N/A'}</p></div>
+        <div class="detail-item"><label>Complete Address</label><p>${item.completeAddress || 'N/A'}</p></div>
+        <div class="detail-item"><label>Business Categories</label><p>${cats}</p></div>
+        <div class="detail-item"><label>Selected Stalls</label><p><b>${(item.seats || []).join(', ')}</b></p></div>
+        <div class="detail-item"><label>Total Amount</label><p>₹${totalAmt.toLocaleString('en-IN')}</p></div>
+        <div class="detail-item"><label>Paid Amount</label><p style="color:#28a745; font-weight:bold;">₹${paidAmt.toLocaleString('en-IN')}</p></div>
+        <div class="detail-item"><label>Pending Amount</label><p style="color:${pendingAmt > 0 ? '#dc3545' : '#28a745'}; font-weight:bold;">₹${pendingAmt.toLocaleString('en-IN')}</p></div>
+        <div class="detail-item"><label>Payment Method & Option</label><p>${item.paymentMethod || 'UPI'} (${item.paymentOption || 'FULL_PAYMENT'})</p></div>
+        <div class="detail-item"><label>Transaction ID / UTR</label><p><code>${item.transactionId || 'N/A'}</code></p></div>
+        <div class="detail-item"><label>Booking Date</label><p>${item.bookingDate || 'N/A'}</p></div>
+        <div class="detail-item" style="grid-column: 1 / -1;"><label>Business Description</label><p>${item.businessDescription || 'N/A'}</p></div>
+        <div class="detail-item" style="grid-column: 1 / -1;"><label>Extra Requirements</label><p>${item.extraRequirements || 'None'}</p></div>
+        <div class="detail-item"><label>ID Proof Document</label><p>${item.idProofUrl ? `<a href="${item.idProofUrl}" target="_blank" style="color:#007bff; font-weight:bold;">View Uploaded ID Proof</a>` : 'Not Uploaded'}</p></div>
+        <div class="detail-item"><label>Payment Screenshot</label><p>${paymentProof ? `<a href="${paymentProof}" target="_blank" style="color:#007bff; font-weight:bold;">View Payment Screenshot</a>` : 'N/A'}</p></div>
+      `;
+
+      document.getElementById('detailsModal').style.display = 'flex';
+    };
 
     // Approve Logic
     window.approveBooking = async (bookingId, seatIdsStr) => {
@@ -417,10 +581,8 @@
       const seatIds = seatIdsStr.split(',');
 
       try {
-        // 1. Update Booking Status
         await updateDoc(doc(db, "bookings", bookingId), { status: "approved" });
 
-        // 2. Update Firestore Seats Status to 'booked'
         for (const seatId of seatIds) {
           if (seatId) {
             await updateDoc(doc(db, "seats", seatId), { status: "booked" });
@@ -439,10 +601,8 @@
       const seatIds = seatIdsStr.split(',');
 
       try {
-        // 1. Update Booking Status
         await updateDoc(doc(db, "bookings", bookingId), { status: "rejected" });
 
-        // 2. Reset Firestore Seats Status to 'available'
         for (const seatId of seatIds) {
           if (seatId) {
             await updateDoc(doc(db, "seats", seatId), { status: "available" });
@@ -454,6 +614,78 @@
         alert("Reject Failed: " + err.message);
       }
     };
+
+    // Delete Booking Permanently from Backend (Firestore)
+    window.deleteBooking = async (bookingId, seatIdsStr) => {
+      if (!confirm("⚠️ Are you sure you want to PERMANENTLY DELETE this booking from the backend? This cannot be undone.")) return;
+      
+      const seatIds = seatIdsStr ? seatIdsStr.split(',').filter(s => s.trim()) : [];
+
+      try {
+        // 1. Delete booking document from Firestore "bookings"
+        await deleteDoc(doc(db, "bookings", bookingId));
+
+        // 2. Free up associated seats back to 'available'
+        for (const seatId of seatIds) {
+          if (seatId) {
+            await updateDoc(doc(db, "seats", seatId), { status: "available" });
+          }
+        }
+
+        alert("Booking record permanently deleted from backend and seats released back to Available!");
+      } catch (err) {
+        console.error("Error deleting booking:", err);
+        alert("Delete Failed: " + err.message);
+      }
+    };
+
+    // Excel Export Function
+    downloadExcelBtn.addEventListener('click', () => {
+      if (allBookings.length === 0) {
+        alert("No booking data available to download!");
+        return;
+      }
+
+      const excelData = allBookings.map((b, index) => {
+        const totalAmt = b.totalAmount || 0;
+        const paidAmt = b.paidAmount !== undefined ? b.paidAmount : totalAmt;
+        const pendingAmt = b.pendingAmount !== undefined ? b.pendingAmount : Math.max(0, totalAmt - paidAmt);
+        const cats = Array.isArray(b.businessCategories) ? b.businessCategories.join(', ') : (b.businessCategories || '');
+
+        return {
+          "S.No": index + 1,
+          "Booking Date": b.bookingDate || '',
+          "Full Name": b.userName || '',
+          "Company / Brand Name": b.companyName || '',
+          "WhatsApp Contact": b.whatsappNumber || '',
+          "Alternative Mobile": b.altMobileNumber || '',
+          "Email Address": b.emailAddress || '',
+          "Complete Address": b.completeAddress || '',
+          "Business Category": cats,
+          "Business Description": b.businessDescription || '',
+          "Extra Requirements": b.extraRequirements || '',
+          "Stall Numbers": (b.seats || []).join(', '),
+          "Total Amount (₹)": totalAmt,
+          "Paid Amount (₹)": paidAmt,
+          "Pending Amount (₹)": pendingAmt,
+          "Payment Method": b.paymentMethod || '',
+          "Payment Option": b.paymentOption || '',
+          "Transaction ID / UTR": b.transactionId || '',
+          "Status": (b.status || '').toUpperCase(),
+          "ID Proof URL": b.idProofUrl || '',
+          "Payment Proof URL": b.paymentProofUrl || b.proofUrl || '',
+          "System Submission Time": b.timestamp ? new Date(b.timestamp).toLocaleString('en-IN') : ''
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Stall Bookings");
+
+      worksheet['!cols'] = Array(22).fill({ wch: 20 });
+
+      XLSX.writeFile(workbook, `Bandhan_Bazaar_Stall_Bookings_${Date.now()}.xlsx`);
+    });
 
     // Tab Filters Listener
     document.querySelectorAll('.tab-btn').forEach(btn => {
