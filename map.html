@@ -34,9 +34,10 @@
     /* Legend */
     .legend-container {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
       gap: 20px;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
       background: #fff;
       padding: 15px;
       border-radius: 8px;
@@ -48,6 +49,7 @@
       align-items: center;
       gap: 8px;
       font-size: 14px;
+      font-weight: 500;
     }
 
     .seat-sample {
@@ -67,6 +69,16 @@
       background: #fff;
     }
 
+    .food-sample {
+      border: 2px solid #ff9800;
+      background: #fff3e0;
+    }
+
+    .play-sample {
+      border: 2px solid #9c27b0;
+      background: #f3e5f5;
+    }
+
     .selected-sample {
       background: #28a745;
       color: #fff;
@@ -75,6 +87,43 @@
     .booked-sample {
       background: #dc3545;
       border: 1px solid #dc3545;
+    }
+
+    /* Map Layout Image Banner */
+    .map-banner {
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      max-width: 1000px;
+      /* Container ko wide karne ke liye */
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .map-banner h3 {
+      margin-bottom: 12px;
+      color: #444;
+      font-size: 16px;
+    }
+
+
+
+    .map-banner img {
+      width: 100%;
+      /* Left se Right tak poora stretch hoga */
+      max-width: 950px;
+      /* Pura screen gherne ke liye size 950px kar di hai */
+      height: auto;
+      /* Height automatically adjust ho jayegi taaki clear dikhe */
+      max-height: 550px;
+      /* Height ko control karne ke liye */
+      object-fit: contain;
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
     }
 
     /* Loading Overlay for Instant Sync */
@@ -187,7 +236,7 @@
       opacity: 0.85;
     }
 
-    /* Available Corner vs Center */
+    /* Available Corner vs Center vs Food vs Play */
     .seat.corner-style.available {
       border: 2px solid #28a745;
       color: #28a745;
@@ -198,6 +247,18 @@
       border: 2px solid #007bff;
       color: #007bff;
       background-color: #ffffff;
+    }
+
+    .seat.food-style.available {
+      border: 2px solid #ff9800;
+      color: #e65100;
+      background-color: #fff3e0;
+    }
+
+    .seat.play-style.available {
+      border: 2px solid #9c27b0;
+      color: #4a148c;
+      background-color: #f3e5f5;
     }
 
     .seat.available:hover {
@@ -282,7 +343,6 @@
 
     .payment-qr img {
       width: 270px;
-      /* Size 180px se badha kar 270px kar di hai */
       height: auto;
       margin: 12px auto;
       display: block;
@@ -302,18 +362,54 @@
       color: #666;
     }
 
-    .qr-placeholder {
-      width: 180px;
-      height: 180px;
-      background-color: #eee;
-      border: 2px dashed #aaa;
-      margin: 15px auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #777;
+    /* Fast Booking Popup Specific Styles */
+    .fast-booking-box {
+      background: #fff;
+      padding: 30px 25px;
+      border-radius: 16px;
+      text-align: center;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      animation: popIn 0.3s ease-out;
+      position: relative;
+      border-top: 6px solid #e65100;
+    }
+
+    @keyframes popIn {
+      from {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .fast-booking-box h2 {
+      color: #d84315;
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+
+    .fast-booking-box p {
+      font-size: 15px;
+      color: #444;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .alert-badge {
+      background: #ffe0b2;
+      color: #e65100;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
       font-weight: bold;
-      border-radius: 8px;
+      display: inline-block;
+      margin-bottom: 12px;
     }
 
     /* Form Styling */
@@ -367,8 +463,16 @@
     <div class="legend-container">
       <div class="legend-item"><span class="seat-sample corner-sample"></span> Corner Stall (₹14,000)</div>
       <div class="legend-item"><span class="seat-sample center-sample"></span> Center Stall (₹10,000)</div>
+      <div class="legend-item"><span class="seat-sample food-sample"></span> Food Court (₹21,000)</div>
+      <div class="legend-item"><span class="seat-sample play-sample"></span> Play Zone (₹11,000)</div>
       <div class="legend-item"><span class="seat-sample selected-sample"></span> Selected</div>
       <div class="legend-item"><span class="seat-sample booked-sample"></span> Booked (Unavailable)</div>
+    </div>
+
+    <!-- Map Layout Preview Banner -->
+    <div class="map-banner">
+      <h3>Bandhan Bazaar Map Layout</h3>
+      <img src="assets/layout-map.png" alt="Bandhan Bazaar Layout Map" id="layoutMapImage" />
     </div>
 
     <!-- Wrapper with Loader to prevent delay flicker -->
@@ -383,13 +487,13 @@
 
         <!-- Play Zone -->
         <div class="section-block">
-          <h3>Play Zone (8x10)</h3>
+          <h3>Play Zone (8x10) - ₹11,000</h3>
           <div class="grid playzone-grid" id="playzoneGrid"></div>
         </div>
 
         <!-- Food Court -->
         <div class="section-block">
-          <h3>Food Court (12x10)</h3>
+          <h3>Food Court (12x10) - ₹21,000</h3>
           <div class="grid foodcourt-grid" id="foodcourtGrid"></div>
         </div>
 
@@ -436,6 +540,17 @@
     </div>
   </div>
 
+  <!-- Fast Booking Alert Pop-up Modal -->
+  <div id="fastBookingModal" class="modal" style="display: flex;">
+    <div class="fast-booking-box">
+      <span class="alert-badge">⚡ LIMITED TIME OFFER</span>
+      <h2>⚡ Fast Booking Alert!</h2>
+      <p>Please book your stall fast! <b>Prices will be increased soon</b> due to high demand. Secure your desired
+        location today.</p>
+      <button id="closeFastBookingBtn" class="btn" style="background-color: #e65100;">Book Stall Now</button>
+    </div>
+  </div>
+
   <!-- Payment & Upload Proof Modal -->
   <div id="paymentModal" class="modal">
     <div class="modal-content">
@@ -447,8 +562,7 @@
         <p style="font-size: 13px; color: #666; margin-top: 8px;">Scan & Pay via UPI / QR Code</p>
 
         <!-- Yahan QR Code ki photo lagayein -->
-        <img src="assets/UPI.jpeg" alt="Payment QR Code"
-          style="width: 180px; height: 180px; margin: 15px auto; display: block; border-radius: 8px; object-fit: contain;" />
+        <img src="assets/UPI.jpeg" alt="Payment QR Code" />
       </div>
 
       <form id="proofForm">
@@ -498,24 +612,26 @@
     // Config Settings
     const CORNER_PRICE = 14000;
     const CENTER_PRICE = 10000;
+    const FOODCOURT_PRICE = 21000;
+    const PLAYZONE_PRICE = 11000;
 
     // Stall Data Array
     const seatData = [];
 
     function generateSeats() {
-      // 1. Play Zone Stalls (P-1 to P-10, Size: 8x10)
+      // 1. Play Zone Stalls (P-1 to P-10, Price: 11,000)
       for (let i = 1; i <= 10; i++) {
         seatData.push({
           id: `P-${i}`, name: `P-${i}`, dim: `8x10`,
-          price: CORNER_PRICE, type: 'corner', section: 'playzone'
+          price: PLAYZONE_PRICE, type: 'play', section: 'playzone'
         });
       }
 
-      // 2. Food Court Stalls (F-1 to F-10, Size: 12x10)
+      // 2. Food Court Stalls (F-1 to F-10, Price: 21,000)
       for (let i = 1; i <= 10; i++) {
         seatData.push({
           id: `F-${i}`, name: `F-${i}`, dim: `12x10`,
-          price: CORNER_PRICE, type: 'corner', section: 'foodcourt'
+          price: FOODCOURT_PRICE, type: 'food', section: 'foodcourt'
         });
       }
 
@@ -576,6 +692,16 @@
     }
 
     generateSeats();
+
+    // Fast Booking Popup Listener
+    const fastBookingModal = document.getElementById('fastBookingModal');
+    const closeFastBookingBtn = document.getElementById('closeFastBookingBtn');
+
+    if (closeFastBookingBtn) {
+      closeFastBookingBtn.addEventListener('click', () => {
+        fastBookingModal.style.display = 'none';
+      });
+    }
 
     // State Variables
     let bookedSeatsMap = {};
@@ -685,7 +811,7 @@
         updateSummary();
         renderMap();
 
-        // Hide loader as soon as initial snapshot arrives (eliminates delay)
+        // Hide loader as soon as initial snapshot arrives
         if (mapLoader) {
           mapLoader.style.display = 'none';
         }
