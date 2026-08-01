@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - Bandhan Bazaar Stall Approvals</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f4f6f9;
+      color: #333;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      background: #fff;
+      padding: 20px 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    header h1 {
+      font-size: 24px;
+      color: #1a252f;
+    }
+
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+
+    .stat-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-left: 5px solid #007bff;
+    }
+
+    .stat-card.pending { border-left-color: #ffc107; }
+    .stat-card.approved { border-left-color: #28a745; }
+    .stat-card.rejected { border-left-color: #dc3545; }
+
+    .stat-card h3 {
+      font-size: 13px;
+      color: #6c757d;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .value {
+      font-size: 26px;
+      font-weight: bold;
+      color: #212529;
+    }
+
+    /* Filters & Controls */
+    .table-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      padding: 10px 15px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      width: 300px;
+      font-size: 14px;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 10px;
+    }
+
+    .tab-btn {
+      padding: 8px 18px;
+      border: 1px solid #ced4da;
+      background: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #495057;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: #007bff;
+      color: #fff;
+      border-color: #007bff;
+    }
+
+    /* Table Styling */
+    .table-responsive {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 14px 18px;
+      border-bottom: 1px solid #e9ecef;
+      font-size: 14px;
+    }
+
+    th {
+      background-color: #343a40;
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .badge-pending { background-color: #fff3cd; color: #856404; }
+    .badge-approved { background-color: #d4edda; color: #155724; }
+    .badge-rejected { background-color: #f8d7da; color: #721c24; }
+
+    .proof-img {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid #dee2e6;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .proof-img:hover {
+      transform: scale(1.1);
+    }
+
+    .action-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 5px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-approve { background-color: #28a745; color: white; }
+    .btn-approve:hover { background-color: #218838; }
+
+    .btn-reject { background-color: #dc3545; color: white; }
+    .btn-reject:hover { background-color: #c82333; }
+
+    /* Modal for Image Zoom */
+    .image-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .image-modal img {
+      max-width: 90%;
+      max-height: 90vh;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Bandhan Bazaar - Admin Stall Verification Dashboard</h1>
+    </header>
+
+    <!-- Stats Bar -->
+    <div class="stats-container">
+      <div class="stat-card pending">
+        <h3>Pending Approvals</h3>
+        <div class="value" id="countPending">0</div>
+      </div>
+      <div class="stat-card approved">
+        <h3>Approved Stalls</h3>
+        <div class="value" id="countApproved">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Total Revenue Confirmed</h3>
+        <div class="value" id="totalRevenue">₹0</div>
+      </div>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="table-controls">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search Name, Txn ID, or Seat..." />
+      
+      <div class="filter-tabs">
+        <button class="tab-btn active" data-filter="pending">Pending Requests</button>
+        <button class="tab-btn" data-filter="approved">Approved</button>
+        <button class="tab-btn" data-filter="rejected">Rejected</button>
+        <button class="tab-btn" data-filter="all">All Bookings</button>
+      </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Date & Time</th>
+            <th>Full Name</th>
+            <th>Stalls</th>
+            <th>Amount</th>
+            <th>UPI Txn ID / UTR</th>
+            <th>Payment Proof</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="adminTableBody">
+          <tr>
+            <td colspan="8" style="text-align: center; color: #777;">Loading bookings...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Zoom Image Modal -->
+  <div id="imgModal" class="image-modal" onclick="this.style.display='none'">
+    <img id="modalImg" src="" alt="Proof Preview" />
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
+      authDomain: "bandhanbazaarevent2026.firebaseapp.com",
+      projectId: "bandhanbazaarevent2026",
+      storageBucket: "bandhanbazaarevent2026.firebasestorage.app",
+      messagingSenderId: "430230410068",
+      appId: "1:430230410068:web:963bc22ebbe3d17faa2ec1",
+      measurementId: "G-DVGBL2Z7BQ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app, "default");
+
+    let allBookings = [];
+    let currentFilter = 'pending';
+
+    const tableBody = document.getElementById('adminTableBody');
+    const searchInput = document.getElementById('searchInput');
+    const countPendingEl = document.getElementById('countPending');
+    const countApprovedEl = document.getElementById('countApproved');
+    const totalRevenueEl = document.getElementById('totalRevenue');
+
+    // Live Snapshot Listener for Bookings
+    onSnapshot(collection(db, "bookings"), (snapshot) => {
+      allBookings = [];
+      let pendingCount = 0;
+      let approvedCount = 0;
+      let confirmedRevenue = 0;
+
+      snapshot.docs.forEach((docSnap) => {
+        const data = docSnap.data();
+        const booking = { id: docSnap.id, ...data };
+        allBookings.push(booking);
+
+        if (data.status === 'pending') pendingCount++;
+        if (data.status === 'approved') {
+          approvedCount++;
+          confirmedRevenue += (data.totalAmount || 0);
+        }
+      });
+
+      // Update Stats
+      countPendingEl.innerText = pendingCount;
+      countApprovedEl.innerText = approvedCount;
+      totalRevenueEl.innerText = "₹" + confirmedRevenue.toLocaleString('en-IN');
+
+      renderTable();
+    });
+
+    // Render Table according to Filter & Search
+    function renderTable() {
+      const searchTerm = searchInput.value.toLowerCase();
+      tableBody.innerHTML = '';
+
+      const filtered = allBookings.filter(b => {
+        const matchesFilter = (currentFilter === 'all') || (b.status === currentFilter);
+        const matchesSearch = (
+          (b.userName && b.userName.toLowerCase().includes(searchTerm)) ||
+          (b.transactionId && b.transactionId.toLowerCase().includes(searchTerm)) ||
+          (b.seats && b.seats.join(', ').toLowerCase().includes(searchTerm))
+        );
+        return matchesFilter && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #888;">No ${currentFilter} bookings found.</td></tr>`;
+        return;
+      }
+
+      // Sort by newest timestamp first
+      filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      filtered.forEach(item => {
+        const row = document.createElement('tr');
+        const formattedDate = new Date(item.timestamp).toLocaleString('en-IN', {
+          dateStyle: 'medium', timeStyle: 'short'
+        });
+
+        row.innerHTML = `
+          <td>${formattedDate}</td>
+          <td><b>${item.userName || 'N/A'}</b></td>
+          <td><b>${(item.seats || []).join(', ')}</b></td>
+          <td>₹${(item.totalAmount || 0).toLocaleString('en-IN')}</td>
+          <td><code>${item.transactionId || 'N/A'}</code></td>
+          <td>
+            <img src="${item.proofUrl}" class="proof-img" onclick="openModal('${item.proofUrl}')" alt="Proof Screenshot" />
+          </td>
+          <td><span class="badge badge-${item.status}">${item.status}</span></td>
+          <td>
+            ${item.status === 'pending' ? `
+              <div class="action-btn-group">
+                <button class="btn btn-approve" onclick="window.approveBooking('${item.id}', '${(item.seats || []).join(',')}')">Approve</button>
+                <button class="btn btn-reject" onclick="window.rejectBooking('${item.id}', '${(item.seats || []).join(',')}')">Reject</button>
+              </div>
+            ` : `
+              <span style="color:#888; font-size:12px;">No Action Required</span>
+            `}
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Approve Logic
+    window.approveBooking = async (bookingId, seatIdsStr) => {
+      if (!confirm("Are you sure you want to APPROVE this booking payment?")) return;
+      const seatIds = seatIdsStr.split(',');
+
+      try {
+        // 1. Update Booking Status
+        await updateDoc(doc(db, "bookings", bookingId), { status: "approved" });
+
+        // 2. Update Firestore Seats Status to 'booked'
+        for (const seatId of seatIds) {
+          if (seatId) {
+            await updateDoc(doc(db, "seats", seatId), { status: "booked" });
+          }
+        }
+        alert("Booking Approved Successfully! Seat map updated to Booked (Red).");
+      } catch (err) {
+        console.error("Error approving:", err);
+        alert("Approve Failed: " + err.message);
+      }
+    };
+
+    // Reject Logic
+    window.rejectBooking = async (bookingId, seatIdsStr) => {
+      if (!confirm("Are you sure you want to REJECT this booking payment?")) return;
+      const seatIds = seatIdsStr.split(',');
+
+      try {
+        // 1. Update Booking Status
+        await updateDoc(doc(db, "bookings", bookingId), { status: "rejected" });
+
+        // 2. Reset Firestore Seats Status to 'available'
+        for (const seatId of seatIds) {
+          if (seatId) {
+            await updateDoc(doc(db, "seats", seatId), { status: "available" });
+          }
+        }
+        alert("Booking Rejected! Seat map updated back to Available.");
+      } catch (err) {
+        console.error("Error rejecting:", err);
+        alert("Reject Failed: " + err.message);
+      }
+    };
+
+    // Tab Filters Listener
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.getAttribute('data-filter');
+        renderTable();
+      });
+    });
+
+    // Search Box Listener
+    searchInput.addEventListener('input', renderTable);
+
+    // Zoom Image Modal Helper
+    window.openModal = (url) => {
+      document.getElementById('modalImg').src = url;
+      document.getElementById('imgModal').style.display = 'flex';
+    };
+  </script>
+</body>
+
+</html>
