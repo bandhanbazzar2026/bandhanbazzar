@@ -608,6 +608,12 @@
     const FOODCOURT_PRICE = 21000;
     const PLAYZONE_PRICE = 11000;
 
+    // 🔴 Sponsor Mandatory & Pre-booked Seats List
+    const PRE_BOOKED_SEATS = [
+      'A-5', 'A-6', 'A-11', 'A-12', 'A-18', 'A-19', 'A-20','A-7','A-8','A-9','A-15','A-16','A-21','B-2','B-4','B-6','B-14','B-15','B-19','B-21','B-23','B-24','C-4','C-8','C-11','C-22','C-23','C-24','D-18','E-16'
+      // Agar aur koi seats bhi pre-booked karni hon toh yahan add karein (e.g., 'B-1', 'C-10')
+    ];
+
     // Stall Data Array
     const seatData = [];
 
@@ -729,7 +735,9 @@
 
         sectionSeats.forEach(seat => {
           const seatEl = document.createElement('div');
-          const isBooked = bookedSeatsMap[seat.id] === 'booked';
+          
+          // Checks both Firestore database status AND local PRE_BOOKED_SEATS list
+          const isBooked = bookedSeatsMap[seat.id] === 'booked' || PRE_BOOKED_SEATS.includes(seat.id);
           const isSelected = selectedSeats.some(s => s.id === seat.id);
 
           seatEl.classList.add('seat', `${seat.type}-style`);
@@ -798,8 +806,8 @@
           bookedSeatsMap[docSnap.id] = data.status;
         });
 
-        // Filter out any selected seat that was booked in real-time
-        selectedSeats = selectedSeats.filter(s => bookedSeatsMap[s.id] !== 'booked');
+        // Filter out any selected seat that is booked or pre-booked
+        selectedSeats = selectedSeats.filter(s => bookedSeatsMap[s.id] !== 'booked' && !PRE_BOOKED_SEATS.includes(s.id));
 
         updateSummary();
         renderMap();
