@@ -917,8 +917,8 @@
         });
       }
 
-      // 4. Block B Stalls (B-1 to B-24)
-      const bCorners = [1, 2, 4, 5, 7, 8, 9, 11, 12, 13, 14, 16, 17, 19, 20];
+      // 4. Block B Stalls (B-1 to B-24) - UPDATED: Added 21, 23, 24 as Corners
+      const bCorners = [1, 2, 4, 5, 7, 8, 9, 11, 12, 13, 14, 16, 17, 19, 20, 21, 23, 24];
       for (let i = 1; i <= 24; i++) {
         const isCorner = bCorners.includes(i);
         seatData.push({
@@ -928,8 +928,8 @@
         });
       }
 
-      // 5. Block C Stalls (C-1 to C-24)
-      const cCorners = [1, 4, 5, 8, 9, 12, 13, 16, 17, 20];
+      // 5. Block C Stalls (C-1 to C-24) - UPDATED: Added 21, 24 as Corners
+      const cCorners = [1, 4, 5, 8, 9, 12, 13, 16, 17, 20, 21, 24];
       for (let i = 1; i <= 24; i++) {
         const isCorner = cCorners.includes(i);
         seatData.push({

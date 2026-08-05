@@ -230,6 +230,9 @@
     .btn-view { background-color: #17a2b8; color: white; }
     .btn-view:hover { background-color: #138496; }
 
+    .btn-pay { background-color: #fd7e14; color: white; }
+    .btn-pay:hover { background-color: #e06d10; }
+
     .btn-approve { background-color: #28a745; color: white; }
     .btn-approve:hover { background-color: #218838; }
 
@@ -725,6 +728,59 @@
     </div>
   </div>
 
+  <!-- 5. ADMIN PAYMENT UPDATE MODAL -->
+  <div id="updatePaymentModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="document.getElementById('updatePaymentModal').style.display='none'">&times;</span>
+      <h2>💳 Update Customer Payment</h2>
+      <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Update paid and pending amounts when customer clears balance (e.g. 50% to 100% full payment).</p>
+
+      <form id="updatePaymentForm" class="admin-form">
+        <input type="hidden" id="updatePaymentBookingId" />
+        
+        <div class="form-group">
+          <label>Customer Name & Stalls</label>
+          <input type="text" id="updatePaymentCustomerInfo" readonly style="background-color: #e9ecef; font-weight: bold;" />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>Total Amount (₹)</label>
+            <input type="number" id="updatePaymentTotalAmt" readonly style="background-color: #e9ecef;" />
+          </div>
+          <div class="form-group">
+            <label>Previously Paid Amount (₹)</label>
+            <input type="number" id="updatePaymentPrevPaid" readonly style="background-color: #e9ecef;" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="updatePaymentAddAmt">Additional Amount Received Now (₹) *</label>
+          <input type="number" id="updatePaymentAddAmt" placeholder="Enter new/additional amount received" min="0" required />
+          <small style="color: #6c757d;">Or manually enter full total paid amount below.</small>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="updatePaymentNewPaid">Updated Total Paid Amount (₹) *</label>
+            <input type="number" id="updatePaymentNewPaid" style="font-weight: bold; color: #28a745; border: 2px solid #28a745;" required />
+          </div>
+          <div class="form-group">
+            <label>Remaining Pending Due (₹)</label>
+            <input type="number" id="updatePaymentNewPending" readonly style="background-color: #e9ecef; font-weight: bold; color: #dc3545;" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="updatePaymentTxnId">New Transaction ID / UTR / Cash Remarks</label>
+          <input type="text" id="updatePaymentTxnId" placeholder="e.g. Cash received by Admin / UPI 9382019" />
+        </div>
+
+        <button type="submit" id="savePaymentUpdateBtn" class="btn btn-pay" style="padding: 12px; font-size: 15px; width: 100%;">Save & Update Payment</button>
+      </form>
+    </div>
+  </div>
+
   <!-- Zoom Image Modal -->
   <div id="imgModal" class="image-modal" onclick="this.style.display='none'">
     <img id="modalImg" src="" alt="Proof Preview" />
@@ -761,6 +817,24 @@
     const totalPendingAmountEl = document.getElementById('totalPendingAmount');
     const downloadExcelBtn = document.getElementById('downloadExcelBtn');
 
+    // Filter Tab Buttons Event Listeners
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.getAttribute('data-filter');
+        renderTable();
+      });
+    });
+
+    searchInput.addEventListener('input', renderTable);
+
+    // Image Zoom Modal
+    window.openModal = (url) => {
+      document.getElementById('modalImg').src = url;
+      document.getElementById('imgModal').style.display = 'flex';
+    };
+
     // Live Snapshot Listener for Bookings
     onSnapshot(collection(db, "bookings"), (snapshot) => {
       allBookings = [];
@@ -777,8 +851,8 @@
         if (data.status === 'pending') pendingCount++;
         if (data.status === 'approved') {
           approvedCount++;
-          const paidVal = data.paidAmount !== undefined ? data.paidAmount : (data.totalAmount || 0);
-          const pendingVal = data.pendingAmount !== undefined ? data.pendingAmount : 0;
+          const paidVal = data.paidAmount !== undefined ? Number(data.paidAmount) : (Number(data.totalAmount) || 0);
+          const pendingVal = data.pendingAmount !== undefined ? Number(data.pendingAmount) : 0;
           
           confirmedRevenue += paidVal;
           pendingDueTotal += pendingVal;
@@ -855,6 +929,7 @@
           <td>
             <div class="action-btn-group">
               <button class="btn btn-view" onclick="window.viewDetails('${item.id}')">View Details</button>
+              <button class="btn btn-pay" onclick="window.openPaymentModal('${item.id}')">💳 Update Pay</button>
               ${item.status === 'pending' ? `
                 <button class="btn btn-approve" onclick="window.approveBooking('${item.id}', '${(item.seats || []).join(',')}')">Approve</button>
                 <button class="btn btn-reject" onclick="window.rejectBooking('${item.id}', '${(item.seats || []).join(',')}')">Reject</button>
@@ -1228,6 +1303,105 @@
       }
     });
 
+    // 💳 ADMIN PAYMENT UPDATE FEATURE LOGIC
+    const updatePaymentModal = document.getElementById('updatePaymentModal');
+    const updatePaymentForm = document.getElementById('updatePaymentForm');
+    const updatePaymentBookingId = document.getElementById('updatePaymentBookingId');
+    const updatePaymentCustomerInfo = document.getElementById('updatePaymentCustomerInfo');
+    const updatePaymentTotalAmt = document.getElementById('updatePaymentTotalAmt');
+    const updatePaymentPrevPaid = document.getElementById('updatePaymentPrevPaid');
+    const updatePaymentAddAmt = document.getElementById('updatePaymentAddAmt');
+    const updatePaymentNewPaid = document.getElementById('updatePaymentNewPaid');
+    const updatePaymentNewPending = document.getElementById('updatePaymentNewPending');
+    const updatePaymentTxnId = document.getElementById('updatePaymentTxnId');
+    const savePaymentUpdateBtn = document.getElementById('savePaymentUpdateBtn');
+
+    window.openPaymentModal = (bookingId) => {
+      const item = allBookings.find(b => b.id === bookingId);
+      if (!item) return alert("Booking not found!");
+
+      const total = Number(item.totalAmount) || 0;
+      const prevPaid = item.paidAmount !== undefined ? Number(item.paidAmount) : total;
+      const prevPending = item.pendingAmount !== undefined ? Number(item.pendingAmount) : Math.max(0, total - prevPaid);
+
+      updatePaymentBookingId.value = item.id;
+      updatePaymentCustomerInfo.value = `${item.userName || 'N/A'} (${(item.seats || []).join(', ')})`;
+      updatePaymentTotalAmt.value = total;
+      updatePaymentPrevPaid.value = prevPaid;
+      updatePaymentAddAmt.value = prevPending; // Pre-fill with remaining balance for convenience
+      updatePaymentNewPaid.value = prevPaid + prevPending;
+      updatePaymentNewPending.value = 0;
+      updatePaymentTxnId.value = '';
+
+      updatePaymentModal.style.display = 'flex';
+    };
+
+    // Calculate when Additional Amount Received changes
+    updatePaymentAddAmt.addEventListener('input', () => {
+      const total = parseFloat(updatePaymentTotalAmt.value) || 0;
+      const prevPaid = parseFloat(updatePaymentPrevPaid.value) || 0;
+      const addAmt = parseFloat(updatePaymentAddAmt.value) || 0;
+
+      const newPaid = prevPaid + addAmt;
+      const newPending = Math.max(0, total - newPaid);
+
+      updatePaymentNewPaid.value = newPaid;
+      updatePaymentNewPending.value = newPending;
+    });
+
+    // Recalculate when Total Paid is manually changed
+    updatePaymentNewPaid.addEventListener('input', () => {
+      const total = parseFloat(updatePaymentTotalAmt.value) || 0;
+      const prevPaid = parseFloat(updatePaymentPrevPaid.value) || 0;
+      const newPaid = parseFloat(updatePaymentNewPaid.value) || 0;
+
+      updatePaymentAddAmt.value = Math.max(0, newPaid - prevPaid);
+      updatePaymentNewPending.value = Math.max(0, total - newPaid);
+    });
+
+    // Save Updated Payment to Firestore
+    updatePaymentForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const bookingId = updatePaymentBookingId.value;
+      if (!bookingId) return alert("Invalid Booking ID!");
+
+      const total = parseFloat(updatePaymentTotalAmt.value) || 0;
+      const newPaid = parseFloat(updatePaymentNewPaid.value) || 0;
+      const newPending = Math.max(0, total - newPaid);
+      const newTxnNote = updatePaymentTxnId.value.trim();
+
+      if (newPaid < 0) return alert("Paid amount cannot be negative!");
+      if (newPaid > total) return alert("Paid amount cannot exceed Total Amount!");
+
+      const item = allBookings.find(b => b.id === bookingId);
+      const existingTxn = item ? (item.transactionId || '') : '';
+      const updatedTxnStr = newTxnNote ? (existingTxn ? `${existingTxn} | Updated: ${newTxnNote}` : newTxnNote) : existingTxn;
+
+      savePaymentUpdateBtn.disabled = true;
+      savePaymentUpdateBtn.innerText = "Updating Payment in Database...";
+
+      try {
+        const bookingRef = doc(db, "bookings", bookingId);
+        await updateDoc(bookingRef, {
+          paidAmount: newPaid,
+          pendingAmount: newPending,
+          paymentOption: newPending === 0 ? 'FULL_PAYMENT' : 'CUSTOM',
+          transactionId: updatedTxnStr,
+          lastPaymentUpdated: new Date().toISOString()
+        });
+
+        alert(`Payment Updated Successfully!\nTotal Paid: ₹${newPaid.toLocaleString('en-IN')}\nRemaining Pending: ₹${newPending.toLocaleString('en-IN')}`);
+        updatePaymentModal.style.display = 'none';
+      } catch (err) {
+        console.error("Payment Update Error:", err);
+        alert("Failed to update payment: " + err.message);
+      } finally {
+        savePaymentUpdateBtn.disabled = false;
+        savePaymentUpdateBtn.innerText = "Save & Update Payment";
+      }
+    });
+
     // View Details Modal Trigger
     window.viewDetails = (bookingId) => {
       const item = allBookings.find(b => b.id === bookingId);
@@ -1253,129 +1427,103 @@
         <div class="detail-item"><label>Selected Stalls</label><p><b>${(item.seats || []).join(', ')}</b></p></div>
         <div class="detail-item"><label>Total Amount</label><p>₹${totalAmt.toLocaleString('en-IN')}</p></div>
         <div class="detail-item"><label>Paid Amount</label><p style="color:#28a745; font-weight:bold;">₹${paidAmt.toLocaleString('en-IN')}</p></div>
-        <div class="detail-item"><label>Pending Amount</label><p style="color:${pendingAmt > 0 ? '#dc3545' : '#28a745'}; font-weight:bold;">₹${pendingAmt.toLocaleString('en-IN')}</p></div>
-        <div class="detail-item"><label>Payment Method & Option</label><p>${item.paymentMethod || 'UPI'} (${item.paymentOption || 'FULL_PAYMENT'})</p></div>
+        <div class="detail-item"><label>Pending Amount</label><p style="color:#dc3545; font-weight:bold;">₹${pendingAmt.toLocaleString('en-IN')}</p></div>
+        <div class="detail-item"><label>Payment Method & Option</label><p>${item.paymentMethod || 'UPI'} (${item.paymentOption || 'N/A'})</p></div>
         <div class="detail-item"><label>Transaction ID / UTR</label><p><code>${item.transactionId || 'N/A'}</code></p></div>
         <div class="detail-item"><label>Booking Date</label><p>${item.bookingDate || 'N/A'}</p></div>
-        <div class="detail-item" style="grid-column: 1 / -1;"><label>Business Description</label><p>${item.businessDescription || 'N/A'}</p></div>
-        <div class="detail-item" style="grid-column: 1 / -1;"><label>Extra Requirements</label><p>${item.extraRequirements || 'None'}</p></div>
-        <div class="detail-item"><label>ID Proof Document</label><p>${item.idProofUrl ? `<a href="${item.idProofUrl}" target="_blank" style="color:#007bff; font-weight:bold;">View Uploaded ID Proof</a>` : 'Not Uploaded'}</p></div>
-        <div class="detail-item"><label>Payment Screenshot</label><p>${paymentProof ? `<a href="${paymentProof}" target="_blank" style="color:#007bff; font-weight:bold;">View Payment Screenshot</a>` : 'N/A'}</p></div>
+        <div class="detail-item"><label>Business Description</label><p>${item.businessDescription || 'N/A'}</p></div>
+        <div class="detail-item"><label>Extra Requirements</label><p>${item.extraRequirements || 'None'}</p></div>
+        <div class="detail-item"><label>Booking Status</label><p><span class="badge badge-${item.status}">${item.status}</span></p></div>
       `;
 
       document.getElementById('detailsModal').style.display = 'flex';
     };
 
-    // Approve Logic
-    window.approveBooking = async (bookingId, seatIdsStr) => {
-      if (!confirm("Are you sure you want to APPROVE this booking payment?")) return;
-      const seatIds = seatIdsStr.split(',');
-
+    // Approve Booking Logic
+    window.approveBooking = async (bookingId, seatStr) => {
+      if (!confirm("Are you sure you want to approve this booking?")) return;
       try {
-        await updateDoc(doc(db, "bookings", bookingId), { status: "approved" });
-        for (const seatId of seatIds) {
-          if (seatId) await updateDoc(doc(db, "seats", seatId), { status: "booked" });
+        await updateDoc(doc(db, "bookings", bookingId), { status: 'approved' });
+        const seats = seatStr.split(',').map(s => s.trim()).filter(s => s);
+        for (const seatId of seats) {
+          await setDoc(doc(db, "seats", seatId), { status: 'booked' }, { merge: true });
         }
-        alert("Booking Approved Successfully! Seat map updated to Booked (Red).");
+        alert("Booking Approved successfully!");
       } catch (err) {
-        console.error("Error approving:", err);
-        alert("Approve Failed: " + err.message);
+        console.error("Approval Error:", err);
+        alert("Error approving booking: " + err.message);
       }
     };
 
-    // Reject Logic
-    window.rejectBooking = async (bookingId, seatIdsStr) => {
-      if (!confirm("Are you sure you want to REJECT this booking payment?")) return;
-      const seatIds = seatIdsStr.split(',');
-
+    // Reject Booking Logic
+    window.rejectBooking = async (bookingId, seatStr) => {
+      if (!confirm("Are you sure you want to reject this booking?")) return;
       try {
-        await updateDoc(doc(db, "bookings", bookingId), { status: "rejected" });
-        for (const seatId of seatIds) {
-          if (seatId) await updateDoc(doc(db, "seats", seatId), { status: "available" });
+        await updateDoc(doc(db, "bookings", bookingId), { status: 'rejected' });
+        const seats = seatStr.split(',').map(s => s.trim()).filter(s => s);
+        for (const seatId of seats) {
+          await setDoc(doc(db, "seats", seatId), { status: 'available' }, { merge: true });
         }
-        alert("Booking Rejected! Seat map updated back to Available.");
+        alert("Booking Rejected and stalls freed up!");
       } catch (err) {
-        console.error("Error rejecting:", err);
-        alert("Reject Failed: " + err.message);
+        console.error("Rejection Error:", err);
+        alert("Error rejecting booking: " + err.message);
       }
     };
 
-    // Delete Booking
-    window.deleteBooking = async (bookingId, seatIdsStr) => {
-      if (!confirm("⚠️ Are you sure you want to PERMANENTLY DELETE this booking from the backend?")) return;
-      const seatIds = seatIdsStr ? seatIdsStr.split(',').filter(s => s.trim()) : [];
-
+    // Delete Booking Logic
+    window.deleteBooking = async (bookingId, seatStr) => {
+      if (!confirm("Are you sure you want to permanently delete this booking?")) return;
       try {
         await deleteDoc(doc(db, "bookings", bookingId));
-        for (const seatId of seatIds) {
-          if (seatId) await updateDoc(doc(db, "seats", seatId), { status: "available" });
+        const seats = seatStr.split(',').map(s => s.trim()).filter(s => s);
+        for (const seatId of seats) {
+          await setDoc(doc(db, "seats", seatId), { status: 'available' }, { merge: true });
         }
-        alert("Booking record deleted and seats released!");
+        alert("Booking Deleted and stalls freed up!");
       } catch (err) {
-        console.error("Error deleting:", err);
-        alert("Delete Failed: " + err.message);
+        console.error("Deletion Error:", err);
+        alert("Error deleting booking: " + err.message);
       }
     };
 
-    // Excel Export
+    // Excel Export Logic (SheetJS)
     downloadExcelBtn.addEventListener('click', () => {
-      if (allBookings.length === 0) return alert("No booking data available to download!");
+      if (allBookings.length === 0) {
+        return alert("No bookings available to export!");
+      }
 
-      const excelData = allBookings.map((b, index) => {
-        const totalAmt = b.totalAmount || 0;
-        const paidAmt = b.paidAmount !== undefined ? b.paidAmount : totalAmt;
-        const pendingAmt = b.pendingAmount !== undefined ? b.pendingAmount : Math.max(0, totalAmt - paidAmt);
-        const cats = Array.isArray(b.businessCategories) ? b.businessCategories.join(', ') : (b.businessCategories || '');
-
-        return {
-          "S.No": index + 1,
-          "Booking Date": b.bookingDate || '',
-          "Full Name": b.userName || '',
-          "Company / Brand Name": b.companyName || '',
-          "WhatsApp Contact": b.whatsappNumber || '',
-          "Alternative Mobile": b.altMobileNumber || '',
-          "Email Address": b.emailAddress || '',
-          "Complete Address": b.completeAddress || '',
-          "Business Category": cats,
-          "Business Description": b.businessDescription || '',
-          "Extra Requirements": b.extraRequirements || '',
-          "Stall Numbers": (b.seats || []).join(', '),
-          "Total Amount (₹)": totalAmt,
-          "Paid Amount (₹)": paidAmt,
-          "Pending Amount (₹)": pendingAmt,
-          "Payment Method": b.paymentMethod || '',
-          "Payment Option": b.paymentOption || '',
-          "Transaction ID / UTR": b.transactionId || '',
-          "Status": (b.status || '').toUpperCase(),
-          "ID Proof URL": b.idProofUrl || '',
-          "Payment Proof URL": b.paymentProofUrl || b.proofUrl || '',
-          "Submission Time": b.timestamp ? new Date(b.timestamp).toLocaleString('en-IN') : ''
-        };
-      });
+      const excelData = allBookings.map((b, idx) => ({
+        "S.No": idx + 1,
+        "Booking Date": b.bookingDate || 'N/A',
+        "Timestamp": b.timestamp ? new Date(b.timestamp).toLocaleString('en-IN') : 'N/A',
+        "Full Name": b.userName || '',
+        "Company Name": b.companyName || '',
+        "WhatsApp Contact": b.whatsappNumber || '',
+        "Alt Contact": b.altMobileNumber || '',
+        "Email Address": b.emailAddress || '',
+        "Complete Address": b.completeAddress || '',
+        "Selected Stalls": (b.seats || []).join(', '),
+        "Total Amount (₹)": b.totalAmount || 0,
+        "Paid Amount (₹)": b.paidAmount !== undefined ? b.paidAmount : (b.totalAmount || 0),
+        "Pending Due (₹)": b.pendingAmount !== undefined ? b.pendingAmount : 0,
+        "Payment Method": b.paymentMethod || 'UPI',
+        "Payment Option": b.paymentOption || '',
+        "Transaction ID / UTR": b.transactionId || '',
+        "Business Categories": Array.isArray(b.businessCategories) ? b.businessCategories.join(', ') : (b.businessCategories || ''),
+        "Business Description": b.businessDescription || '',
+        "Extra Requirements": b.extraRequirements || '',
+        "Status": (b.status || '').toUpperCase(),
+        "Payment Proof URL": b.paymentProofUrl || b.proofUrl || '',
+        "ID Proof URL": b.idProofUrl || ''
+      }));
 
       const worksheet = XLSX.utils.json_to_sheet(excelData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Stall Bookings");
-      worksheet['!cols'] = Array(22).fill({ wch: 20 });
-      XLSX.writeFile(workbook, `Bandhan_Bazaar_Stall_Bookings_${Date.now()}.xlsx`);
+      XLSX.writeFile(workbook, `Bandhan_Bazaar_Bookings_${new Date().toISOString().slice(0,10)}.xlsx`);
     });
 
-    // Filter Buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        currentFilter = e.target.getAttribute('data-filter');
-        renderTable();
-      });
-    });
-
-    searchInput.addEventListener('input', renderTable);
-
-    window.openModal = (url) => {
-      document.getElementById('modalImg').src = url;
-      document.getElementById('imgModal').style.display = 'flex';
-    };
   </script>
 </body>
 
