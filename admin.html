@@ -77,6 +77,9 @@
     .free-btn { background-color: #6f42c1; color: white; }
     .free-btn:hover { background-color: #593196; }
 
+    .split-btn { background-color: #e83e8c; color: white; }
+    .split-btn:hover { background-color: #d63384; }
+
     .stats-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -371,6 +374,7 @@
       <div class="header-actions">
         <button id="openPriceModalBtn" class="btn-header price-btn">🏷️ Manage Stall Prices</button>
         <button id="openFreeSeatModalBtn" class="btn-header free-btn">🔓 Open / Free Stall</button>
+        <button id="openSplitSeatModalBtn" class="btn-header split-btn">✂️ Split / Merge Stall</button>
         <button id="openAdminBookingModalBtn" class="btn-header book-btn">➕ Direct Admin Stall Booking</button>
         <button id="downloadExcelBtn" class="btn-header export-btn">📊 Download Excel Report</button>
       </div>
@@ -459,15 +463,15 @@
         <div class="form-group">
           <label for="priceUpdateType">Update Mode</label>
           <select id="priceUpdateType">
-            <option value="single">Single Stall Price Edit (e.g. C-12, A-1, F-2)</option>
+            <option value="single">Single Stall Price Edit (e.g. C-12, A-1, A-7(A), F-2)</option>
             <option value="category">Category Bulk Price Update (e.g. Corner, Food Court)</option>
           </select>
         </div>
 
         <!-- Single Stall Edit -->
         <div id="singleStallGroup" class="form-group">
-          <label for="singleStallId">Enter Stall ID (e.g. C-12, A-1, B-12, F-3)</label>
-          <input type="text" id="singleStallId" placeholder="e.g. C-12" />
+          <label for="singleStallId">Enter Stall ID (e.g. C-12, A-1, A-7(A), B-12)</label>
+          <input type="text" id="singleStallId" placeholder="e.g. C-12 or A-7(A)" />
         </div>
 
         <!-- Category Edit -->
@@ -500,8 +504,8 @@
 
       <div class="admin-form">
         <div class="form-group">
-          <label for="freeStallIds">Enter Stall ID(s) (Comma separated if multiple, e.g. C-12, A-1, B-5)</label>
-          <input type="text" id="freeStallIds" placeholder="e.g. C-12, A-5" required />
+          <label for="freeStallIds">Enter Stall ID(s) (Comma separated if multiple, e.g. C-12, A-1, A-7(A), B-5)</label>
+          <input type="text" id="freeStallIds" placeholder="e.g. C-12, A-7(A)" required />
         </div>
 
         <button id="confirmFreeSeatBtn" class="btn btn-approve" style="padding: 12px; font-size: 14px; background-color: #6f42c1;">Open / Free Seat in Database</button>
@@ -509,7 +513,58 @@
     </div>
   </div>
 
-  <!-- 3. ADMIN DIRECT BOOKING MODAL -->
+  <!-- 3. SPLIT / UNSPLIT STALL MODAL -->
+  <div id="splitSeatModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="document.getElementById('splitSeatModal').style.display='none'">&times;</span>
+      <h2>✂️ Split or Merge Stall</h2>
+      <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Admin can split any stall (e.g., A-7 into A-7(A) & A-7(B)) with custom prices and map reflection.</p>
+
+      <div class="admin-form">
+        <div class="form-group">
+          <label for="splitActionType">Action Mode</label>
+          <select id="splitActionType">
+            <option value="split">Split Single Stall into 2 Sub-Stalls</option>
+            <option value="unsplit">Merge / Unsplit Sub-Stalls back to Original</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="targetStallId">Target Stall ID (e.g. A-7, B-12, C-4)</label>
+          <input type="text" id="targetStallId" placeholder="e.g. A-7" required />
+        </div>
+
+        <!-- Split Fields Container -->
+        <div id="splitFieldsContainer">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label for="subSeat1Name">Sub-Stall 1 Name</label>
+              <input type="text" id="subSeat1Name" placeholder="e.g. A-7(A)" />
+            </div>
+            <div class="form-group">
+              <label for="subSeat1Price">Sub-Stall 1 Price (₹)</label>
+              <input type="number" id="subSeat1Price" placeholder="e.g. 5000" min="0" />
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
+            <div class="form-group">
+              <label for="subSeat2Name">Sub-Stall 2 Name</label>
+              <input type="text" id="subSeat2Name" placeholder="e.g. A-7(B)" />
+            </div>
+            <div class="form-group">
+              <label for="subSeat2Price">Sub-Stall 2 Price (₹)</label>
+              <input type="number" id="subSeat2Price" placeholder="e.g. 5000" min="0" />
+            </div>
+          </div>
+        </div>
+
+        <button id="confirmSplitBtn" class="btn btn-approve" style="padding: 12px; font-size: 14px; background-color: #e83e8c;">Confirm Stall Split / Merge</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ADMIN DIRECT BOOKING MODAL -->
   <div id="adminBookingModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('adminBookingModal').style.display='none'">&times;</span>
@@ -519,8 +574,8 @@
       <form id="adminBookingForm" class="admin-form">
         <!-- Stall IDs -->
         <div class="form-group">
-          <label for="adminStalls">Stall IDs * (Comma separated if multiple, e.g., A-1, A-2)</label>
-          <input type="text" id="adminStalls" placeholder="e.g. A-1, B-5" required />
+          <label for="adminStalls">Stall IDs * (Comma separated if multiple, e.g., A-1, A-7(A))</label>
+          <input type="text" id="adminStalls" placeholder="e.g. A-1, A-7(A)" required />
         </div>
 
         <!-- Name & Company -->
@@ -677,7 +732,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
@@ -821,6 +876,10 @@
       document.getElementById('freeSeatModal').style.display = 'flex';
     });
 
+    document.getElementById('openSplitSeatModalBtn').addEventListener('click', () => {
+      document.getElementById('splitSeatModal').style.display = 'flex';
+    });
+
     document.getElementById('openAdminBookingModalBtn').addEventListener('click', () => {
       document.getElementById('adminBookingDate').valueAsDate = new Date();
       document.getElementById('adminBookingModal').style.display = 'flex';
@@ -914,6 +973,123 @@
       } finally {
         savePriceBtn.disabled = false;
         savePriceBtn.innerText = "Update Price in Database";
+      }
+    });
+
+    // ✂️ STALL SPLIT / MERGE LOGIC
+    const splitActionTypeSelect = document.getElementById('splitActionType');
+    const splitFieldsContainer = document.getElementById('splitFieldsContainer');
+    const targetStallIdInput = document.getElementById('targetStallId');
+    const subSeat1NameInput = document.getElementById('subSeat1Name');
+    const subSeat2NameInput = document.getElementById('subSeat2Name');
+    const subSeat1PriceInput = document.getElementById('subSeat1Price');
+    const subSeat2PriceInput = document.getElementById('subSeat2Price');
+    const confirmSplitBtn = document.getElementById('confirmSplitBtn');
+
+    splitActionTypeSelect.addEventListener('change', () => {
+      if (splitActionTypeSelect.value === 'split') {
+        splitFieldsContainer.style.display = 'block';
+      } else {
+        splitFieldsContainer.style.display = 'none';
+      }
+    });
+
+    targetStallIdInput.addEventListener('input', () => {
+      const val = targetStallIdInput.value.trim().toUpperCase();
+      if (val) {
+        subSeat1NameInput.value = `${val}(A)`;
+        subSeat2NameInput.value = `${val}(B)`;
+      } else {
+        subSeat1NameInput.value = '';
+        subSeat2NameInput.value = '';
+      }
+    });
+
+    confirmSplitBtn.addEventListener('click', async () => {
+      const targetId = targetStallIdInput.value.trim().toUpperCase();
+      const action = splitActionTypeSelect.value;
+
+      if (!targetId) return alert("Please enter a Target Stall ID (e.g. A-7)!");
+
+      confirmSplitBtn.disabled = true;
+      confirmSplitBtn.innerText = "Processing Stall Action...";
+
+      try {
+        if (action === 'split') {
+          const s1Name = subSeat1NameInput.value.trim().toUpperCase() || `${targetId}(A)`;
+          const s2Name = subSeat2NameInput.value.trim().toUpperCase() || `${targetId}(B)`;
+          const p1 = parseFloat(subSeat1PriceInput.value) || 0;
+          const p2 = parseFloat(subSeat2PriceInput.value) || 0;
+
+          // Mark parent seat as split in Firestore
+          await setDoc(doc(db, "seats", targetId), {
+            status: "split",
+            isSplit: true,
+            children: [s1Name, s2Name]
+          }, { merge: true });
+
+          // Create Sub-Stall 1
+          await setDoc(doc(db, "seats", s1Name), {
+            id: s1Name,
+            name: s1Name,
+            parentId: targetId,
+            price: p1,
+            status: "available",
+            isSubSeat: true
+          }, { merge: true });
+
+          // Create Sub-Stall 2
+          await setDoc(doc(db, "seats", s2Name), {
+            id: s2Name,
+            name: s2Name,
+            parentId: targetId,
+            price: p2,
+            status: "available",
+            isSubSeat: true
+          }, { merge: true });
+
+          alert(`Success! Stall ${targetId} split into ${s1Name} (₹${p1}) and ${s2Name} (₹${p2}). Reflected on Map in Realtime!`);
+
+        } else {
+          // Unsplit / Merge Logic
+          const targetSnap = await getDoc(doc(db, "seats", targetId));
+          let children = [`${targetId}(A)`, `${targetId}(B)`];
+
+          if (targetSnap.exists() && targetSnap.data().children) {
+            children = targetSnap.data().children;
+          }
+
+          // Delete children docs
+          for (const childId of children) {
+            try {
+              await deleteDoc(doc(db, "seats", childId));
+            } catch (e) {
+              console.warn("Child deletion note:", e);
+            }
+          }
+
+          // Reset parent seat
+          await setDoc(doc(db, "seats", targetId), {
+            status: "available",
+            isSplit: false,
+            children: []
+          }, { merge: true });
+
+          alert(`Success! Sub-stalls merged back into original Stall ${targetId}.`);
+        }
+
+        document.getElementById('splitSeatModal').style.display = 'none';
+        targetStallIdInput.value = '';
+        subSeat1NameInput.value = '';
+        subSeat2NameInput.value = '';
+        subSeat1PriceInput.value = '';
+        subSeat2PriceInput.value = '';
+      } catch (err) {
+        console.error("Split/Merge Error:", err);
+        alert("Operation Failed: " + err.message);
+      } finally {
+        confirmSplitBtn.disabled = false;
+        confirmSplitBtn.innerText = "Confirm Stall Split / Merge";
       }
     });
 

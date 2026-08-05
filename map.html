@@ -222,8 +222,10 @@
 
     .seat-name {
       font-weight: 700;
-      font-size: 13px;
+      font-size: 11px;
       line-height: 1.1;
+      text-align: center;
+      word-break: break-all;
     }
 
     .seat-size {
@@ -976,7 +978,7 @@
     }
 
     // App State
-    let bookedSeatsMap = {};
+    let dbSeatsMap = {};
     let selectedSeats = [];
 
     // DOM Elements
@@ -1121,7 +1123,7 @@
       }
     }
 
-    // Render Map Grids
+    // Render Map Grids (With Dynamic Realtime Split Seat Support)
     function renderMap() {
       const sections = ['playzone', 'foodcourt', 'block-a', 'block-b', 'block-c', 'block-d', 'block-e'];
 
@@ -1133,34 +1135,64 @@
         const sectionSeats = seatData.filter(s => s.section === secKey);
 
         sectionSeats.forEach(seat => {
-          const seatEl = document.createElement('div');
-          
-          const seatStatus = bookedSeatsMap[seat.id];
-          const isBooked = seatStatus === 'booked' || PRE_BOOKED_SEATS.includes(seat.id);
-          const isPending = seatStatus === 'pending';
-          const isSelected = selectedSeats.some(s => s.id === seat.id);
+          const parentDbData = dbSeatsMap[seat.id] || {};
 
-          seatEl.classList.add('seat', `${seat.type}-style`);
+          // Check if parent seat is split by Admin
+          if (parentDbData.isSplit && Array.isArray(parentDbData.children) && parentDbData.children.length > 0) {
+            
+            // Render sub-seats (e.g. A-7(A), A-7(B))
+            parentDbData.children.forEach(subSeatId => {
+              const subDbData = dbSeatsMap[subSeatId] || {};
+              const subSeatObj = {
+                id: subSeatId,
+                name: subSeatId,
+                dim: 'Split',
+                price: subDbData.price !== undefined ? Number(subDbData.price) : Math.ceil(seat.price / 2),
+                type: seat.type,
+                section: seat.section
+              };
 
-          if (isBooked) {
-            seatEl.classList.add('booked');
-          } else if (isPending) {
-            seatEl.classList.add('pending');
-          } else if (isSelected) {
-            seatEl.classList.add('selected');
+              createSeatElement(subSeatObj, gridEl, subDbData.status);
+            });
+
           } else {
-            seatEl.classList.add('available');
+            // Render Standard Seat
+            const activePrice = parentDbData.price !== undefined ? Number(parentDbData.price) : seat.price;
+            const currentSeatObj = { ...seat, price: activePrice };
+
+            createSeatElement(currentSeatObj, gridEl, parentDbData.status);
           }
-
-          seatEl.innerHTML = `
-            <span class="seat-name">${seat.name}</span>
-            <span class="seat-size">${seat.dim}</span>
-          `;
-
-          seatEl.addEventListener('click', () => toggleSeatSelection(seat, isBooked || isPending));
-          gridEl.appendChild(seatEl);
         });
       });
+    }
+
+    // Single Seat Element Creation Helper
+    function createSeatElement(seat, containerEl, seatStatus) {
+      const seatEl = document.createElement('div');
+      
+      const isBooked = seatStatus === 'booked' || PRE_BOOKED_SEATS.includes(seat.id);
+      const isPending = seatStatus === 'pending';
+      const isSelected = selectedSeats.some(s => s.id === seat.id);
+
+      seatEl.classList.add('seat', `${seat.type}-style`);
+
+      if (isBooked) {
+        seatEl.classList.add('booked');
+      } else if (isPending) {
+        seatEl.classList.add('pending');
+      } else if (isSelected) {
+        seatEl.classList.add('selected');
+      } else {
+        seatEl.classList.add('available');
+      }
+
+      seatEl.innerHTML = `
+        <span class="seat-name">${seat.name}</span>
+        <span class="seat-size">${seat.dim}</span>
+      `;
+
+      seatEl.addEventListener('click', () => toggleSeatSelection(seat, isBooked || isPending));
+      containerEl.appendChild(seatEl);
     }
 
     // Toggle Stall Selection
@@ -1224,37 +1256,25 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app, "default");
 
-      // Live Firestore Snapshot Listener with Price & Status Realtime Sync
+      // Live Firestore Snapshot Listener with Split, Price & Status Realtime Sync
       const seatsCollection = collection(db, "seats");
       onSnapshot(seatsCollection, (snapshot) => {
+        dbSeatsMap = {};
+
         snapshot.docs.forEach((docSnap) => {
-          const data = docSnap.data();
-
-          // Realtime Sync Status
-          if (data.status) {
-            bookedSeatsMap[docSnap.id] = data.status;
-          }
-
-          // Realtime Sync Price from Admin Panel
-          if (data.price !== undefined && data.price !== null) {
-            const seatObj = seatData.find(s => s.id === docSnap.id);
-            if (seatObj) {
-              seatObj.price = Number(data.price);
-            }
-          }
+          dbSeatsMap[docSnap.id] = docSnap.data();
         });
 
-        // Update currently selected seats' prices in real time
+        // Sync price/status for currently selected seats
         selectedSeats.forEach(selected => {
-          const updatedSeat = seatData.find(s => s.id === selected.id);
-          if (updatedSeat) {
-            selected.price = updatedSeat.price;
+          if (dbSeatsMap[selected.id] && dbSeatsMap[selected.id].price !== undefined) {
+            selected.price = Number(dbSeatsMap[selected.id].price);
           }
         });
 
-        // Exclude seats that got reserved or booked
+        // Filter out seats that got reserved or booked
         selectedSeats = selectedSeats.filter(s => {
-          const st = bookedSeatsMap[s.id];
+          const st = dbSeatsMap[s.id] ? dbSeatsMap[s.id].status : null;
           return st !== 'booked' && st !== 'pending' && !PRE_BOOKED_SEATS.includes(s.id);
         });
 
@@ -1402,7 +1422,9 @@
 
           // Mark selected seats status = 'pending' in Firestore "seats"
           for (const seat of selectedSeats) {
-            bookedSeatsMap[seat.id] = 'pending';
+            if (dbSeatsMap[seat.id]) {
+              dbSeatsMap[seat.id].status = 'pending';
+            }
             const seatRef = doc(db, "seats", seat.id);
             await setDoc(seatRef, { status: 'pending' }, { merge: true });
           }
