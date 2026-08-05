@@ -798,7 +798,7 @@
 
         <!-- 11. Payment Option -->
         <div class="form-group">
-          <label>Payment Option * (Minimum 50% Advance Compulsory)</label>
+          <label>Payment Option *</label>
           <div class="radio-group">
             <label class="radio-item">
               <input type="radio" name="paymentOption" value="50_ADVANCE" checked />
@@ -807,6 +807,10 @@
             <label class="radio-item">
               <input type="radio" name="paymentOption" value="FULL_PAYMENT" />
               <span>100% Full Payment</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="paymentOption" value="CUSTOM" />
+              <span>Custom Amount (Any Amount)</span>
             </label>
           </div>
         </div>
@@ -1063,7 +1067,7 @@
       });
     });
 
-    // Get Payment Option (50% Advance / Full)
+    // Get Payment Option (50% Advance / Full / Custom)
     function getSelectedPayOption() {
       const radio = document.querySelector('input[name="paymentOption"]:checked');
       return radio ? radio.value : '50_ADVANCE';
@@ -1075,36 +1079,47 @@
         const option = getSelectedPayOption();
         if (option === '50_ADVANCE') {
           paidAmountInput.value = Math.ceil(total / 2);
-        } else {
+        } else if (option === 'FULL_PAYMENT') {
           paidAmountInput.value = total;
+        } else if (option === 'CUSTOM') {
+          paidAmountInput.value = '';
+          paidAmountInput.focus();
         }
         calculatePendingAmount();
       });
+    });
+
+    // Automatically change option to Custom if user edits amount manually
+    paidAmountInput.addEventListener('input', () => {
+      const total = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+      const val = parseFloat(paidAmountInput.value) || 0;
+      const customRadio = document.querySelector('input[name="paymentOption"][value="CUSTOM"]');
+      if (customRadio && val !== Math.ceil(total / 2) && val !== total) {
+        customRadio.checked = true;
+      }
+      calculatePendingAmount();
     });
 
     // Calculate Pending Due Amount
     function calculatePendingAmount() {
       const total = selectedSeats.reduce((sum, s) => sum + s.price, 0);
       const paid = parseFloat(paidAmountInput.value) || 0;
-      const min50 = total * 0.5;
       const pending = total - paid;
 
-      if (paid < min50) {
-        pendingAmountInfo.innerText = `Minimum 50% Advance (₹${min50.toLocaleString('en-IN')}) is mandatory!`;
+      if (paid <= 0) {
+        pendingAmountInfo.innerText = `Please enter a valid paying amount.`;
         pendingAmountInfo.style.color = '#dc3545';
       } else if (pending > 0) {
-        pendingAmountInfo.innerText = `Pending Due Amount: ₹${pending.toLocaleString('en-IN')}`;
+        pendingAmountInfo.innerText = `Advance Paid: ₹${paid.toLocaleString('en-IN')} | Pending Due: ₹${pending.toLocaleString('en-IN')}`;
         pendingAmountInfo.style.color = '#d84315';
       } else if (pending < 0) {
-        pendingAmountInfo.innerText = `Paying amount cannot exceed Total Amount!`;
+        pendingAmountInfo.innerText = `Paying amount cannot exceed Total Amount (₹${total.toLocaleString('en-IN')})!`;
         pendingAmountInfo.style.color = '#dc3545';
       } else {
         pendingAmountInfo.innerText = `Full payment complete (₹0 Pending).`;
         pendingAmountInfo.style.color = '#28a745';
       }
     }
-
-    paidAmountInput.addEventListener('input', calculatePendingAmount);
 
     // Render Map Grids
     function renderMap() {
@@ -1209,12 +1224,32 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app, "default");
 
-      // Live Firestore Snapshot Listener
+      // Live Firestore Snapshot Listener with Price & Status Realtime Sync
       const seatsCollection = collection(db, "seats");
       onSnapshot(seatsCollection, (snapshot) => {
         snapshot.docs.forEach((docSnap) => {
           const data = docSnap.data();
-          bookedSeatsMap[docSnap.id] = data.status;
+
+          // Realtime Sync Status
+          if (data.status) {
+            bookedSeatsMap[docSnap.id] = data.status;
+          }
+
+          // Realtime Sync Price from Admin Panel
+          if (data.price !== undefined && data.price !== null) {
+            const seatObj = seatData.find(s => s.id === docSnap.id);
+            if (seatObj) {
+              seatObj.price = Number(data.price);
+            }
+          }
+        });
+
+        // Update currently selected seats' prices in real time
+        selectedSeats.forEach(selected => {
+          const updatedSeat = seatData.find(s => s.id === selected.id);
+          if (updatedSeat) {
+            selected.price = updatedSeat.price;
+          }
         });
 
         // Exclude seats that got reserved or booked
@@ -1239,9 +1274,14 @@
         const total = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
         modalAmount.innerText = total.toLocaleString('en-IN');
         
-        paidAmountInput.value = Math.ceil(total / 2);
-        calculatePendingAmount();
+        const option = getSelectedPayOption();
+        if (option === '50_ADVANCE') {
+          paidAmountInput.value = Math.ceil(total / 2);
+        } else if (option === 'FULL_PAYMENT') {
+          paidAmountInput.value = total;
+        }
 
+        calculatePendingAmount();
         paymentModal.style.display = 'flex';
       });
 
@@ -1283,10 +1323,9 @@
 
         const totalAmount = selectedSeats.reduce((sum, s) => sum + s.price, 0);
         const paidAmount = parseFloat(paidAmountInput.value) || 0;
-        const min50 = totalAmount * 0.5;
 
-        if (paidAmount < min50) {
-          return alert(`Minimum 50% Advance (₹${min50.toLocaleString('en-IN')}) is compulsory!`);
+        if (paidAmount <= 0) {
+          return alert("Please enter a valid paying amount!");
         }
         if (paidAmount > totalAmount) {
           return alert("Paying amount cannot exceed the Total Amount!");
