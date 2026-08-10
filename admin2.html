@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard - Bandhan Bazaar Stall Approvals</title>
+  <title>Admin Dashboard - Bandhan Bazaar Stall Approvals & Pricing</title>
   
   <!-- Excel Export Library (SheetJS) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -46,11 +46,15 @@
       color: #1a252f;
     }
 
-    .export-btn {
-      background-color: #28a745;
-      color: white;
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-header {
       border: none;
-      padding: 10px 20px;
+      padding: 10px 18px;
       border-radius: 6px;
       font-size: 14px;
       font-weight: bold;
@@ -61,9 +65,20 @@
       transition: background 0.2s;
     }
 
-    .export-btn:hover {
-      background-color: #218838;
-    }
+    .export-btn { background-color: #28a745; color: white; }
+    .export-btn:hover { background-color: #218838; }
+
+    .price-btn { background-color: #ff9800; color: white; }
+    .price-btn:hover { background-color: #e65100; }
+
+    .book-btn { background-color: #007bff; color: white; }
+    .book-btn:hover { background-color: #0056b3; }
+
+    .free-btn { background-color: #6f42c1; color: white; }
+    .free-btn:hover { background-color: #593196; }
+
+    .split-btn { background-color: #e83e8c; color: white; }
+    .split-btn:hover { background-color: #d63384; }
 
     .stats-container {
       display: grid;
@@ -97,7 +112,7 @@
       color: #212529;
     }
 
-    /* Filters & Controls */
+    /* Controls */
     .table-controls {
       display: flex;
       justify-content: space-between;
@@ -170,9 +185,7 @@
       white-space: nowrap;
     }
 
-    tr:hover {
-      background-color: #f8f9fa;
-    }
+    tr:hover { background-color: #f8f9fa; }
 
     .badge {
       display: inline-block;
@@ -195,11 +208,6 @@
       border-radius: 6px;
       border: 1px solid #dee2e6;
       cursor: pointer;
-      transition: transform 0.2s;
-    }
-
-    .proof-img:hover {
-      transform: scale(1.1);
     }
 
     .action-btn-group {
@@ -217,7 +225,6 @@
       cursor: pointer;
       transition: background 0.2s;
       text-align: center;
-      text-decoration: none;
     }
 
     .btn-view { background-color: #17a2b8; color: white; }
@@ -232,7 +239,7 @@
     .btn-delete { background-color: #6c757d; color: white; }
     .btn-delete:hover { background-color: #343a40; }
 
-    /* Modal Styling */
+    /* Modals */
     .modal {
       display: none;
       position: fixed;
@@ -294,6 +301,53 @@
       word-break: break-word;
     }
 
+    /* Form Fields */
+    .admin-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group label {
+      font-size: 13px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 10px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+      background: #f8f9fa;
+      padding: 12px;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .category-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
     .image-modal {
       display: none;
       position: fixed;
@@ -316,10 +370,14 @@
 
   <div class="container">
     <header>
-      <h1>Bandhan Bazaar - Admin Stall Verification Dashboard</h1>
-      <button id="downloadExcelBtn" class="export-btn">
-        📊 Download Full Excel Report
-      </button>
+      <h1>Bandhan Bazaar - Admin Dashboard</h1>
+      <div class="header-actions">
+        <button id="openPriceModalBtn" class="btn-header price-btn">🏷️ Manage Stall Prices</button>
+        <button id="openFreeSeatModalBtn" class="btn-header free-btn">🔓 Open / Free Stall</button>
+        <button id="openSplitSeatModalBtn" class="btn-header split-btn">✂️ Split / Merge Stall</button>
+        <button id="openAdminBookingModalBtn" class="btn-header book-btn">➕ Direct Admin Stall Booking</button>
+        <button id="downloadExcelBtn" class="btn-header export-btn">📊 Download Excel Report</button>
+      </div>
     </header>
 
     <!-- Stats Bar -->
@@ -390,9 +448,280 @@
       <h2 style="margin-bottom: 5px; color: #1a252f;" id="modalCustomerName">Customer Details</h2>
       <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Complete information submitted during stall registration</p>
       
-      <div class="details-grid" id="modalDetailsBody">
-        <!-- Dynamic Content Injected Here -->
+      <div class="details-grid" id="modalDetailsBody"></div>
+    </div>
+  </div>
+
+  <!-- 1. STALL PRICING MANAGEMENT MODAL -->
+  <div id="priceModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="document.getElementById('priceModal').style.display='none'">&times;</span>
+      <h2>🏷️ Edit Stall Prices</h2>
+      <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Update price for individual stalls or full stall categories.</p>
+
+      <div class="admin-form">
+        <div class="form-group">
+          <label for="priceUpdateType">Update Mode</label>
+          <select id="priceUpdateType">
+            <option value="single">Single Stall Price Edit (e.g. C-12, A-1, A-7(A), F-2)</option>
+            <option value="category">Category Bulk Price Update (e.g. Corner, Food Court)</option>
+          </select>
+        </div>
+
+        <!-- Single Stall Edit -->
+        <div id="singleStallGroup" class="form-group">
+          <label for="singleStallId">Enter Stall ID (e.g. C-12, A-1, A-7(A), B-12)</label>
+          <input type="text" id="singleStallId" placeholder="e.g. C-12 or A-7(A)" />
+        </div>
+
+        <!-- Category Edit -->
+        <div id="categoryGroup" class="form-group" style="display: none;">
+          <label for="stallCategorySelect">Select Category</label>
+          <select id="stallCategorySelect">
+            <option value="corner">Corner Stalls (Default ₹14,000)</option>
+            <option value="center">Center Stalls (Default ₹10,000)</option>
+            <option value="food">Food Court Stalls (Default ₹21,000)</option>
+            <option value="play">Play Zone Stalls (Default ₹11,000)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="newStallPrice">New Price (₹)</label>
+          <input type="number" id="newStallPrice" placeholder="Enter new price in ₹" min="0" required />
+        </div>
+
+        <button id="savePriceBtn" class="btn btn-approve" style="padding: 12px; font-size: 14px;">Update Price in Database</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 2. OPEN / FREE STALL MODAL -->
+  <div id="freeSeatModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="document.getElementById('freeSeatModal').style.display='none'">&times;</span>
+      <h2>🔓 Open / Free Stall Status</h2>
+      <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Unlock or make any booked/pending stall available for fresh booking.</p>
+
+      <div class="admin-form">
+        <div class="form-group">
+          <label for="freeStallIds">Enter Stall ID(s) (Comma separated if multiple, e.g. C-12, A-1, A-7(A), B-5)</label>
+          <input type="text" id="freeStallIds" placeholder="e.g. C-12, A-7(A)" required />
+        </div>
+
+        <button id="confirmFreeSeatBtn" class="btn btn-approve" style="padding: 12px; font-size: 14px; background-color: #6f42c1;">Open / Free Seat in Database</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. SPLIT / UNSPLIT STALL MODAL -->
+  <div id="splitSeatModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="document.getElementById('splitSeatModal').style.display='none'">&times;</span>
+      <h2>✂️ Split or Merge Stall</h2>
+      <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Admin can split any stall (e.g., A-7 into A-7(A) & A-7(B)) with custom prices and map reflection.</p>
+
+      <div class="admin-form">
+        <div class="form-group">
+          <label for="splitActionType">Action Mode</label>
+          <select id="splitActionType">
+            <option value="split">Split Single Stall into 2 Sub-Stalls</option>
+            <option value="unsplit">Merge / Unsplit Sub-Stalls back to Original</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="targetStallId">Target Stall ID (e.g. A-7, B-12, C-4)</label>
+          <input type="text" id="targetStallId" placeholder="e.g. A-7" required />
+        </div>
+
+        <!-- Split Fields Container -->
+        <div id="splitFieldsContainer">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label for="subSeat1Name">Sub-Stall 1 Name</label>
+              <input type="text" id="subSeat1Name" placeholder="e.g. A-7(A)" />
+            </div>
+            <div class="form-group">
+              <label for="subSeat1Price">Sub-Stall 1 Price (₹)</label>
+              <input type="number" id="subSeat1Price" placeholder="e.g. 5000" min="0" />
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
+            <div class="form-group">
+              <label for="subSeat2Name">Sub-Stall 2 Name</label>
+              <input type="text" id="subSeat2Name" placeholder="e.g. A-7(B)" />
+            </div>
+            <div class="form-group">
+              <label for="subSeat2Price">Sub-Stall 2 Price (₹)</label>
+              <input type="number" id="subSeat2Price" placeholder="e.g. 5000" min="0" />
+            </div>
+          </div>
+        </div>
+
+        <button id="confirmSplitBtn" class="btn btn-approve" style="padding: 12px; font-size: 14px; background-color: #e83e8c;">Confirm Stall Split / Merge</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ADMIN DIRECT BOOKING MODAL -->
+  <div id="adminBookingModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="document.getElementById('adminBookingModal').style.display='none'">&times;</span>
+      <h2>➕ Admin Direct Stall Booking</h2>
+      <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Book any stall directly on behalf of a customer or yourself.</p>
+
+      <form id="adminBookingForm" class="admin-form">
+        <!-- Stall IDs -->
+        <div class="form-group">
+          <label for="adminStalls">Stall IDs * (Comma separated if multiple, e.g., A-1, A-7(A))</label>
+          <input type="text" id="adminStalls" placeholder="e.g. A-1, A-7(A)" required />
+        </div>
+
+        <!-- Name & Company -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="adminUserName">Full Name *</label>
+            <input type="text" id="adminUserName" placeholder="Full Name" required />
+          </div>
+          <div class="form-group">
+            <label for="adminCompanyName">Company / Brand Name *</label>
+            <input type="text" id="adminCompanyName" placeholder="Company Name" required />
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div class="form-group">
+          <label for="adminAddress">Complete Address *</label>
+          <textarea id="adminAddress" rows="2" placeholder="Address..." required></textarea>
+        </div>
+
+        <!-- Contacts -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="adminWhatsapp">WhatsApp Number *</label>
+            <input type="tel" id="adminWhatsapp" placeholder="10-digit number" required />
+          </div>
+          <div class="form-group">
+            <label for="adminAltMobile">Alternative Mobile No</label>
+            <input type="tel" id="adminAltMobile" placeholder="Optional" />
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label for="adminEmail">Email Address *</label>
+          <input type="email" id="adminEmail" placeholder="example@domain.com" required />
+        </div>
+
+        <!-- Complete Business Categories List -->
+        <div class="form-group">
+          <label>Business Category * (Select all that apply)</label>
+          <div class="category-grid">
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Fashion & Apparel"> Fashion & Apparel</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Women's Wear"> Women's Wear</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Men's Wear"> Men's Wear</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Kids Wear"> Kids Wear</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Footwear"> Footwear</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Gold & Silver Jewellery"> Gold & Silver Jewellery</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Artificial Jewellery"> Artificial Jewellery</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Handicrafts"> Handicrafts</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Home Decor"> Home Decor</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Kitchenware"> Kitchenware</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Gift Items"> Gift Items</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Cosmetics & Beauty Products"> Cosmetics & Beauty Products</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Bags & Accessories"> Bags & Accessories</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Electronics & Gadgets"> Electronics & Gadgets</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Books & Stationery"> Books & Stationery</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Organic Products"> Organic Products</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Health & Wellness"> Health & Wellness</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Toys & Games"> Toys & Games</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Furnishing & Textile"> Furnishing & Textile</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Mobile Accessories"> Mobile Accessories</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Food / Snacks"> Food / Snacks</label>
+            <label class="category-item"><input type="checkbox" name="adminCat" value="Other (Please Specify)"> Other (Please Specify)</label>
+          </div>
+        </div>
+
+        <!-- Description & Extra -->
+        <div class="form-group">
+          <label for="adminDescription">Business Description *</label>
+          <textarea id="adminDescription" rows="2" placeholder="Products description..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="adminExtra">Extra Requirements</label>
+          <textarea id="adminExtra" rows="1" placeholder="Tables, Power sockets etc."></textarea>
+        </div>
+
+        <!-- Amount & Payment Details -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="adminTotalAmt">Total Amount (₹) *</label>
+            <input type="number" id="adminTotalAmt" placeholder="Total" required />
+          </div>
+          <div class="form-group">
+            <label for="adminPaidAmt">Paid Amount (₹) *</label>
+            <input type="number" id="adminPaidAmt" placeholder="Paid" required />
+          </div>
+          <div class="form-group">
+            <label for="adminPendingAmt">Pending Amount (₹)</label>
+            <input type="number" id="adminPendingAmt" placeholder="Auto Calculated" readonly />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="adminPayMethod">Payment Method</label>
+            <select id="adminPayMethod">
+              <option value="Cash">Cash Payment</option>
+              <option value="UPI">UPI Payment</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="adminPayOption">Payment Option</label>
+            <select id="adminPayOption">
+              <option value="FULL_PAYMENT">100% Full Payment</option>
+              <option value="50_ADVANCE">50% Advance Payment</option>
+              <option value="CUSTOM">Custom Amount</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="adminTxnId">Transaction ID / UTR / Reference</label>
+          <input type="text" id="adminTxnId" placeholder="e.g. CASH / UPI Txn ID" />
+        </div>
+
+        <!-- File Uploads -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="adminIdProof">ID Proof Document (Optional)</label>
+            <input type="file" id="adminIdProof" accept="image/*,application/pdf" />
+          </div>
+          <div class="form-group">
+            <label for="adminPaymentProof">Payment Screenshot (Optional)</label>
+            <input type="file" id="adminPaymentProof" accept="image/*" />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="adminBookingDate">Booking Date *</label>
+            <input type="date" id="adminBookingDate" required />
+          </div>
+          <div class="form-group">
+            <label for="adminStatusSelect">Booking Status *</label>
+            <select id="adminStatusSelect">
+              <option value="approved">Approved (Lock Seats Red)</option>
+              <option value="pending">Pending Verification (Yellow)</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" id="adminSubmitBookingBtn" class="btn btn-approve" style="padding: 12px; font-size: 15px;">Confirm Admin Booking</button>
+      </form>
     </div>
   </div>
 
@@ -403,7 +732,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
@@ -414,6 +743,9 @@
       appId: "1:430230410068:web:963bc22ebbe3d17faa2ec1",
       measurementId: "G-DVGBL2Z7BQ"
     };
+
+    const CLOUDINARY_CLOUD_NAME = "iaycutxm";
+    const CLOUDINARY_UPLOAD_PRESET = "bandhan_photos";
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app, "default");
@@ -453,7 +785,6 @@
         }
       });
 
-      // Update Stats
       countPendingEl.innerText = pendingCount;
       countApprovedEl.innerText = approvedCount;
       totalRevenueEl.innerText = "₹" + confirmedRevenue.toLocaleString('en-IN');
@@ -462,7 +793,7 @@
       renderTable();
     });
 
-    // Render Table according to Filter & Search
+    // Render Table
     function renderTable() {
       const searchTerm = searchInput.value.toLowerCase();
       tableBody.innerHTML = '';
@@ -486,14 +817,13 @@
         return;
       }
 
-      // Sort by newest timestamp first
-      filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      filtered.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
 
       filtered.forEach(item => {
         const row = document.createElement('tr');
-        const formattedDate = new Date(item.timestamp).toLocaleString('en-IN', {
+        const formattedDate = item.timestamp ? new Date(item.timestamp).toLocaleString('en-IN', {
           dateStyle: 'medium', timeStyle: 'short'
-        });
+        }) : (item.bookingDate || 'N/A');
 
         const totalAmt = item.totalAmount || 0;
         const paidAmt = item.paidAmount !== undefined ? item.paidAmount : totalAmt;
@@ -536,6 +866,367 @@
         tableBody.appendChild(row);
       });
     }
+
+    // Modal Control Helpers
+    document.getElementById('openPriceModalBtn').addEventListener('click', () => {
+      document.getElementById('priceModal').style.display = 'flex';
+    });
+
+    document.getElementById('openFreeSeatModalBtn').addEventListener('click', () => {
+      document.getElementById('freeSeatModal').style.display = 'flex';
+    });
+
+    document.getElementById('openSplitSeatModalBtn').addEventListener('click', () => {
+      document.getElementById('splitSeatModal').style.display = 'flex';
+    });
+
+    document.getElementById('openAdminBookingModalBtn').addEventListener('click', () => {
+      document.getElementById('adminBookingDate').valueAsDate = new Date();
+      document.getElementById('adminBookingModal').style.display = 'flex';
+    });
+
+    // Open / Free Seat Logic
+    document.getElementById('confirmFreeSeatBtn').addEventListener('click', async () => {
+      const rawInput = document.getElementById('freeStallIds').value.trim();
+      if (!rawInput) return alert("Please enter Stall ID(s)!");
+
+      const stallIds = rawInput.split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+      const confirmFreeBtn = document.getElementById('confirmFreeSeatBtn');
+      confirmFreeBtn.disabled = true;
+      confirmFreeBtn.innerText = "Freeing Seats...";
+
+      try {
+        for (const seatId of stallIds) {
+          await setDoc(doc(db, "seats", seatId), { status: "available" }, { merge: true });
+        }
+        alert(`Success! Stall(s) ${stallIds.join(', ')} are now unlocked and set to AVAILABLE.`);
+        document.getElementById('freeSeatModal').style.display = 'none';
+        document.getElementById('freeStallIds').value = '';
+      } catch (err) {
+        console.error("Error freeing seat:", err);
+        alert("Failed to free seat: " + err.message);
+      } finally {
+        confirmFreeBtn.disabled = false;
+        confirmFreeBtn.innerText = "Open / Free Seat in Database";
+      }
+    });
+
+    // Price Update Logic
+    const priceUpdateType = document.getElementById('priceUpdateType');
+    const singleStallGroup = document.getElementById('singleStallGroup');
+    const categoryGroup = document.getElementById('categoryGroup');
+    const savePriceBtn = document.getElementById('savePriceBtn');
+
+    priceUpdateType.addEventListener('change', () => {
+      if (priceUpdateType.value === 'single') {
+        singleStallGroup.style.display = 'flex';
+        categoryGroup.style.display = 'none';
+      } else {
+        singleStallGroup.style.display = 'none';
+        categoryGroup.style.display = 'flex';
+      }
+    });
+
+    savePriceBtn.addEventListener('click', async () => {
+      const newPrice = parseFloat(document.getElementById('newStallPrice').value);
+      if (isNaN(newPrice) || newPrice < 0) {
+        return alert("Please enter a valid price amount!");
+      }
+
+      savePriceBtn.disabled = true;
+      savePriceBtn.innerText = "Saving to Database...";
+
+      try {
+        if (priceUpdateType.value === 'single') {
+          const stallId = document.getElementById('singleStallId').value.trim().toUpperCase();
+          if (!stallId) {
+            savePriceBtn.disabled = false;
+            savePriceBtn.innerText = "Update Price in Database";
+            return alert("Please enter a Stall ID!");
+          }
+
+          const seatRef = doc(db, "seats", stallId);
+          await setDoc(seatRef, { price: newPrice }, { merge: true });
+          alert(`Success! Stall ${stallId} price updated to ₹${newPrice.toLocaleString('en-IN')}`);
+
+        } else {
+          const cat = document.getElementById('stallCategorySelect').value;
+          const querySnapshot = await getDocs(collection(db, "seats"));
+
+          let updatedCount = 0;
+          for (const docSnap of querySnapshot.docs) {
+            const data = docSnap.data();
+            if (data.type === cat || data.section === cat || docSnap.id.toLowerCase().startsWith(cat[0])) {
+              await setDoc(doc(db, "seats", docSnap.id), { price: newPrice }, { merge: true });
+              updatedCount++;
+            }
+          }
+          alert(`Success! Updated price to ₹${newPrice.toLocaleString('en-IN')} for ${updatedCount} stalls in category '${cat}'.`);
+        }
+
+        document.getElementById('priceModal').style.display = 'none';
+        document.getElementById('newStallPrice').value = '';
+        document.getElementById('singleStallId').value = '';
+      } catch (err) {
+        console.error("Error updating price:", err);
+        alert("Failed to update price: " + err.message);
+      } finally {
+        savePriceBtn.disabled = false;
+        savePriceBtn.innerText = "Update Price in Database";
+      }
+    });
+
+    // ✂️ STALL SPLIT / MERGE LOGIC
+    const splitActionTypeSelect = document.getElementById('splitActionType');
+    const splitFieldsContainer = document.getElementById('splitFieldsContainer');
+    const targetStallIdInput = document.getElementById('targetStallId');
+    const subSeat1NameInput = document.getElementById('subSeat1Name');
+    const subSeat2NameInput = document.getElementById('subSeat2Name');
+    const subSeat1PriceInput = document.getElementById('subSeat1Price');
+    const subSeat2PriceInput = document.getElementById('subSeat2Price');
+    const confirmSplitBtn = document.getElementById('confirmSplitBtn');
+
+    splitActionTypeSelect.addEventListener('change', () => {
+      if (splitActionTypeSelect.value === 'split') {
+        splitFieldsContainer.style.display = 'block';
+      } else {
+        splitFieldsContainer.style.display = 'none';
+      }
+    });
+
+    targetStallIdInput.addEventListener('input', () => {
+      const val = targetStallIdInput.value.trim().toUpperCase();
+      if (val) {
+        subSeat1NameInput.value = `${val}(A)`;
+        subSeat2NameInput.value = `${val}(B)`;
+      } else {
+        subSeat1NameInput.value = '';
+        subSeat2NameInput.value = '';
+      }
+    });
+
+    confirmSplitBtn.addEventListener('click', async () => {
+      const targetId = targetStallIdInput.value.trim().toUpperCase();
+      const action = splitActionTypeSelect.value;
+
+      if (!targetId) return alert("Please enter a Target Stall ID (e.g. A-7)!");
+
+      confirmSplitBtn.disabled = true;
+      confirmSplitBtn.innerText = "Processing Stall Action...";
+
+      try {
+        if (action === 'split') {
+          const s1Name = subSeat1NameInput.value.trim().toUpperCase() || `${targetId}(A)`;
+          const s2Name = subSeat2NameInput.value.trim().toUpperCase() || `${targetId}(B)`;
+          const p1 = parseFloat(subSeat1PriceInput.value) || 0;
+          const p2 = parseFloat(subSeat2PriceInput.value) || 0;
+
+          // Mark parent seat as split in Firestore
+          await setDoc(doc(db, "seats", targetId), {
+            status: "split",
+            isSplit: true,
+            children: [s1Name, s2Name]
+          }, { merge: true });
+
+          // Create Sub-Stall 1
+          await setDoc(doc(db, "seats", s1Name), {
+            id: s1Name,
+            name: s1Name,
+            parentId: targetId,
+            price: p1,
+            status: "available",
+            isSubSeat: true
+          }, { merge: true });
+
+          // Create Sub-Stall 2
+          await setDoc(doc(db, "seats", s2Name), {
+            id: s2Name,
+            name: s2Name,
+            parentId: targetId,
+            price: p2,
+            status: "available",
+            isSubSeat: true
+          }, { merge: true });
+
+          alert(`Success! Stall ${targetId} split into ${s1Name} (₹${p1}) and ${s2Name} (₹${p2}). Reflected on Map in Realtime!`);
+
+        } else {
+          // Unsplit / Merge Logic
+          const targetSnap = await getDoc(doc(db, "seats", targetId));
+          let children = [`${targetId}(A)`, `${targetId}(B)`];
+
+          if (targetSnap.exists() && targetSnap.data().children) {
+            children = targetSnap.data().children;
+          }
+
+          // Delete children docs
+          for (const childId of children) {
+            try {
+              await deleteDoc(doc(db, "seats", childId));
+            } catch (e) {
+              console.warn("Child deletion note:", e);
+            }
+          }
+
+          // Reset parent seat
+          await setDoc(doc(db, "seats", targetId), {
+            status: "available",
+            isSplit: false,
+            children: []
+          }, { merge: true });
+
+          alert(`Success! Sub-stalls merged back into original Stall ${targetId}.`);
+        }
+
+        document.getElementById('splitSeatModal').style.display = 'none';
+        targetStallIdInput.value = '';
+        subSeat1NameInput.value = '';
+        subSeat2NameInput.value = '';
+        subSeat1PriceInput.value = '';
+        subSeat2PriceInput.value = '';
+      } catch (err) {
+        console.error("Split/Merge Error:", err);
+        alert("Operation Failed: " + err.message);
+      } finally {
+        confirmSplitBtn.disabled = false;
+        confirmSplitBtn.innerText = "Confirm Stall Split / Merge";
+      }
+    });
+
+    // Cloudinary Helper
+    async function uploadToCloudinary(file, folderPath) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      formData.append('folder', folderPath);
+
+      const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!cloudRes.ok) throw new Error("Cloudinary file upload failed.");
+      const cloudData = await cloudRes.json();
+      return cloudData.secure_url;
+    }
+
+    // Admin Direct Booking Form Calculation
+    const adminTotalAmt = document.getElementById('adminTotalAmt');
+    const adminPaidAmt = document.getElementById('adminPaidAmt');
+    const adminPendingAmt = document.getElementById('adminPendingAmt');
+
+    function calcAdminPending() {
+      const tot = parseFloat(adminTotalAmt.value) || 0;
+      const pd = parseFloat(adminPaidAmt.value) || 0;
+      adminPendingAmt.value = Math.max(0, tot - pd);
+    }
+
+    adminTotalAmt.addEventListener('input', calcAdminPending);
+    adminPaidAmt.addEventListener('input', calcAdminPending);
+
+    // Auto calculate on option selection
+    document.getElementById('adminPayOption').addEventListener('change', (e) => {
+      const opt = e.target.value;
+      const tot = parseFloat(adminTotalAmt.value) || 0;
+      if (opt === 'FULL_PAYMENT') {
+        adminPaidAmt.value = tot;
+      } else if (opt === '50_ADVANCE') {
+        adminPaidAmt.value = Math.ceil(tot / 2);
+      }
+      calcAdminPending();
+    });
+
+    // Admin Direct Booking Submit
+    document.getElementById('adminBookingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const stallStr = document.getElementById('adminStalls').value.trim();
+      if (!stallStr) return alert("Please enter Stall IDs!");
+
+      const seats = stallStr.split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+      const userName = document.getElementById('adminUserName').value.trim();
+      const companyName = document.getElementById('adminCompanyName').value.trim();
+      const completeAddress = document.getElementById('adminAddress').value.trim();
+      const whatsappNumber = document.getElementById('adminWhatsapp').value.trim();
+      const altMobileNumber = document.getElementById('adminAltMobile').value.trim();
+      const emailAddress = document.getElementById('adminEmail').value.trim();
+
+      const selectedCategories = [];
+      document.querySelectorAll('input[name="adminCat"]:checked').forEach(cb => selectedCategories.push(cb.value));
+
+      const businessDescription = document.getElementById('adminDescription').value.trim();
+      const extraRequirements = document.getElementById('adminExtra').value.trim();
+
+      const totalAmount = parseFloat(adminTotalAmt.value) || 0;
+      const paidAmount = parseFloat(adminPaidAmt.value) || 0;
+      const pendingAmount = Math.max(0, totalAmount - paidAmount);
+
+      const paymentMethod = document.getElementById('adminPayMethod').value;
+      const paymentOption = document.getElementById('adminPayOption').value;
+      const transactionId = document.getElementById('adminTxnId').value.trim() || 'ADMIN_DIRECT_ENTRY';
+      const bookingDate = document.getElementById('adminBookingDate').value;
+      const status = document.getElementById('adminStatusSelect').value;
+
+      const submitBtn = document.getElementById('adminSubmitBookingBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Creating Admin Booking...";
+
+      try {
+        let idProofUrl = "";
+        let paymentProofUrl = "";
+
+        const idFile = document.getElementById('adminIdProof').files[0];
+        const payFile = document.getElementById('adminPaymentProof').files[0];
+
+        const folderPath = `bandhan_bazaar_2026/admin_${userName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now()}`;
+        if (idFile) idProofUrl = await uploadToCloudinary(idFile, `${folderPath}/id_proof`);
+        if (payFile) paymentProofUrl = await uploadToCloudinary(payFile, `${folderPath}/payment_proof`);
+
+        // Create Booking Doc
+        const bookingRef = doc(collection(db, "bookings"));
+        await setDoc(bookingRef, {
+          userName,
+          companyName,
+          completeAddress,
+          whatsappNumber,
+          altMobileNumber,
+          emailAddress,
+          businessCategories: selectedCategories,
+          businessDescription,
+          extraRequirements,
+          idProofUrl,
+          seats,
+          totalAmount,
+          paidAmount,
+          pendingAmount,
+          paymentMethod,
+          paymentOption,
+          transactionId,
+          paymentProofUrl,
+          declarationAccepted: true,
+          bookingDate,
+          status,
+          bookedByAdmin: true,
+          timestamp: new Date().toISOString()
+        });
+
+        // Update Seats status in Firestore
+        const seatStatus = status === 'approved' ? 'booked' : 'pending';
+        for (const seatId of seats) {
+          await setDoc(doc(db, "seats", seatId), { status: seatStatus }, { merge: true });
+        }
+
+        alert(`Admin Booking Created Successfully!\nStalls: ${seats.join(', ')}\nStatus: ${status.toUpperCase()}`);
+        document.getElementById('adminBookingModal').style.display = 'none';
+        document.getElementById('adminBookingForm').reset();
+      } catch (err) {
+        console.error("Admin booking error:", err);
+        alert("Booking failed: " + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Confirm Admin Booking";
+      }
+    });
 
     // View Details Modal Trigger
     window.viewDetails = (bookingId) => {
@@ -582,11 +1273,8 @@
 
       try {
         await updateDoc(doc(db, "bookings", bookingId), { status: "approved" });
-
         for (const seatId of seatIds) {
-          if (seatId) {
-            await updateDoc(doc(db, "seats", seatId), { status: "booked" });
-          }
+          if (seatId) await updateDoc(doc(db, "seats", seatId), { status: "booked" });
         }
         alert("Booking Approved Successfully! Seat map updated to Booked (Red).");
       } catch (err) {
@@ -602,11 +1290,8 @@
 
       try {
         await updateDoc(doc(db, "bookings", bookingId), { status: "rejected" });
-
         for (const seatId of seatIds) {
-          if (seatId) {
-            await updateDoc(doc(db, "seats", seatId), { status: "available" });
-          }
+          if (seatId) await updateDoc(doc(db, "seats", seatId), { status: "available" });
         }
         alert("Booking Rejected! Seat map updated back to Available.");
       } catch (err) {
@@ -615,36 +1300,26 @@
       }
     };
 
-    // Delete Booking Permanently from Backend (Firestore)
+    // Delete Booking
     window.deleteBooking = async (bookingId, seatIdsStr) => {
-      if (!confirm("⚠️ Are you sure you want to PERMANENTLY DELETE this booking from the backend? This cannot be undone.")) return;
-      
+      if (!confirm("⚠️ Are you sure you want to PERMANENTLY DELETE this booking from the backend?")) return;
       const seatIds = seatIdsStr ? seatIdsStr.split(',').filter(s => s.trim()) : [];
 
       try {
-        // 1. Delete booking document from Firestore "bookings"
         await deleteDoc(doc(db, "bookings", bookingId));
-
-        // 2. Free up associated seats back to 'available'
         for (const seatId of seatIds) {
-          if (seatId) {
-            await updateDoc(doc(db, "seats", seatId), { status: "available" });
-          }
+          if (seatId) await updateDoc(doc(db, "seats", seatId), { status: "available" });
         }
-
-        alert("Booking record permanently deleted from backend and seats released back to Available!");
+        alert("Booking record deleted and seats released!");
       } catch (err) {
-        console.error("Error deleting booking:", err);
+        console.error("Error deleting:", err);
         alert("Delete Failed: " + err.message);
       }
     };
 
-    // Excel Export Function
+    // Excel Export
     downloadExcelBtn.addEventListener('click', () => {
-      if (allBookings.length === 0) {
-        alert("No booking data available to download!");
-        return;
-      }
+      if (allBookings.length === 0) return alert("No booking data available to download!");
 
       const excelData = allBookings.map((b, index) => {
         const totalAmt = b.totalAmount || 0;
@@ -674,20 +1349,18 @@
           "Status": (b.status || '').toUpperCase(),
           "ID Proof URL": b.idProofUrl || '',
           "Payment Proof URL": b.paymentProofUrl || b.proofUrl || '',
-          "System Submission Time": b.timestamp ? new Date(b.timestamp).toLocaleString('en-IN') : ''
+          "Submission Time": b.timestamp ? new Date(b.timestamp).toLocaleString('en-IN') : ''
         };
       });
 
       const worksheet = XLSX.utils.json_to_sheet(excelData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Stall Bookings");
-
       worksheet['!cols'] = Array(22).fill({ wch: 20 });
-
       XLSX.writeFile(workbook, `Bandhan_Bazaar_Stall_Bookings_${Date.now()}.xlsx`);
     });
 
-    // Tab Filters Listener
+    // Filter Buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -697,10 +1370,8 @@
       });
     });
 
-    // Search Box Listener
     searchInput.addEventListener('input', renderTable);
 
-    // Zoom Image Modal Helper
     window.openModal = (url) => {
       document.getElementById('modalImg').src = url;
       document.getElementById('imgModal').style.display = 'flex';
