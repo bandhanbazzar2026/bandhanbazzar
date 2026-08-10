@@ -218,6 +218,7 @@
       cursor: pointer;
       transition: transform 0.15s ease, background-color 0.15s ease;
       user-select: none;
+      position: relative;
     }
 
     .seat-name {
@@ -233,6 +234,31 @@
       margin-top: 2px;
       font-weight: 600;
       opacity: 0.85;
+    }
+
+    /* GLOBAL FLOATING TOOLTIP (NO CLIPPING) */
+    #globalTooltip {
+      position: fixed;
+      background: rgba(26, 32, 44, 0.98);
+      color: #ffffff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      line-height: 1.4;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.15s ease, visibility 0.15s ease;
+      z-index: 99999;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      text-align: left;
+      min-width: 150px;
+      max-width: 240px;
+    }
+
+    #globalTooltip.active {
+      opacity: 1;
+      visibility: visible;
     }
 
     /* Stall Types */
@@ -274,7 +300,7 @@
       background-color: #ffc107 !important;
       color: #212529 !important;
       border: 2px solid #e0a800 !important;
-      cursor: not-allowed;
+      cursor: pointer;
       opacity: 0.9;
     }
 
@@ -282,7 +308,7 @@
       background-color: #dc3545 !important;
       color: #ffffff !important;
       border: 2px solid #dc3545 !important;
-      cursor: not-allowed;
+      cursor: pointer;
       opacity: 0.85;
     }
 
@@ -571,6 +597,9 @@
 
 <body>
 
+  <!-- Single Global Tooltip Container (Placed at top of body to avoid overflow clipping) -->
+  <div id="globalTooltip"></div>
+
   <div class="container">
     <h1>Bandhan Bazaar Stall Booking Map</h1>
 
@@ -650,7 +679,7 @@
     <div class="summary-card">
       <div>
         <h3>Selected Stalls: <span id="selectedSeatsList" style="font-weight: bold; color: #2d3748;">None</span></h3>
-        <h2>Total Amount: ₹<span id="totalAmount">0</span></h2>
+        Total Amount: ₹<span id="totalAmount">0</span>
       </div>
       <button id="checkoutBtn" class="btn" style="width: auto;" disabled>Proceed to Pay</button>
     </div>
@@ -917,7 +946,7 @@
         });
       }
 
-      // 4. Block B Stalls (B-1 to B-24) - UPDATED: Added 21, 23, 24 as Corners
+      // 4. Block B Stalls (B-1 to B-24)
       const bCorners = [1, 2, 4, 5, 7, 8, 9, 11, 12, 13, 14, 16, 17, 19, 20, 21, 23, 24];
       for (let i = 1; i <= 24; i++) {
         const isCorner = bCorners.includes(i);
@@ -928,7 +957,7 @@
         });
       }
 
-      // 5. Block C Stalls (C-1 to C-24) - UPDATED: Added 21, 24 as Corners
+      // 5. Block C Stalls (C-1 to C-24)
       const cCorners = [1, 4, 5, 8, 9, 12, 13, 16, 17, 20, 21, 24];
       for (let i = 1; i <= 24; i++) {
         const isCorner = cCorners.includes(i);
@@ -975,6 +1004,8 @@
     }
 
     // App State
+    let rawSeatsMap = {};
+    let rawBookingsMap = {};
     let dbSeatsMap = {};
     let selectedSeats = [];
 
@@ -1066,7 +1097,7 @@
       });
     });
 
-    // Get Payment Option (50% Advance / Full / Custom)
+    // Get Payment Option
     function getSelectedPayOption() {
       const radio = document.querySelector('input[name="paymentOption"]:checked');
       return radio ? radio.value : '50_ADVANCE';
@@ -1120,7 +1151,61 @@
       }
     }
 
-    // Render Map Grids (With Dynamic Realtime Split Seat Support)
+    // Combine Data from both 'seats' and 'bookings' collections
+    function updateCombinedSeatMap() {
+      dbSeatsMap = {};
+
+      // 1. Copy raw data from 'seats' collection
+      for (const seatId in rawSeatsMap) {
+        dbSeatsMap[seatId] = { ...rawSeatsMap[seatId] };
+      }
+
+      // 2. Fetch and merge booking info from 'bookings' collection
+      Object.values(rawBookingsMap).forEach(booking => {
+        if (Array.isArray(booking.seats)) {
+          booking.seats.forEach(seatId => {
+            if (!dbSeatsMap[seatId]) {
+              dbSeatsMap[seatId] = {};
+            }
+
+            // Sync company & category details
+            if (!dbSeatsMap[seatId].companyName && (booking.companyName || booking.businessName)) {
+              dbSeatsMap[seatId].companyName = booking.companyName || booking.businessName;
+            }
+            if (!dbSeatsMap[seatId].businessCategories && (booking.businessCategories || booking.category)) {
+              dbSeatsMap[seatId].businessCategories = booking.businessCategories || booking.category;
+            }
+
+            // Sync booking status
+            if (!dbSeatsMap[seatId].status) {
+              dbSeatsMap[seatId].status = booking.status === 'approved' ? 'booked' : (booking.status || 'booked');
+            }
+          });
+        }
+      });
+
+      // 3. Update active price/status for currently selected seats
+      selectedSeats.forEach(selected => {
+        if (dbSeatsMap[selected.id] && dbSeatsMap[selected.id].price !== undefined) {
+          selected.price = Number(dbSeatsMap[selected.id].price);
+        }
+      });
+
+      // Filter out seats that are reserved, pending, or booked
+      selectedSeats = selectedSeats.filter(s => {
+        const st = dbSeatsMap[s.id] ? dbSeatsMap[s.id].status : null;
+        return st !== 'booked' && st !== 'pending' && !PRE_BOOKED_SEATS.includes(s.id);
+      });
+
+      updateSummary();
+      renderMap();
+
+      if (mapLoader) {
+        mapLoader.style.display = 'none';
+      }
+    }
+
+    // Render Map Grids
     function renderMap() {
       const sections = ['playzone', 'foodcourt', 'block-a', 'block-b', 'block-c', 'block-d', 'block-e'];
 
@@ -1136,8 +1221,6 @@
 
           // Check if parent seat is split by Admin
           if (parentDbData.isSplit && Array.isArray(parentDbData.children) && parentDbData.children.length > 0) {
-            
-            // Render sub-seats (e.g. A-7(A), A-7(B))
             parentDbData.children.forEach(subSeatId => {
               const subDbData = dbSeatsMap[subSeatId] || {};
               const subSeatObj = {
@@ -1163,6 +1246,43 @@
       });
     }
 
+    // Global Tooltip Helper Functions
+    const globalTooltip = document.getElementById('globalTooltip');
+
+    function showTooltip(e, content) {
+      if (!globalTooltip) return;
+      globalTooltip.innerHTML = content;
+      globalTooltip.classList.add('active');
+      moveTooltip(e);
+    }
+
+    function moveTooltip(e) {
+      if (!globalTooltip || !globalTooltip.classList.contains('active')) return;
+
+      const padding = 12;
+      let x = e.clientX + padding;
+      let y = e.clientY - 10;
+
+      const tooltipRect = globalTooltip.getBoundingClientRect();
+
+      // Screen Edge Clipping Protection
+      if (x + tooltipRect.width > window.innerWidth - 10) {
+        x = e.clientX - tooltipRect.width - padding;
+      }
+      if (y + tooltipRect.height > window.innerHeight - 10) {
+        y = window.innerHeight - tooltipRect.height - 10;
+      }
+      if (y < 10) y = 10;
+
+      globalTooltip.style.left = `${x}px`;
+      globalTooltip.style.top = `${y}px`;
+    }
+
+    function hideTooltip() {
+      if (!globalTooltip) return;
+      globalTooltip.classList.remove('active');
+    }
+
     // Single Seat Element Creation Helper
     function createSeatElement(seat, containerEl, seatStatus) {
       const seatEl = document.createElement('div');
@@ -1183,12 +1303,45 @@
         seatEl.classList.add('available');
       }
 
+      // Fetch Business & Category details from combined Firestore map
+      const parentDbData = dbSeatsMap[seat.id] || {};
+      const companyName = parentDbData.companyName || parentDbData.businessName || 'Reserved / Org';
+      
+      let category = 'N/A';
+      if (Array.isArray(parentDbData.businessCategories)) {
+        category = parentDbData.businessCategories.join(', ');
+      } else if (parentDbData.businessCategories) {
+        category = parentDbData.businessCategories;
+      } else if (parentDbData.category) {
+        category = parentDbData.category;
+      }
+
+      // Prepare Tooltip Content
+      let tooltipContent = `<strong>Stall:</strong> ${seat.name}`;
+      if (isBooked || isPending || parentDbData.companyName || parentDbData.businessCategories) {
+        tooltipContent += `<br><strong>Business:</strong> ${companyName}`;
+        tooltipContent += `<br><strong>Category:</strong> ${category}`;
+        tooltipContent += `<br><strong>Status:</strong> ${isBooked ? 'Booked' : 'Pending Verification'}`;
+      } else {
+        tooltipContent += `<br><strong>Price:</strong> ₹${seat.price.toLocaleString('en-IN')}`;
+        tooltipContent += `<br><strong>Status:</strong> Available`;
+      }
+
       seatEl.innerHTML = `
         <span class="seat-name">${seat.name}</span>
         <span class="seat-size">${seat.dim}</span>
       `;
 
-      seatEl.addEventListener('click', () => toggleSeatSelection(seat, isBooked || isPending));
+      // Attach Hover Event Listeners to avoid overflow clipping
+      seatEl.addEventListener('mouseenter', (e) => showTooltip(e, tooltipContent));
+      seatEl.addEventListener('mousemove', (e) => moveTooltip(e));
+      seatEl.addEventListener('mouseleave', () => hideTooltip());
+
+      seatEl.addEventListener('click', () => {
+        hideTooltip();
+        toggleSeatSelection(seat, isBooked || isPending);
+      });
+
       containerEl.appendChild(seatEl);
     }
 
@@ -1248,41 +1401,34 @@
       return cloudData.secure_url;
     }
 
-    // Initialize Firebase
+    // Initialize Firebase and Listeners
     try {
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app, "default");
 
-      // Live Firestore Snapshot Listener with Split, Price & Status Realtime Sync
+      // 1. Real-time Listener for "seats" collection
       const seatsCollection = collection(db, "seats");
       onSnapshot(seatsCollection, (snapshot) => {
-        dbSeatsMap = {};
-
+        rawSeatsMap = {};
         snapshot.docs.forEach((docSnap) => {
-          dbSeatsMap[docSnap.id] = docSnap.data();
+          rawSeatsMap[docSnap.id] = docSnap.data();
         });
-
-        // Sync price/status for currently selected seats
-        selectedSeats.forEach(selected => {
-          if (dbSeatsMap[selected.id] && dbSeatsMap[selected.id].price !== undefined) {
-            selected.price = Number(dbSeatsMap[selected.id].price);
-          }
-        });
-
-        // Filter out seats that got reserved or booked
-        selectedSeats = selectedSeats.filter(s => {
-          const st = dbSeatsMap[s.id] ? dbSeatsMap[s.id].status : null;
-          return st !== 'booked' && st !== 'pending' && !PRE_BOOKED_SEATS.includes(s.id);
-        });
-
-        updateSummary();
-        renderMap();
-
-        if (mapLoader) {
-          mapLoader.style.display = 'none';
-        }
+        updateCombinedSeatMap();
       }, (error) => {
-        console.warn("Firebase snapshot error:", error);
+        console.warn("Seats snapshot error:", error);
+        if (mapLoader) mapLoader.style.display = 'none';
+      });
+
+      // 2. Real-time Listener for "bookings" collection (fetches category & business names)
+      const bookingsCollection = collection(db, "bookings");
+      onSnapshot(bookingsCollection, (snapshot) => {
+        rawBookingsMap = {};
+        snapshot.docs.forEach((docSnap) => {
+          rawBookingsMap[docSnap.id] = docSnap.data();
+        });
+        updateCombinedSeatMap();
+      }, (error) => {
+        console.warn("Bookings snapshot error:", error);
         if (mapLoader) mapLoader.style.display = 'none';
       });
 
@@ -1310,7 +1456,6 @@
       proofForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Selected Business Categories
         const selectedCategories = [];
         document.querySelectorAll('input[name="bizCategory"]:checked').forEach(cb => {
           if (cb.value === 'Other') {
@@ -1417,16 +1562,16 @@
             timestamp: new Date().toISOString()
           });
 
-          // Mark selected seats status = 'pending' in Firestore "seats"
+          // Mark selected seats status = 'pending' in "seats" collection
           for (const seat of selectedSeats) {
-            if (dbSeatsMap[seat.id]) {
-              dbSeatsMap[seat.id].status = 'pending';
-            }
             const seatRef = doc(db, "seats", seat.id);
-            await setDoc(seatRef, { status: 'pending' }, { merge: true });
+            await setDoc(seatRef, { 
+              status: 'pending',
+              companyName: companyName,
+              businessCategories: selectedCategories
+            }, { merge: true });
           }
 
-          renderMap();
           alert(`Booking submitted successfully!\nStalls: ${seatIds.join(', ')}\nPaid: ₹${paidAmount.toLocaleString('en-IN')} | Pending: ₹${pendingAmount.toLocaleString('en-IN')}\nStatus: PENDING ADMIN VERIFICATION.`);
 
           selectedSeats = [];
