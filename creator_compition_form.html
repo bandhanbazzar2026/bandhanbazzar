@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creator Reel Contest 2026 - Bandhan Bazaar</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background-color: #f8f9fa;
+      color: #212529;
+      padding: 20px 10px;
+    }
+
+    .container {
+      max-width: 950px;
+      margin: 0 auto;
+    }
+
+    /* Header Styling */
+    .header-card {
+      background: linear-gradient(135deg, #7b1fa2, #e91e63, #ff9800);
+      color: #ffffff;
+      padding: 30px 20px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      margin-bottom: 25px;
+    }
+
+    .header-card h2 {
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.9;
+      margin-bottom: 5px;
+    }
+
+    .header-card h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .event-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(5px);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* Prizes Grid */
+    .prizes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .prize-card {
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border-top: 5px solid #ff9800;
+    }
+
+    .prize-card.first { border-color: #ffd700; }
+    .prize-card.second { border-color: #c0c0c0; }
+    .prize-card.third { border-color: #cd7f32; }
+
+    .prize-card .rank {
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .prize-card .amount {
+      font-size: 22px;
+      font-weight: 700;
+      color: #d84315;
+      margin-top: 4px;
+    }
+
+    /* Main Form Layout */
+    .form-card {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #4a148c;
+      border-bottom: 2px solid #f3e5f5;
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+      margin-top: 10px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 15px;
+    }
+
+    .full-width {
+      grid-column: span 2;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: #8e24aa;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(142, 36, 170, 0.15);
+    }
+
+    /* Checkbox Requirements */
+    .req-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #faf5ff;
+      border: 1px solid #f3e5f5;
+      padding: 16px;
+      border-radius: 10px;
+    }
+
+    .req-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: #4a5568;
+      cursor: pointer;
+    }
+
+    .req-item input {
+      margin-top: 3px;
+      width: 17px;
+      height: 17px;
+      accent-color: #8e24aa;
+      cursor: pointer;
+    }
+
+    /* Declaration Box */
+    .declaration-box {
+      background: #fffbe6;
+      border: 1px solid #ffe58f;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #744210;
+      margin-top: 15px;
+    }
+
+    /* Submit Button */
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #8e24aa, #d81b60);
+      color: #ffffff;
+      border: none;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: transform 0.15s ease, opacity 0.2s ease;
+    }
+
+    .submit-btn:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:disabled {
+      background: #cbd5e0;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .full-width { grid-column: span 1; }
+      .prizes-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    
+    <!-- Banner Header -->
+    <div class="header-card">
+      <h2>Bandhan Bazaar 2026</h2>
+      <h1>🏆 CREATOR REEL CONTEST</h1>
+      <div class="event-badge">📅 25 • 26 • 27 AUGUST 2026 | 📍 Raja Park, Bajrang Bagh Road, Pali</div>
+    </div>
+
+    <!-- Prizes Announcement -->
+    <div class="prizes-grid">
+      <div class="prize-card first">
+        <div class="rank">🥇 1st Prize</div>
+        <div class="amount">7,100₹</div>
+      </div>
+      <div class="prize-card second">
+        <div class="rank">🥈 2nd Prize</div>
+        <div class="amount">5,100₹</div>
+      </div>
+      <div class="prize-card third">
+        <div class="rank">🥉 3rd Prize</div>
+        <div class="amount">3,100₹</div>
+      </div>
+    </div>
+
+    <!-- Creator Registration Form -->
+    <div class="form-card">
+      <form id="creatorForm">
+        
+        <!-- 1. Creator Details -->
+        <div class="section-title">1. Creator Details</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="fullName">Full Name *</label>
+            <input type="text" id="fullName" placeholder="Enter Full Name" required />
+          </div>
+          <div class="form-group">
+            <label for="channelName">Creator / Channel Name *</label>
+            <input type="text" id="channelName" placeholder="e.g. Pali Vlogs / Craft Studio" required />
+          </div>
+          <div class="form-group">
+            <label for="mobile">Mobile Number *</label>
+            <input type="tel" id="mobile" placeholder="10-digit Mobile Number" pattern="[0-9]{10}" required />
+          </div>
+          <div class="form-group">
+            <label for="whatsapp">WhatsApp Number *</label>
+            <input type="tel" id="whatsapp" placeholder="10-digit WhatsApp Number" pattern="[0-9]{10}" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address *</label>
+            <input type="email" id="email" placeholder="example@domain.com" required />
+          </div>
+          <div class="form-group">
+            <label for="city">City / Area *</label>
+            <input type="text" id="city" placeholder="e.g. Pali / Jodhpur" required />
+          </div>
+        </div>
+
+        <!-- 2. Social Media Details -->
+        <div class="section-title">2. Social Media Details</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="instagram">Instagram Handle *</label>
+            <input type="text" id="instagram" placeholder="@yourhandle" required />
+          </div>
+          <div class="form-group">
+            <label for="facebook">Facebook Page / Profile</label>
+            <input type="text" id="facebook" placeholder="Facebook Profile URL or Name" />
+          </div>
+          <div class="form-group">
+            <label for="youtube">YouTube Channel</label>
+            <input type="text" id="youtube" placeholder="YouTube Channel Link or Handle" />
+          </div>
+          <div class="form-group">
+            <label for="primaryPlatform">Primary Content Platform *</label>
+            <select id="primaryPlatform" required>
+              <option value="">-- Select Primary Platform --</option>
+              <option value="Instagram">Instagram</option>
+              <option value="YouTube">YouTube</option>
+              <option value="Facebook">Facebook</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 3. Contest Participation -->
+        <div class="section-title">3. Contest Participation</div>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label for="reelTitle">Reel Concept / Title *</label>
+            <input type="text" id="reelTitle" placeholder="Brief idea about your Reel theme" required />
+          </div>
+          <div class="form-group">
+            <label for="reelPostingDate">Reel Posting Date *</label>
+            <input type="date" id="reelPostingDate" required />
+          </div>
+          <div class="form-group">
+            <label for="reelLink">Reel Link (If already posted)</label>
+            <input type="url" id="reelLink" placeholder="https://www.instagram.com/reel/..." />
+          </div>
+          <div class="form-group full-width">
+            <label>Contest Hashtag</label>
+            <input type="text" value="#BandhanBazaarCreatorContest" readonly style="background-color: #f1f5f9; font-weight: 600; color: #4a148c;" />
+          </div>
+        </div>
+
+        <!-- 4. Mandatory Requirements -->
+        <div class="section-title">4. Mandatory Requirements *</div>
+        <div class="req-list">
+          <label class="req-item">
+            <input type="checkbox" class="req-check" required />
+            <span>I will create an original Reel promoting Bandhan Bazaar 2026.</span>
+          </label>
+          <label class="req-item">
+            <input type="checkbox" class="req-check" required />
+            <span>I will post the Reel publicly on my Instagram account.</span>
+          </label>
+          <label class="req-item">
+            <input type="checkbox" class="req-check" required />
+            <span>I will use the official Instagram Collab feature with <b>@bandhan_bazaar</b>.</span>
+          </label>
+          <label class="req-item">
+            <input type="checkbox" class="req-check" required />
+            <span>I will tag <b>@bandhan_bazaar</b> and use <b>#BandhanBazaarCreatorContest</b>.</span>
+          </label>
+          <label class="req-item">
+            <input type="checkbox" class="req-check" required />
+            <span>I will keep the Reel/account public during the contest and judging period.</span>
+          </label>
+          <label class="req-item">
+            <input type="checkbox" class="req-check" required />
+            <span>I understand that fake likes, views, bots or artificial engagement lead to disqualification.</span>
+          </label>
+        </div>
+
+        <!-- 5. Declaration -->
+        <div class="declaration-box">
+          <label style="display: flex; gap: 10px; cursor: pointer;">
+            <input type="checkbox" id="declarationCheck" required style="margin-top: 3px; accent-color: #8e24aa;" />
+            <span><b>Creator Declaration:</b> I confirm that the information provided is correct. I agree to abide by all official rules and confirm my Reel will contain original material. I acknowledge all eligible participants will be felicitated at Bandhan Bazaar 2026.</span>
+          </label>
+        </div>
+
+        <button type="submit" id="submitBtn" class="submit-btn">🚀 Submit Creator Registration</button>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- Firebase JavaScript Modular SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Bandhan Bazaar Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
+      authDomain: "bandhanbazaarevent2026.firebaseapp.com",
+      projectId: "bandhanbazaarevent2026",
+      storageBucket: "bandhanbazaarevent2026.firebasestorage.app",
+      messagingSenderId: "430230410068",
+      appId: "1:430230410068:web:963bc22ebbe3d17faa2ec1",
+      measurementId: "G-DVGBL2Z7BQ"
+    };
+
+    // Initialize Firebase Services
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app, "default");
+    const contestCollection = collection(db, "creator_registrations");
+
+    // UI Elements
+    const creatorForm = document.getElementById("creatorForm");
+    const submitBtn = document.getElementById("submitBtn");
+
+    // Form Submission
+    creatorForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Submitting Entry...";
+
+      try {
+        const formData = {
+          fullName: document.getElementById("fullName").value.trim(),
+          channelName: document.getElementById("channelName").value.trim(),
+          mobile: document.getElementById("mobile").value.trim(),
+          whatsapp: document.getElementById("whatsapp").value.trim(),
+          email: document.getElementById("email").value.trim(),
+          city: document.getElementById("city").value.trim(),
+          instagram: document.getElementById("instagram").value.trim(),
+          facebook: document.getElementById("facebook").value.trim(),
+          youtube: document.getElementById("youtube").value.trim(),
+          primaryPlatform: document.getElementById("primaryPlatform").value,
+          reelTitle: document.getElementById("reelTitle").value.trim(),
+          reelPostingDate: document.getElementById("reelPostingDate").value,
+          reelLink: document.getElementById("reelLink").value.trim(),
+          rulesAccepted: true,
+          timestamp: new Date().toISOString()
+        };
+
+        await addDoc(contestCollection, formData);
+
+        alert("🎉 Registration Successful! Thank you for participating in Bandhan Bazaar Creator Reel Contest 2026.");
+        creatorForm.reset();
+
+      } catch (error) {
+        console.error("Firestore Error:", error);
+        alert("Submission failed: " + error.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "🚀 Submit Creator Registration";
+      }
+    });
+  </script>
+</body>
+
+</html>
