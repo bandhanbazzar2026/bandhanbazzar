@@ -6,7 +6,8 @@
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>Bandhan Bazaar - Visitor Registration</title>
 
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet">
       <link rel="stylesheet" href="style.css">
 
       <!-- QR Code Library -->
@@ -17,48 +18,94 @@
 
 <body>
 
-      <div class="form-card">
-            <div class="form-header">
-                  <h2>BANDHAN BAZAAR</h2>
-                  <p>Visitor Pass Registration</p>
+      <!-- Main Layout Wrapper -->
+      <div class="main-container">
+
+            <!-- Left Sponsor Sidebar -->
+            <aside class="sponsor-sidebar sponsor-left">
+                  <div class="sponsor-main-title">OUR SPONSORS</div>
+
+                  <div class="sponsor-sections-grid">
+                        <div class="sponsor-section">
+                              <span class="sponsor-tag">POWERED BY</span>
+                              <div class="sponsor-card">
+                                    <img src="assets/1 BCM.png" alt="Powered By Sponsor"
+                                          onerror="this.src='https://via.placeholder.com/250x150?text=Powered+By'">
+                              </div>
+                        </div>
+
+                        <div class="sponsor-section">
+                              <span class="sponsor-tag">CO-POWERED BY</span>
+                              <div class="sponsor-card">
+                                    <img src="assets/2 MAHENDRA KUMAR MOOLCHAND & SONS.png" alt="Co-Powered By Sponsor"
+                                          onerror="this.src='https://via.placeholder.com/250x150?text=Co-Powered+By'">
+                              </div>
+                        </div>
+                  </div>
+            </aside>
+
+            <!-- Central Form Card -->
+            <div class="form-card">
+                  <div class="form-header">
+                        <img src="assets/headerlogo.png" alt="Bandhan Bazaar Header Logo" class="header-logo">
+                  </div>
+
+                  <form id="visitorForm">
+                        <div class="form-group">
+                              <label for="name">Name (Aapka Naam) *</label>
+                              <input type="text" id="name" required placeholder="Enter full name">
+                        </div>
+
+                        <div class="form-group">
+                              <label for="fatherName">Father's Name *</label>
+                              <input type="text" id="fatherName" required placeholder="Enter father's name">
+                        </div>
+
+                        <div class="form-group">
+                              <label for="address">Address *</label>
+                              <textarea id="address" rows="2" required placeholder="Enter complete address"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                              <label for="mobile">Mobile No *</label>
+                              <input type="tel" id="mobile" pattern="[0-9]{10}" required
+                                    placeholder="10-digit mobile number">
+                        </div>
+
+                        <div class="form-group">
+                              <label for="numMembers">Number of Members (Sath me kitne log hain?)</label>
+                              <input type="number" id="numMembers" min="0" max="10" value="0">
+                        </div>
+
+                        <button type="submit" id="submitBtn" class="btn-submit">Submit & Download Pass PDF</button>
+                        <div id="statusMsg" class="status-msg"></div>
+                  </form>
             </div>
 
-            <form id="visitorForm">
-                  <div class="form-group">
-                        <label for="name">Name (Aapka Naam) *</label>
-                        <input type="text" id="name" required placeholder="Enter full name">
-                  </div>
+            <!-- Right Sponsor Sidebar -->
+            <aside class="sponsor-sidebar sponsor-right">
+                  <div class="sponsor-main-title">OUR SPONSORS</div>
+                  <span class="sponsor-tag">ASSOCIATED WITH</span>
 
-                  <div class="form-group">
-                        <label for="fatherName">Father's Name *</label>
-                        <input type="text" id="fatherName" required placeholder="Enter father's name">
+                  <div class="sponsor-cards-grid">
+                        <div class="sponsor-card">
+                              <img src="assets/sponsor2.png" alt="Associated Sponsor 1"
+                                    onerror="this.src='https://via.placeholder.com/250x150?text=Sponsor+2'">
+                        </div>
+                        <div class="sponsor-card">
+                              <img src="assets/sponsor4.png" alt="Associated Sponsor 2"
+                                    onerror="this.src='https://via.placeholder.com/250x150?text=Sponsor+4'">
+                        </div>
                   </div>
+            </aside>
 
-                  <div class="form-group">
-                        <label for="address">Address *</label>
-                        <textarea id="address" rows="2" required placeholder="Enter complete address"></textarea>
-                  </div>
-
-                  <div class="form-group">
-                        <label for="mobile">Mobile No *</label>
-                        <input type="tel" id="mobile" pattern="[0-9]{10}" required placeholder="10-digit mobile number">
-                  </div>
-
-                  <div class="form-group">
-                        <label for="numMembers">Number of Members (Sath me kitne log hain?)</label>
-                        <input type="number" id="numMembers" min="0" max="10" value="0">
-                  </div>
-
-                  <button type="submit" id="submitBtn" class="btn-submit">Submit & Download Pass PDF</button>
-                  <div id="statusMsg" class="status-msg"></div>
-            </form>
       </div>
 
-      <!-- QR Code Processing Container (Mobile Fix: Off-screen instead of display:none) -->
+      <!-- Offscreen Elements for QR & Canvas Rendering -->
       <div id="qrcode-temp" style="position: fixed; left: -9999px; top: -9999px;"></div>
       <canvas id="cardCanvas" style="display:none;"></canvas>
 
-      <!-- Firebase Logic & Form Handling Single Module -->
+      <!-- Firebase & HD Canvas Module -->
       <script type="module">
             import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
             import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -73,11 +120,9 @@
                   measurementId: "G-DVGBL2Z7BQ"
             };
 
-            // Initialize Firebase
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app, "default");
 
-            // Form Submit Logic
             const form = document.getElementById('visitorForm');
             const submitBtn = document.getElementById('submitBtn');
             const statusMsg = document.getElementById('statusMsg');
@@ -85,8 +130,8 @@
             form.addEventListener('submit', async (e) => {
                   e.preventDefault();
                   submitBtn.disabled = true;
-                  statusMsg.style.color = "#7b2cbf";
-                  statusMsg.innerText = "Processing... Data save ho raha hai aur PDF generate ho rahi hai.";
+                  statusMsg.style.color = "#F97316";
+                  statusMsg.innerText = "Processing... Data save ho raha hai aur Pass PDF generate ho rahi hai.";
 
                   const name = document.getElementById('name').value.trim();
                   const fatherName = document.getElementById('fatherName').value.trim();
@@ -108,26 +153,22 @@
 
                         const docId = docRef.id;
 
-                        // 2. Generate Pass on Canvas
-                        const canvas = await createQRPassCanvas({
+                        // 2. Generate Proportional Canvas Pass
+                        const canvas = await createHDPassCanvas({
                               docId,
                               name,
-                              fatherName,
-                              address,
-                              mobile,
                               numMembers
                         });
 
-                        // 3. Download Pass as PDF
+                        // 3. Download Pass as PDF (Mobile & Desktop Compatible)
                         downloadPassAsPDF(canvas, `Bandhan_Bazaar_Pass_${name.replace(/\s+/g, '_')}.pdf`);
 
                         statusMsg.style.color = "green";
-                        statusMsg.innerText = "Success! Data save ho chuka hai aur PDF Pass download ho gaya hai. Redirecting...";
+                        statusMsg.innerText = "Success! Data save ho chuka hai aur Pass PDF download ho gaya hai. Redirecting...";
 
-                        // 4. Redirect after 3 Seconds
                         setTimeout(() => {
                               window.location.href = "https://bandhanbazaar.in/";
-                        }, 3000);
+                        }, 5000);
 
                   } catch (error) {
                         console.error("Submission Error: ", error);
@@ -137,32 +178,61 @@
                   }
             });
 
-            // Pass Generation Canvas Utility (Optimized for Mobile)
-            function createQRPassCanvas(data) {
-                  const { docId, name, fatherName, address, mobile, numMembers } = data;
+            // Helper for Preloading Canvas Assets
+            function loadImage(src) {
+                  return new Promise((resolve) => {
+                        if (!src) return resolve(null);
+                        const img = new Image();
+                        img.crossOrigin = "Anonymous";
+                        img.onload = () => resolve(img);
+                        img.onerror = () => resolve(null);
+                        img.src = src;
+                  });
+            }
+
+            // Aspect-Ratio Preserving Draw Function for Side Sponsors
+            function drawImageContain(ctx, img, x, y, maxW, maxH) {
+                  if (!img) return { drawW: 0, drawH: 0, drawX: x, drawY: y };
+                  const imgRatio = img.width / img.height;
+                  const containerRatio = maxW / maxH;
+                  let drawW, drawH;
+
+                  if (imgRatio > containerRatio) {
+                        drawW = maxW;
+                        drawH = maxW / imgRatio;
+                  } else {
+                        drawH = maxH;
+                        drawW = maxH * imgRatio;
+                  }
+
+                  const drawX = x + (maxW - drawW) / 2;
+                  const drawY = y + (maxH - drawH) / 2;
+                  ctx.drawImage(img, drawX, drawY, drawW, drawH);
+                  return { drawW, drawH, drawX, drawY };
+            }
+
+            // Canvas Pass Generator
+            function createHDPassCanvas(data) {
+                  const { docId, name, numMembers } = data;
 
                   return new Promise((resolve, reject) => {
                         const qrContainer = document.getElementById('qrcode-temp');
                         qrContainer.innerHTML = '';
 
-                        // Plain Text Format for QR Code
                         const qrTextData = `BANDHAN BAZAAR PASS\n` +
                               `Name: ${name}\n` +
-                              `Father Name: ${fatherName}\n` +
-                              `Mobile: ${mobile}\n` +
-                              `Address: ${address}\n` +
-                              `Accompanying Members: ${numMembers}\n` +
-                              `Pass ID: ${docId}`;
+                              `Pass ID: ${docId}\n` +
+                              `Members: ${numMembers + 1}`;
 
                         new QRCode(qrContainer, {
                               text: qrTextData,
-                              width: 180,
-                              height: 180,
-                              correctLevel: QRCode.CorrectLevel.L
+                              width: 300,
+                              height: 300,
+                              correctLevel: QRCode.CorrectLevel.H
                         });
 
                         let checkCount = 0;
-                        const interval = setInterval(() => {
+                        const interval = setInterval(async () => {
                               checkCount++;
 
                               const qrCanvas = qrContainer.querySelector('canvas');
@@ -171,88 +241,215 @@
                               if (qrCanvas || (qrImg && qrImg.src)) {
                                     clearInterval(interval);
 
-                                    const renderPass = (sourceElement) => {
-                                          try {
-                                                const canvas = document.getElementById('cardCanvas');
-                                                const ctx = canvas.getContext('2d');
+                                    try {
+                                          // Preload All Assets
+                                          const [headerLogo, poweredByImg, coPoweredByImg, associated1Img, associated2Img] = await Promise.all([
+                                                loadImage('assets/headerlogo.png'),
+                                                loadImage('assets/1 BCM.png'),
+                                                loadImage('assets/2 MAHENDRA KUMAR MOOLCHAND & SONS.png'),
+                                                loadImage('assets/sponsor2.png'),
+                                                loadImage('assets/sponsor4.png')
+                                          ]);
 
-                                                const width = 450;
-                                                const height = numMembers > 0 ? 370 : 340;
+                                          const canvas = document.getElementById('cardCanvas');
+                                          const ctx = canvas.getContext('2d');
 
-                                                canvas.width = width;
-                                                canvas.height = height;
+                                          const scaleFactor = 2;
+                                          const baseWidth = 800;
+                                          const centerX = baseWidth / 2;
 
-                                                // Canvas Background
-                                                ctx.fillStyle = '#FFFFFF';
-                                                ctx.fillRect(0, 0, width, height);
-
-                                                // Header Banner
-                                                ctx.fillStyle = '#7B2CBF';
-                                                ctx.fillRect(0, 0, width, 65);
-                                                ctx.fillStyle = '#E5A93C';
-                                                ctx.fillRect(0, 61, width, 4);
-
-                                                ctx.fillStyle = '#FFFFFF';
-                                                ctx.font = 'bold 20px Poppins, sans-serif';
-                                                ctx.textAlign = 'center';
-                                                ctx.fillText('BANDHAN BAZAAR PASS', width / 2, 40);
-
-                                                // Name
-                                                ctx.fillStyle = '#2B2B2B';
-                                                ctx.font = 'bold 18px Poppins, sans-serif';
-                                                ctx.fillText(name.toUpperCase(), width / 2, 100);
-
-                                                // QR Code Center Alignment
-                                                const qrSize = 180;
-                                                const qrX = Math.round((width - qrSize) / 2);
-
-                                                ctx.imageSmoothingEnabled = false;
-                                                ctx.drawImage(sourceElement, qrX, 120, qrSize, qrSize);
-
-                                                // Accompanying Members Count
-                                                if (numMembers > 0) {
-                                                      ctx.fillStyle = '#7B2CBF';
-                                                      ctx.font = 'bold 14px Poppins, sans-serif';
-                                                      ctx.fillText(`Accompanying Members: ${numMembers}`, width / 2, 335);
-                                                }
-
-                                                resolve(canvas);
-                                          } catch (err) {
-                                                reject(err);
+                                          // 1. Calculate Full Width Header Logo Dimensions
+                                          const logoW = 740; // Full header width span
+                                          let logoH = 150;
+                                          if (headerLogo && headerLogo.width > 0) {
+                                                logoH = (headerLogo.height / headerLogo.width) * logoW;
                                           }
-                                    };
 
-                                    // Direct canvas draw if available (Instant on mobile)
-                                    if (qrCanvas) {
-                                          renderPass(qrCanvas);
-                                    } else if (qrImg) {
-                                          const img = new Image();
-                                          img.onload = () => renderPass(img);
-                                          img.src = qrImg.src;
+                                          const logoX = (baseWidth - logoW) / 2;
+                                          const logoY = 15;
+                                          const logoBottomY = logoY + logoH;
+
+                                          // 2. Separator Line + Name Position
+                                          const lineY = logoBottomY + 28;
+
+                                          // Name will appear BELOW the separator line
+                                          const nameY = lineY + 14;
+
+                                          // Middle section starts after the name
+                                          const sectionY = nameY + 45;
+
+                                          // Calculate total base height dynamically
+                                          const middleSectionH = 295;
+                                          const footerH = 45;
+                                          const baseHeight = Math.max(680, Math.round(sectionY + middleSectionH + footerH));
+
+                                          canvas.width = baseWidth * scaleFactor;
+                                          canvas.height = baseHeight * scaleFactor;
+
+                                          ctx.scale(scaleFactor, scaleFactor);
+                                          ctx.imageSmoothingEnabled = true;
+                                          ctx.imageSmoothingQuality = 'high';
+
+                                          // Outer Background & Orange Border
+                                          ctx.fillStyle = '#FFFFFF';
+                                          ctx.fillRect(0, 0, baseWidth, baseHeight);
+
+                                          ctx.strokeStyle = '#F97316';
+                                          ctx.lineWidth = 6;
+                                          ctx.strokeRect(3, 3, baseWidth - 6, baseHeight - 6);
+
+                                          // Draw Full Width Header Logo (Direct Draw)
+                                          if (headerLogo) {
+                                                ctx.drawImage(headerLogo, logoX, logoY, logoW, logoH);
+                                          }
+
+                                          // Visitor Name (Centered vertically between Logo and Line)
+                                          ctx.fillStyle = '#1E293B';
+                                          ctx.font = 'bold 30px Poppins, sans-serif';
+                                          ctx.textAlign = 'center';
+                                          ctx.textBaseline = 'top';
+                                          ctx.fillText(name.toUpperCase(), centerX, nameY);
+
+                                          // Horizontal Separator Line (Placed cleanly below Name)
+                                          ctx.strokeStyle = '#E2E8F0';
+                                          ctx.lineWidth = 1.5;
+                                          ctx.beginPath();
+                                          ctx.moveTo(35, lineY);
+                                          ctx.lineTo(baseWidth - 35, lineY);
+                                          ctx.stroke();
+
+                                          // Reset text baseline for remaining sections
+                                          ctx.textBaseline = 'alphabetic';
+
+                                          // 3. Middle 3-Column Section Layout
+                                          const sideBoxW = 190;
+                                          const sideBoxH = 95;
+
+                                          // --- LEFT COLUMN: POWERED BY & CO-POWERED BY ---
+                                          const leftColX = 35;
+                                          const leftCenterX = leftColX + (sideBoxW / 2);
+
+                                          // Powered By Tag & Image
+                                          ctx.fillStyle = '#FEF3C7';
+                                          ctx.fillRect(leftCenterX - 65, sectionY, 130, 22);
+                                          ctx.strokeStyle = '#FDE047';
+                                          ctx.strokeRect(leftCenterX - 65, sectionY, 130, 22);
+                                          ctx.fillStyle = '#854D0E';
+                                          ctx.font = 'bold 10px Poppins, sans-serif';
+                                          ctx.fillText('POWERED BY', leftCenterX, sectionY + 15);
+
+                                          drawImageContain(ctx, poweredByImg, leftColX, sectionY + 28, sideBoxW, sideBoxH);
+
+                                          // Co-Powered By Tag & Image
+                                          const coPoweredY = sectionY + 135;
+                                          ctx.fillStyle = '#FEF3C7';
+                                          ctx.fillRect(leftCenterX - 70, coPoweredY, 140, 22);
+                                          ctx.strokeStyle = '#FDE047';
+                                          ctx.strokeRect(leftCenterX - 70, coPoweredY, 140, 22);
+                                          ctx.fillStyle = '#854D0E';
+                                          ctx.font = 'bold 10px Poppins, sans-serif';
+                                          ctx.fillText('CO-POWERED BY', leftCenterX, coPoweredY + 15);
+
+                                          drawImageContain(ctx, coPoweredByImg, leftColX, coPoweredY + 28, sideBoxW, sideBoxH);
+
+                                          // --- CENTER COLUMN: QR CODE & ACCOMPANYING MEMBERS ---
+                                          const qrSize = 210;
+                                          const qrX = Math.round(centerX - (qrSize / 2));
+                                          const qrY = sectionY + 5;
+
+                                          ctx.fillStyle = '#FAFAFA';
+                                          ctx.fillRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16);
+                                          ctx.strokeStyle = '#CBD5E1';
+                                          ctx.lineWidth = 2;
+                                          ctx.strokeRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16);
+
+                                          const qrSourceElement = qrCanvas || qrImg;
+                                          ctx.drawImage(qrSourceElement, qrX, qrY, qrSize, qrSize);
+
+                                          // Accompanying Members Badge
+                                          const membersY = qrY + qrSize + 30;
+                                          ctx.fillStyle = '#FEF3C7';
+                                          ctx.fillRect(centerX - 140, membersY - 18, 280, 34);
+                                          ctx.strokeStyle = '#FDE047';
+                                          ctx.strokeRect(centerX - 140, membersY - 18, 280, 34);
+
+                                          ctx.fillStyle = '#EA580C';
+                                          ctx.font = 'bold 16px Poppins, sans-serif';
+                                          ctx.fillText(`Accompanying Members: ${numMembers}`, centerX, membersY + 4);
+
+                                          // --- RIGHT COLUMN: ASSOCIATED WITH SPONSORS ---
+                                          const rightColX = baseWidth - 35 - sideBoxW;
+                                          const rightCenterX = rightColX + (sideBoxW / 2);
+
+                                          ctx.fillStyle = '#FEF3C7';
+                                          ctx.fillRect(rightCenterX - 70, sectionY, 140, 22);
+                                          ctx.strokeStyle = '#FDE047';
+                                          ctx.strokeRect(rightCenterX - 70, sectionY, 140, 22);
+                                          ctx.fillStyle = '#854D0E';
+                                          ctx.font = 'bold 10px Poppins, sans-serif';
+                                          ctx.fillText('ASSOCIATED WITH', rightCenterX, sectionY + 15);
+
+                                          drawImageContain(ctx, associated1Img, rightColX, sectionY + 28, sideBoxW, sideBoxH);
+                                          drawImageContain(ctx, associated2Img, rightColX, coPoweredY + 28, sideBoxW, sideBoxH);
+
+                                          // 4. Footer Verification Notice
+                                          ctx.fillStyle = '#FFF7ED';
+                                          ctx.fillRect(6, baseHeight - 38, baseWidth - 12, 32);
+                                          ctx.fillStyle = '#EA580C';
+                                          ctx.font = 'italic 500 12px Poppins, sans-serif';
+                                          ctx.fillText('Please present this QR Pass at the entry gate for scan verification.', centerX, baseHeight - 18);
+
+                                          resolve(canvas);
+                                    } catch (err) {
+                                          reject(err);
                                     }
                               }
 
                               if (checkCount > 50) {
                                     clearInterval(interval);
-                                    reject(new Error("QR code generation timed out. Please try again."));
+                                    reject(new Error("Pass generation timed out. Please try again."));
                               }
                         }, 100);
                   });
             }
 
-            // PDF Download Function using jsPDF
+            // Cross-Platform PDF Download Function (Mobile & Desktop Compatible)
             function downloadPassAsPDF(canvas, filename) {
                   const { jsPDF } = window.jspdf;
-                  
+
+                  const pdfWidth = canvas.width / 2;
+                  const pdfHeight = canvas.height / 2;
+
+                  const imgData = canvas.toDataURL('image/png', 1.0);
+
                   const pdf = new jsPDF({
-                        orientation: 'portrait',
+                        orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
                         unit: 'px',
-                        format: [canvas.width, canvas.height]
+                        format: [pdfWidth, pdfHeight]
                   });
 
-                  const imgData = canvas.toDataURL('image/png');
-                  pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                  pdf.save(filename);
+                  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+                  try {
+                        const pdfBlob = pdf.output('blob');
+                        const blobUrl = URL.createObjectURL(pdfBlob);
+
+                        const link = document.createElement('a');
+                        link.href = blobUrl;
+                        link.download = filename;
+                        link.style.display = 'none';
+                        document.body.appendChild(link);
+
+                        link.click();
+
+                        setTimeout(() => {
+                              document.body.removeChild(link);
+                              URL.revokeObjectURL(blobUrl);
+                        }, 3000);
+                  } catch (e) {
+                        console.warn("Fallback to standard pdf.save()", e);
+                        pdf.save(filename);
+                  }
             }
       </script>
 </body>
