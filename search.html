@@ -9,6 +9,9 @@
       <!-- Google Fonts -->
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
       
+      <!-- SheetJS Library for Excel Export -->
+      <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+      
       <style>
             :root {
                   --primary-orange: #F97316;
@@ -122,10 +125,35 @@
                   border-top: 1px solid var(--border-color);
             }
 
+            .action-buttons {
+                  display: flex;
+                  gap: 10px;
+                  align-items: center;
+                  flex-wrap: wrap;
+            }
+
             .stats-text {
                   font-size: 0.95rem;
                   font-weight: 500;
                   color: #64748B;
+            }
+
+            .btn-excel {
+                  background: #16A34A;
+                  color: white;
+                  border: none;
+                  padding: 10px 18px;
+                  border-radius: 8px;
+                  font-weight: 600;
+                  cursor: pointer;
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 6px;
+                  transition: background 0.2s;
+            }
+
+            .btn-excel:hover {
+                  background: #15803D;
             }
 
             .btn-delete-selected {
@@ -350,7 +378,10 @@
                   </div>
                   <div class="action-bar">
                         <div class="stats-text" id="statsText">Loading records...</div>
-                        <button id="btnDeleteSelected" class="btn-delete-selected">Delete Selected (0)</button>
+                        <div class="action-buttons">
+                              <button id="btnExportExcel" class="btn-excel">📊 Export Excel</button>
+                              <button id="btnDeleteSelected" class="btn-delete-selected">Delete Selected (0)</button>
+                        </div>
                   </div>
             </div>
 
@@ -452,6 +483,7 @@
             const statsText = document.getElementById('statsText');
             const selectAllCheckbox = document.getElementById('selectAll');
             const btnDeleteSelected = document.getElementById('btnDeleteSelected');
+            const btnExportExcel = document.getElementById('btnExportExcel');
             const editModal = document.getElementById('editModal');
             const editForm = document.getElementById('editForm');
             const btnCancelEdit = document.getElementById('btnCancelEdit');
@@ -566,6 +598,51 @@
                               deleteSingleUser(id);
                         });
                   });
+            }
+
+            // Download All Data to Excel File
+            function exportToExcel() {
+                  if (allUsers.length === 0) {
+                        showToast("No data available to export!", true);
+                        return;
+                  }
+
+                  // Format data array into clean readable JSON structure for Excel
+                  const excelData = allUsers.map((user, index) => ({
+                        "S.No": index + 1,
+                        "Name": user.name || '',
+                        "Father's Name": user.fatherName || '',
+                        "Mobile Number": user.mobile || '',
+                        "Address": user.address || '',
+                        "Accompanying Members": user.numMembers || 0,
+                        "Total Members Count": user.totalMembersCount || ((user.numMembers || 0) + 1),
+                        "Registration Date": user.createdAt && user.createdAt.toDate ? user.createdAt.toDate().toLocaleString('en-IN') : ''
+                  }));
+
+                  // Generate Worksheet
+                  const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+                  // Define Custom Column Widths
+                  worksheet['!cols'] = [
+                        { wch: 6 },  // S.No
+                        { wch: 22 }, // Name
+                        { wch: 22 }, // Father's Name
+                        { wch: 15 }, // Mobile Number
+                        { wch: 30 }, // Address
+                        { wch: 22 }, // Accompanying Members
+                        { wch: 20 }, // Total Members Count
+                        { wch: 22 }  // Registration Date
+                  ];
+
+                  // Create Workbook & Append Sheet
+                  const workbook = XLSX.utils.book_new();
+                  XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
+
+                  // Trigger Automatic Download
+                  const fileName = `Bandhan_Bazaar_Registrations_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                  XLSX.writeFile(workbook, fileName);
+
+                  showToast("Excel file downloaded successfully!");
             }
 
             // Select All Checkbox Handler
@@ -692,6 +769,9 @@
                         .replace(/"/g, "&quot;")
                         .replace(/'/g, "&#039;");
             }
+
+            // Export Excel Button Event Listener
+            btnExportExcel.addEventListener('click', exportToExcel);
 
             // Real-Time Search Event Listener
             searchInput.addEventListener('input', filterAndRender);
