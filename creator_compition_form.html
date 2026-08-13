@@ -28,87 +28,72 @@
       margin: 0 auto;
     }
 
-    /* Header Styling */
+    /* Header Styling - Modern Split Layout */
     .header-card {
-    width: 700px;
-    max-width: 100%;
-    margin: 0 auto 25px auto;
+      width: 100%;
+      margin: 0 auto 25px auto;
+      background: #F97316;
+      color: #ffffff;
+      padding: 24px 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(249, 115, 22, 0.25);
+      overflow: hidden;
+      
+      /* Flexbox for Left Text & Right Image */
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
 
-    background: linear-gradient(
-        135deg,
-        #7b1fa2 0%,
-        #c2185b 45%,
-        #ff6f00 100%
-    );
-
-    color: #ffffff;
-    padding: 14px 20px 18px;
-
-    border-radius: 16px;
-    text-align: center;
-
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-
-    overflow: hidden;
-}
-
-    /* Header Image Logo - Sleek & Well Proportioned */
-    .header-logo {
-    display: block;
-
-    width: 380px;
-    max-width: 90%;
-    height: auto;
-
-    margin: 0 auto 14px auto;
-
-    object-fit: contain;
-
-    border-radius: 12px;
-}
+    .header-content {
+      flex: 1;
+      text-align: left;
+    }
 
     .header-card h1 {
-    margin: 0 0 12px 0;
+      margin: 0 0 14px 0;
+      font-size: 26px;
+      line-height: 1.3;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-    font-size: 25px;
-    line-height: 1.25;
+    .header-logo-container {
+      flex: 0 0 320px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-    font-weight: 700;
-
-    color: #ffffff;
-
-    text-align: center;
-
-    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.20);
-}
+    .header-logo {
+      width: 100%;
+      max-width: 320px;
+      height: auto;
+      object-fit: contain;
+      border-radius: 12px;
+    }
 
     .event-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    max-width: 100%;
-
-    background: rgba(255, 255, 255, 0.18);
-
-    border: 1px solid rgba(255, 255, 255, 0.25);
-
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-
-    padding: 7px 16px;
-
-    border-radius: 25px;
-
-    font-size: 13px;
-    font-weight: 600;
-
-    line-height: 1.4;
-
-    text-align: center;
-
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-}
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      padding: 8px 18px;
+      border-radius: 25px;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: #ffffff;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    }
 
     /* Prizes Grid */
     .prizes-grid {
@@ -200,9 +185,9 @@
     .form-group input:focus,
     .form-group select:focus,
     .form-group textarea:focus {
-      border-color: #8e24aa;
+      border-color: #F97316;
       outline: none;
-      box-shadow: 0 0 0 3px rgba(142, 36, 170, 0.15);
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
     }
 
     /* Checkbox Requirements */
@@ -229,7 +214,7 @@
       margin-top: 3px;
       width: 17px;
       height: 17px;
-      accent-color: #8e24aa;
+      accent-color: #F97316;
       cursor: pointer;
     }
 
@@ -248,7 +233,7 @@
     /* Submit Button */
     .submit-btn {
       width: 100%;
-      background: linear-gradient(135deg, #8e24aa, #d81b60);
+      background: linear-gradient(135deg, #F97316, #ea580c);
       color: #ffffff;
       border: none;
       padding: 14px;
@@ -258,6 +243,7 @@
       cursor: pointer;
       margin-top: 20px;
       transition: transform 0.15s ease, opacity 0.2s ease;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
     }
 
     .submit-btn:hover {
@@ -269,51 +255,52 @@
       background: #cbd5e0;
       cursor: not-allowed;
       transform: none;
+      box-shadow: none;
     }
 
+    /* Responsive adjustments */
     @media (max-width: 768px) {
+      .header-card {
+        flex-direction: column-reverse;
+        padding: 20px 16px;
+        text-align: center;
+      }
 
-    .header-card {
-        padding: 12px 12px 18px;
-        border-radius: 14px;
-    }
+      .header-content {
+        text-align: center;
+      }
 
-    .header-logo {
-        width: 280px;
-        max-width: 88%;
-        margin-bottom: 12px;
-    }
-
-    .header-card h1 {
+      .header-card h1 {
+        justify-content: center;
         font-size: 21px;
-        line-height: 1.25;
-        margin-bottom: 10px;
-    }
+      }
 
-    .event-badge {
-        width: auto;
-        max-width: 100%;
+      .header-logo-container {
+        flex: 0 0 auto;
+        width: 100%;
+      }
 
-        padding: 6px 12px;
+      .header-logo {
+        max-width: 260px;
+      }
 
+      .event-badge {
         font-size: 11px;
-        line-height: 1.5;
+        padding: 6px 12px;
+      }
 
-        white-space: normal;
-    }
-
-    .form-grid {
+      .form-grid {
         grid-template-columns: 1fr;
-    }
+      }
 
-    .full-width {
+      .full-width {
         grid-column: span 1;
-    }
+      }
 
-    .prizes-grid {
+      .prizes-grid {
         grid-template-columns: 1fr;
+      }
     }
-}
   </style>
 </head>
 
@@ -321,12 +308,15 @@
 
   <div class="container">
     
-    <!-- Banner Header -->
+    <!-- Banner Header with Left Text & Right Image -->
     <div class="header-card">
-      <img src="assets/headerlogo.png" alt="Bandhan Bazaar Logo" class="header-logo">
-      <h1>🏆 CREATOR REEL CONTEST</h1>
-      <!-- <div class="event-badge">📅 25 • 26 • 27 AUGUST 2026 | 📍 Raja Park, Bajrang Bagh Road, Pali</div> -->
-      <div class="event-badge">📅 13 - 26 AUGUST 2026 | 📍 Raja Park, Bajrang Bagh Road, Pali</div>
+      <div class="header-content">
+        <h1>🏆 CREATOR REEL CONTEST</h1>
+        <div class="event-badge">📅 13 - 26 AUGUST 2026 | 📍 Raja Park, Bajrang Bagh Road, Pali</div>
+      </div>
+      <div class="header-logo-container">
+        <img src="assets/logo_new.png" alt="Bandhan Bazaar Logo" class="header-logo">
+      </div>
     </div>
 
     <!-- Prizes Announcement -->
@@ -422,7 +412,7 @@
           </div>
           <div class="form-group full-width">
             <label>Contest Hashtag</label>
-            <input type="text" value="#BandhanBazaarCreatorContest" readonly style="background-color: #f1f5f9; font-weight: 600; color: #4a148c;" />
+            <input type="text" value="#BandhanBazaarCreatorContest" readonly style="background-color: #f1f5f9; font-weight: 600; color: #ea580c;" />
           </div>
         </div>
 
@@ -458,7 +448,7 @@
         <!-- 5. Declaration -->
         <div class="declaration-box">
           <label style="display: flex; gap: 10px; cursor: pointer;">
-            <input type="checkbox" id="declarationCheck" required style="margin-top: 3px; accent-color: #8e24aa;" />
+            <input type="checkbox" id="declarationCheck" required style="margin-top: 3px; accent-color: #F97316;" />
             <span><b>Creator Declaration:</b> I confirm that the information provided is correct. I agree to abide by all official rules and confirm my Reel will contain original material. I acknowledge all eligible participants will be felicitated at Bandhan Bazaar 2026.</span>
           </label>
         </div>
