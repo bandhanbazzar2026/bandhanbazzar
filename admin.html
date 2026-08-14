@@ -540,12 +540,13 @@
             <th>Platform & Handles</th>
             <th>Reel Concept / Title</th>
             <th>Posting Date</th>
+            <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="creatorTableBody">
           <tr>
-            <td colspan="7" style="text-align: center; color: #777;">Loading creator submissions...</td>
+            <td colspan="8" style="text-align: center; color: #777;">Loading creator submissions...</td>
           </tr>
         </tbody>
       </table>
@@ -981,6 +982,88 @@
     </div>
   </div>
 
+  <!-- EDIT CREATOR ENTRY MODAL -->
+  <div id="editCreatorModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="document.getElementById('editCreatorModal').style.display='none'">&times;</span>
+      <h2>✏️ Edit Creator Registration</h2>
+      <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Update creator details, reel link, posting date, or status.</p>
+
+      <form id="editCreatorForm" class="admin-form">
+        <input type="hidden" id="editCreatorId" />
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editCreatorChannelName">Creator / Channel Name *</label>
+            <input type="text" id="editCreatorChannelName" required />
+          </div>
+          <div class="form-group">
+            <label for="editCreatorFullName">Full Name *</label>
+            <input type="text" id="editCreatorFullName" required />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editCreatorCity">City *</label>
+            <input type="text" id="editCreatorCity" required />
+          </div>
+          <div class="form-group">
+            <label for="editCreatorMobile">Mobile No *</label>
+            <input type="tel" id="editCreatorMobile" required />
+          </div>
+          <div class="form-group">
+            <label for="editCreatorEmail">Email Address *</label>
+            <input type="email" id="editCreatorEmail" required />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editCreatorPlatform">Primary Platform *</label>
+            <select id="editCreatorPlatform" required>
+              <option value="Instagram">Instagram</option>
+              <option value="YouTube">YouTube</option>
+              <option value="Facebook">Facebook</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editCreatorHandle">Handle / Username *</label>
+            <input type="text" id="editCreatorHandle" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editCreatorReelTitle">Reel Concept / Title *</label>
+          <input type="text" id="editCreatorReelTitle" required />
+        </div>
+
+        <div class="form-group">
+          <label for="editCreatorReelLink">Reel Link / URL</label>
+          <input type="url" id="editCreatorReelLink" placeholder="https://..." />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editCreatorPostingDate">Posting Date *</label>
+            <input type="date" id="editCreatorPostingDate" required />
+          </div>
+          <div class="form-group">
+            <label for="editCreatorStatus">Approval Status *</label>
+            <select id="editCreatorStatus" required>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" id="saveCreatorEditBtn" class="btn btn-edit" style="padding: 12px; font-size: 15px; font-weight: bold;">💾 Save & Update Creator Entry</button>
+      </form>
+    </div>
+  </div>
+
   <!-- Zoom Image Modal -->
   <div id="imgModal" class="image-modal" onclick="this.style.display='none'">
     <img id="modalImg" src="" alt="Proof Preview" />
@@ -1008,6 +1091,7 @@
     const db = getFirestore(app, "default");
 
     let allBookings = [];
+    let allCreators = [];
     let currentFilter = 'pending';
 
     const tableBody = document.getElementById('adminTableBody');
@@ -1103,6 +1187,7 @@
     // Firestore Listener for Creator Registrations
     const creatorQuery = query(collection(db, "creator_registrations"), orderBy("timestamp", "desc"));
     onSnapshot(creatorQuery, (snapshot) => {
+      allCreators = [];
       let total = 0;
       let igCount = 0;
       let ytCount = 0;
@@ -1114,10 +1199,12 @@
       creatorTableBody.innerHTML = "";
 
       if (snapshot.empty) {
-        creatorTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#888; padding:20px;">No creator entries registered yet.</td></tr>`;
+        creatorTableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#888; padding:20px;">No creator entries registered yet.</td></tr>`;
       } else {
         snapshot.docs.forEach((docSnap) => {
           const data = docSnap.data();
+          const creatorItem = { id: docSnap.id, ...data };
+          allCreators.push(creatorItem);
           total++;
 
           // Count Platform breakdown
@@ -1138,6 +1225,11 @@
           if (data.primaryPlatform === "YouTube") badgeClass = "badge-yt";
           if (data.primaryPlatform === "Facebook") badgeClass = "badge-fb";
 
+          const creatorStatus = data.status || 'pending';
+          let statusBadgeClass = 'badge-pending';
+          if (creatorStatus === 'approved') statusBadgeClass = 'badge-approved';
+          if (creatorStatus === 'rejected') statusBadgeClass = 'badge-rejected';
+
           const subDate = data.timestamp ? new Date(data.timestamp).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : 'N/A';
 
           const tr = document.createElement("tr");
@@ -1148,8 +1240,15 @@
             <td><span class="badge ${badgeClass}">${escapeHtml(data.primaryPlatform)}</span><br><small style="color:#007bff;">${escapeHtml(data.instagram)}</small></td>
             <td><b>${escapeHtml(data.reelTitle)}</b>${data.reelLink ? `<br><a href="${escapeHtml(data.reelLink)}" target="_blank" style="color:#8e24aa; font-size:11px;">View Reel Link</a>` : ''}</td>
             <td>📅 ${data.reelPostingDate || 'N/A'}</td>
+            <td><span class="badge ${statusBadgeClass}">${creatorStatus}</span></td>
             <td>
-              <button class="btn btn-delete" onclick="window.deleteCreatorEntry('${docSnap.id}')">Delete</button>
+              <div class="action-btn-group">
+                <button class="btn btn-edit" onclick="window.editCreatorEntry('${docSnap.id}')">✏️ Edit / Update</button>
+                ${creatorStatus !== 'approved' ? `
+                  <button class="btn btn-approve" onclick="window.approveCreatorEntry('${docSnap.id}')">Approve</button>
+                ` : ''}
+                <button class="btn btn-delete" onclick="window.deleteCreatorEntry('${docSnap.id}')">Delete</button>
+              </div>
             </td>
           `;
           creatorTableBody.appendChild(tr);
@@ -1172,7 +1271,77 @@
 
     }, (error) => {
       console.error("Creator Firestore fetch error:", error);
-      creatorTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#e53e3e;">Failed to load creator registrations.</td></tr>`;
+      creatorTableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#e53e3e;">Failed to load creator registrations.</td></tr>`;
+    });
+
+    // Approve Creator Entry
+    window.approveCreatorEntry = async (docId) => {
+      if (!confirm("Are you sure you want to APPROVE this creator entry?")) return;
+      try {
+        await updateDoc(doc(db, "creator_registrations", docId), { status: "approved" });
+        alert("Creator approved successfully!");
+      } catch (err) {
+        alert("Approval failed: " + err.message);
+      }
+    };
+
+    // Open Edit Creator Modal
+    window.editCreatorEntry = (docId) => {
+      const creator = allCreators.find(c => c.id === docId);
+      if (!creator) return alert("Creator entry not found!");
+
+      document.getElementById('editCreatorId').value = creator.id;
+      document.getElementById('editCreatorChannelName').value = creator.channelName || '';
+      document.getElementById('editCreatorFullName').value = creator.fullName || '';
+      document.getElementById('editCreatorCity').value = creator.city || '';
+      document.getElementById('editCreatorMobile').value = creator.mobile || '';
+      document.getElementById('editCreatorEmail').value = creator.email || '';
+      document.getElementById('editCreatorPlatform').value = creator.primaryPlatform || 'Instagram';
+      document.getElementById('editCreatorHandle').value = creator.instagram || '';
+      document.getElementById('editCreatorReelTitle').value = creator.reelTitle || '';
+      document.getElementById('editCreatorReelLink').value = creator.reelLink || '';
+      document.getElementById('editCreatorPostingDate').value = creator.reelPostingDate || '';
+      document.getElementById('editCreatorStatus').value = creator.status || 'pending';
+
+      document.getElementById('editCreatorModal').style.display = 'flex';
+    };
+
+    // Save Creator Edit Form Submit
+    document.getElementById('editCreatorForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const creatorId = document.getElementById('editCreatorId').value;
+      if (!creatorId) return;
+
+      const submitBtn = document.getElementById('saveCreatorEditBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Saving Changes...";
+
+      try {
+        await updateDoc(doc(db, "creator_registrations", creatorId), {
+          channelName: document.getElementById('editCreatorChannelName').value.trim(),
+          fullName: document.getElementById('editCreatorFullName').value.trim(),
+          city: document.getElementById('editCreatorCity').value.trim(),
+          mobile: document.getElementById('editCreatorMobile').value.trim(),
+          email: document.getElementById('editCreatorEmail').value.trim(),
+          primaryPlatform: document.getElementById('editCreatorPlatform').value,
+          instagram: document.getElementById('editCreatorHandle').value.trim(),
+          reelTitle: document.getElementById('editCreatorReelTitle').value.trim(),
+          reelLink: document.getElementById('editCreatorReelLink').value.trim(),
+          reelPostingDate: document.getElementById('editCreatorPostingDate').value,
+          status: document.getElementById('editCreatorStatus').value,
+          lastEditedAt: new Date().toISOString()
+        });
+
+        alert("Creator registration updated successfully!");
+        document.getElementById('editCreatorModal').style.display = 'none';
+      } catch (err) {
+        console.error("Error updating creator:", err);
+        alert("Failed to update creator: " + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "💾 Save & Update Creator Entry";
+      }
     });
 
     // Delete Creator Registration Entry
