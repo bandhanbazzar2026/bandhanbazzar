@@ -554,7 +554,7 @@
 
   </div>
 
-  <!-- Full Details View Modal -->
+  <!-- Full Details View Modal for Stall Bookings -->
   <div id="detailsModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('detailsModal').style.display='none'">&times;</span>
@@ -562,6 +562,17 @@
       <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Complete information submitted during stall registration</p>
       
       <div class="details-grid" id="modalDetailsBody"></div>
+    </div>
+  </div>
+
+  <!-- Creator Entry Details View Modal -->
+  <div id="creatorDetailsModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="document.getElementById('creatorDetailsModal').style.display='none'">&times;</span>
+      <h2 style="margin-bottom: 5px; color: #1a252f;" id="modalCreatorChannelName">Creator Details</h2>
+      <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Complete information submitted during creator contest registration</p>
+      
+      <div class="details-grid" id="modalCreatorDetailsBody"></div>
     </div>
   </div>
 
@@ -1243,6 +1254,7 @@
             <td><span class="badge ${statusBadgeClass}">${creatorStatus}</span></td>
             <td>
               <div class="action-btn-group">
+                <button class="btn btn-view" onclick="window.viewCreatorDetails('${docSnap.id}')">👁️ View Entry</button>
                 <button class="btn btn-edit" onclick="window.editCreatorEntry('${docSnap.id}')">✏️ Edit / Update</button>
                 ${creatorStatus !== 'approved' ? `
                   <button class="btn btn-approve" onclick="window.approveCreatorEntry('${docSnap.id}')">Approve</button>
@@ -1273,6 +1285,34 @@
       console.error("Creator Firestore fetch error:", error);
       creatorTableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#e53e3e;">Failed to load creator registrations.</td></tr>`;
     });
+
+    // View Creator Entry Details Modal Trigger
+    window.viewCreatorDetails = (docId) => {
+      const creator = allCreators.find(c => c.id === docId);
+      if (!creator) return alert("Creator entry not found!");
+
+      document.getElementById('modalCreatorChannelName').innerText = creator.channelName || 'Creator Details';
+      const body = document.getElementById('modalCreatorDetailsBody');
+
+      const subDate = creator.timestamp ? new Date(creator.timestamp).toLocaleString('en-IN', { dateStyle: 'full', timeStyle: 'short' }) : 'N/A';
+
+      body.innerHTML = `
+        <div class="detail-item"><label>Channel / Creator Name</label><p><b>${escapeHtml(creator.channelName || 'N/A')}</b></p></div>
+        <div class="detail-item"><label>Full Name</label><p>${escapeHtml(creator.fullName || 'N/A')}</p></div>
+        <div class="detail-item"><label>City</label><p>${escapeHtml(creator.city || 'N/A')}</p></div>
+        <div class="detail-item"><label>Mobile Number</label><p>📞 ${escapeHtml(creator.mobile || 'N/A')}</p></div>
+        <div class="detail-item"><label>Email Address</label><p>✉️ ${escapeHtml(creator.email || 'N/A')}</p></div>
+        <div class="detail-item"><label>Primary Platform</label><p><span class="badge badge-method">${escapeHtml(creator.primaryPlatform || 'N/A')}</span></p></div>
+        <div class="detail-item"><label>Social Handle / Username</label><p>${escapeHtml(creator.instagram || 'N/A')}</p></div>
+        <div class="detail-item"><label>Target Reel Posting Date</label><p>📅 ${creator.reelPostingDate || 'N/A'}</p></div>
+        <div class="detail-item"><label>Status</label><p><b>${(creator.status || 'pending').toUpperCase()}</b></p></div>
+        <div class="detail-item"><label>Submission Date & Time</label><p>${subDate}</p></div>
+        <div class="detail-item" style="grid-column: 1 / -1;"><label>Reel Concept / Title</label><p>${escapeHtml(creator.reelTitle || 'N/A')}</p></div>
+        <div class="detail-item" style="grid-column: 1 / -1;"><label>Reel URL / Link</label><p>${creator.reelLink ? `<a href="${escapeHtml(creator.reelLink)}" target="_blank" style="color:#007bff; font-weight:bold; word-break:break-all;">${escapeHtml(creator.reelLink)}</a>` : 'Not Provided'}</p></div>
+      `;
+
+      document.getElementById('creatorDetailsModal').style.display = 'flex';
+    };
 
     // Approve Creator Entry
     window.approveCreatorEntry = async (docId) => {
