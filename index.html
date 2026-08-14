@@ -148,7 +148,15 @@
       <!-- Firebase & HD Canvas Module -->
       <script type="module">
             import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-            import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+            import { 
+                  getFirestore, 
+                  collection, 
+                  addDoc, 
+                  serverTimestamp,
+                  query,
+                  where,
+                  getDocs 
+            } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
             const firebaseConfig = {
                   apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
@@ -171,7 +179,7 @@
                   e.preventDefault();
                   submitBtn.disabled = true;
                   statusMsg.style.color = "#F97316";
-                  statusMsg.innerText = "Processing... Data save ho raha hai aur Pass PDF generate ho rahi hai.";
+                  statusMsg.innerText = "Checking record... Kpya prateeksha karein.";
 
                   const name = document.getElementById('name').value.trim();
                   const fatherName = document.getElementById('fatherName').value.trim();
@@ -180,8 +188,23 @@
                   const numMembers = parseInt(document.getElementById('numMembers').value) || 0;
 
                   try {
-                        // 1. Data Save into Firestore
-                        const docRef = await addDoc(collection(db, "Users"), {
+                        // 1. Real-time Backend Duplicate Check (By Mobile Number)
+                        const usersRef = collection(db, "Users");
+                        const duplicateQuery = query(usersRef, where("mobile", "==", mobile));
+                        const querySnapshot = await getDocs(duplicateQuery);
+
+                        if (!querySnapshot.empty) {
+                              statusMsg.style.color = "red";
+                              statusMsg.innerText = `⚠️ Mobile number (${mobile}) pehle se registered hai! Kpya dusra mobile number enter karein.`;
+                              submitBtn.disabled = false;
+                              return; // Stop form execution if duplicate found
+                        }
+
+                        statusMsg.style.color = "#F97316";
+                        statusMsg.innerText = "Processing... Data save ho raha hai aur Pass PDF generate ho rahi hai.";
+
+                        // 2. Data Save into Firestore
+                        const docRef = await addDoc(usersRef, {
                               name: name,
                               fatherName: fatherName,
                               address: address,
@@ -193,22 +216,23 @@
 
                         const docId = docRef.id;
 
-                        // 2. Generate Proportional Canvas Pass
+                        // 3. Generate Proportional Canvas Pass
                         const canvas = await createHDPassCanvas({
                               docId,
                               name,
                               numMembers
                         });
 
-                        // 3. Download Pass as PDF (Mobile & Desktop Compatible)
-                        downloadPassAsPDF(canvas, `Bandhan_Bazaar_Pass_${name.replace(/\s+/g, '_')}.pdf`);
-
+                        // 4. Trigger Cross-Device Download with Explicit Delay Buffer
                         statusMsg.style.color = "green";
-                        statusMsg.innerText = "Success! Data save ho chuka hai aur Pass PDF download ho gaya hai. Redirecting...";
+                        statusMsg.innerText = "Success! Pass PDF downloading... Website redirect ho rahi hai.";
 
+                        await downloadPassAsPDF(canvas, `Bandhan_Bazaar_Pass_${name.replace(/\s+/g, '_')}.pdf`);
+
+                        // 1 Second Wait Delay Before Final Redirection
                         setTimeout(() => {
                               window.location.href = "https://bandhanbazaar.in/";
-                        }, 5000);
+                        }, 1000);
 
                   } catch (error) {
                         console.error("Submission Error: ", error);
@@ -453,43 +477,59 @@
                   });
             }
 
-            // Cross-Platform PDF Download Function (Mobile & Desktop Compatible)
+            // Cross-Platform PDF Download Function (Optimized for Mobile Browsers & Desktop)
             function downloadPassAsPDF(canvas, filename) {
-                  const { jsPDF } = window.jspdf;
+                  return new Promise((resolve) => {
+                        const { jsPDF } = window.jspdf;
 
-                  const pdfWidth = canvas.width / 2;
-                  const pdfHeight = canvas.height / 2;
+                        const pdfWidth = canvas.width / 2;
+                        const pdfHeight = canvas.height / 2;
 
-                  const imgData = canvas.toDataURL('image/png', 1.0);
+                        const imgData = canvas.toDataURL('image/png', 1.0);
 
-                  const pdf = new jsPDF({
-                        orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
-                        unit: 'px',
-                        format: [pdfWidth, pdfHeight]
-                  });
+                        const pdf = new jsPDF({
+                              orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+                              unit: 'px',
+                              format: [pdfWidth, pdfHeight]
+                        });
 
-                  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
-                  try {
-                        const pdfBlob = pdf.output('blob');
-                        const blobUrl = URL.createObjectURL(pdfBlob);
+                        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-                        const link = document.createElement('a');
-                        link.href = blobUrl;
-                        link.download = filename;
-                        link.style.display = 'none';
-                        document.body.appendChild(link);
+                        try {
+                              if (isMobile) {
+                                    // Native jsPDF download triggers system save prompt cleanly on mobile devices
+                                    pdf.save(filename);
+                              } else {
+                                    const pdfBlob = pdf.output('blob');
+                                    const blobUrl = URL.createObjectURL(pdfBlob);
 
-                        link.click();
+                                    const link = document.createElement('a');
+                                    link.href = blobUrl;
+                                    link.download = filename;
+                                    link.style.display = 'none';
+                                    document.body.appendChild(link);
 
+                                    link.click();
+
+                                    setTimeout(() => {
+                                          if (document.body.contains(link)) {
+                                                document.body.removeChild(link);
+                                          }
+                                          URL.revokeObjectURL(blobUrl);
+                                    }, 10000);
+                              }
+                        } catch (e) {
+                              console.warn("Fallback trigger standard pdf.save()", e);
+                              pdf.save(filename);
+                        }
+
+                        // Allow 1 second buffer delay for device download stack execution
                         setTimeout(() => {
-                              document.body.removeChild(link);
-                              URL.revokeObjectURL(blobUrl);
-                        }, 3000);
-                  } catch (e) {
-                        console.warn("Fallback to standard pdf.save()", e);
-                        pdf.save(filename);
-                  }
+                              resolve(true);
+                        }, 1000);
+                  });
             }
       </script>
 </body>
