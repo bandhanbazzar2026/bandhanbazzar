@@ -597,7 +597,7 @@
 
 <body>
 
-  <!-- Single Global Tooltip Container (Placed at top of body to avoid overflow clipping) -->
+  <!-- Single Global Tooltip Container -->
   <div id="globalTooltip"></div>
 
   <div class="container">
@@ -913,7 +913,7 @@
 
     // Pre-booked / Reserved Stalls List
     const PRE_BOOKED_SEATS = [
-      'A-5', 'A-6', 'A-11', 'A-12','B-1'
+      'A-5', 'A-6', 'A-11', 'A-12', 'B-1'
     ];
 
     // Stall Data Structure Generator
@@ -1067,35 +1067,37 @@
       return radio ? radio.value : 'UPI';
     }
 
-    // Payment Method UI Switch
+    // Payment Method UI Switch Helper
+    function updatePaymentMethodUI() {
+      const method = getSelectedPayMethod();
+      if (method === 'UPI') {
+        qrDisplayCard.style.display = 'block';
+        bankDisplayCard.style.display = 'none';
+        txnIdGroup.style.display = 'flex';
+        paymentProofGroup.style.display = 'flex';
+        transactionIdInput.required = true;
+        proofFileInput.required = true;
+      } else if (method === 'Bank Transfer') {
+        qrDisplayCard.style.display = 'none';
+        bankDisplayCard.style.display = 'block';
+        txnIdGroup.style.display = 'flex';
+        paymentProofGroup.style.display = 'flex';
+        transactionIdInput.required = true;
+        proofFileInput.required = true;
+      } else { // Cash
+        qrDisplayCard.style.display = 'none';
+        bankDisplayCard.style.display = 'none';
+        txnIdGroup.style.display = 'none';
+        paymentProofGroup.style.display = 'none';
+        transactionIdInput.required = false;
+        proofFileInput.required = false;
+        transactionIdInput.value = '';
+        proofFileInput.value = '';
+      }
+    }
+
     document.querySelectorAll('input[name="payMethod"]').forEach(radio => {
-      radio.addEventListener('change', () => {
-        const method = getSelectedPayMethod();
-        if (method === 'UPI') {
-          qrDisplayCard.style.display = 'block';
-          bankDisplayCard.style.display = 'none';
-          txnIdGroup.style.display = 'flex';
-          paymentProofGroup.style.display = 'flex';
-          transactionIdInput.required = true;
-          proofFileInput.required = true;
-        } else if (method === 'Bank Transfer') {
-          qrDisplayCard.style.display = 'none';
-          bankDisplayCard.style.display = 'block';
-          txnIdGroup.style.display = 'flex';
-          paymentProofGroup.style.display = 'flex';
-          transactionIdInput.required = true;
-          proofFileInput.required = true;
-        } else { // Cash
-          qrDisplayCard.style.display = 'none';
-          bankDisplayCard.style.display = 'none';
-          txnIdGroup.style.display = 'none';
-          paymentProofGroup.style.display = 'none';
-          transactionIdInput.required = false;
-          proofFileInput.required = false;
-          transactionIdInput.value = '';
-          proofFileInput.value = '';
-        }
-      });
+      radio.addEventListener('change', updatePaymentMethodUI);
     });
 
     // Get Payment Option
@@ -1163,6 +1165,9 @@
 
       // 2. Fetch and merge booking info from 'bookings' collection
       Object.values(rawBookingsMap).forEach(booking => {
+        // Skip cancelled or rejected bookings
+        if (booking.status === 'cancelled' || booking.status === 'rejected') return;
+
         if (Array.isArray(booking.seats)) {
           booking.seats.forEach(seatId => {
             if (!dbSeatsMap[seatId]) {
@@ -1284,6 +1289,9 @@
       globalTooltip.classList.remove('active');
     }
 
+    window.addEventListener('scroll', hideTooltip, { passive: true });
+    window.addEventListener('touchend', hideTooltip, { passive: true });
+
     // Single Seat Element Creation Helper
     function createSeatElement(seat, containerEl, seatStatus) {
       const seatEl = document.createElement('div');
@@ -1319,7 +1327,7 @@
 
       // Prepare Tooltip Content
       let tooltipContent = `<strong>Stall:</strong> ${seat.name}`;
-      if (isBooked || isPending || parentDbData.companyName || parentDbData.businessCategories) {
+      if (isBooked || isPending) {
         tooltipContent += `<br><strong>Business:</strong> ${companyName}`;
         tooltipContent += `<br><strong>Category:</strong> ${category}`;
         tooltipContent += `<br><strong>Status:</strong> ${isBooked ? 'Booked' : 'Pending Verification'}`;
@@ -1333,7 +1341,7 @@
         <span class="seat-size">${seat.dim}</span>
       `;
 
-      // Attach Hover Event Listeners to avoid overflow clipping
+      // Attach Hover Event Listeners
       seatEl.addEventListener('mouseenter', (e) => showTooltip(e, tooltipContent));
       seatEl.addEventListener('mousemove', (e) => moveTooltip(e));
       seatEl.addEventListener('mouseleave', () => hideTooltip());
@@ -1378,7 +1386,7 @@
       checkoutBtn.disabled = false;
     }
 
-    // Cloudinary File Upload Helper
+    // Cloudinary File Upload Helper (Uses auto/upload for image & pdf support)
     async function uploadToCloudinary(file, folderPath) {
       if (file.size > 10 * 1024 * 1024) {
         throw new Error("File size exceeds 10 MB limit.");
@@ -1389,7 +1397,7 @@
       formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
       formData.append('folder', folderPath);
 
-      const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
         method: 'POST',
         body: formData
       });
@@ -1401,6 +1409,32 @@
       const cloudData = await cloudRes.json();
       return cloudData.secure_url;
     }
+
+    // Form Reset Helper
+    function resetFormAndState() {
+      proofForm.reset();
+      otherCatGroup.style.display = 'none';
+      otherCatText.required = false;
+      bookingDateInput.valueAsDate = new Date();
+      
+      const upiRadio = document.querySelector('input[name="payMethod"][value="UPI"]');
+      if (upiRadio) upiRadio.checked = true;
+      
+      const advanceRadio = document.querySelector('input[name="paymentOption"][value="50_ADVANCE"]');
+      if (advanceRadio) advanceRadio.checked = true;
+
+      updatePaymentMethodUI();
+    }
+
+    // Close Modals on Backdrop Click
+    window.addEventListener('click', (e) => {
+      if (e.target === paymentModal) {
+        paymentModal.style.display = 'none';
+      }
+      if (e.target === fastBookingModal) {
+        fastBookingModal.style.display = 'none';
+      }
+    });
 
     // Initialize Firebase and Listeners
     try {
@@ -1420,7 +1454,7 @@
         if (mapLoader) mapLoader.style.display = 'none';
       });
 
-      // 2. Real-time Listener for "bookings" collection (fetches category & business names)
+      // 2. Real-time Listener for "bookings" collection
       const bookingsCollection = collection(db, "bookings");
       onSnapshot(bookingsCollection, (snapshot) => {
         rawBookingsMap = {};
@@ -1578,8 +1612,7 @@
           selectedSeats = [];
           updateSummary();
           paymentModal.style.display = 'none';
-          proofForm.reset();
-          otherCatGroup.style.display = 'none';
+          resetFormAndState();
 
         } catch (error) {
           console.error("Error submitting booking:", error);

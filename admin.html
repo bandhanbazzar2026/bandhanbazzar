@@ -128,7 +128,6 @@
       color: #212529;
     }
 
-    /* Analytics Chart Grid */
     .charts-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
@@ -149,7 +148,6 @@
       color: #334155;
     }
 
-    /* Controls */
     .table-controls {
       display: flex;
       justify-content: space-between;
@@ -191,7 +189,6 @@
       border-color: #007bff;
     }
 
-    /* Table Styling */
     .table-responsive {
       background: #fff;
       border-radius: 10px;
@@ -285,7 +282,6 @@
     .btn-delete { background-color: #6c757d; color: white; }
     .btn-delete:hover { background-color: #343a40; }
 
-    /* Modals */
     .modal {
       display: none;
       position: fixed;
@@ -347,7 +343,6 @@
       word-break: break-word;
     }
 
-    /* Form Fields */
     .admin-form {
       display: flex;
       flex-direction: column;
@@ -430,7 +425,6 @@
       </div>
     </header>
 
-    <!-- STALL BOOKINGS OVERVIEW -->
     <div class="section-block-title">🎪 Stall Bookings Overview</div>
     <div class="stats-container">
       <div class="stat-card pending">
@@ -451,7 +445,6 @@
       </div>
     </div>
 
-    <!-- Stall Controls Bar -->
     <div class="table-controls">
       <input type="text" id="searchInput" class="search-input" placeholder="Search Name, Company, Phone, Seat, Txn ID..." />
       
@@ -463,7 +456,6 @@
       </div>
     </div>
 
-    <!-- Stall Bookings Table -->
     <div class="table-responsive">
       <table>
         <thead>
@@ -491,13 +483,11 @@
       </table>
     </div>
 
-    <!-- CREATOR CONTEST REALTIME DASHBOARD & GRAPHS -->
     <div class="section-block-title">
       <span>📊 Live Creator Contest Analytics & Registrations</span>
       <span style="font-size: 12px; background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 12px; font-weight: bold;">● Live Sync Active</span>
     </div>
 
-    <!-- Creator Contest Stats -->
     <div class="stats-container">
       <div class="stat-card purple">
         <h3>Total Creators Registered</h3>
@@ -517,7 +507,6 @@
       </div>
     </div>
 
-    <!-- Creator Contest Analytics Bar & Doughnut Graphs -->
     <div class="charts-grid">
       <div class="chart-card">
         <h3>📊 Primary Content Platform Distribution (Bar Graph)</h3>
@@ -529,7 +518,6 @@
       </div>
     </div>
 
-    <!-- Creator Entries Table -->
     <div class="table-responsive">
       <table>
         <thead>
@@ -554,7 +542,7 @@
 
   </div>
 
-  <!-- Full Details View Modal for Stall Bookings -->
+  <!-- Modals -->
   <div id="detailsModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('detailsModal').style.display='none'">&times;</span>
@@ -565,7 +553,6 @@
     </div>
   </div>
 
-  <!-- Creator Entry Details View Modal -->
   <div id="creatorDetailsModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('creatorDetailsModal').style.display='none'">&times;</span>
@@ -576,7 +563,6 @@
     </div>
   </div>
 
-  <!-- STALL PRICING MANAGEMENT MODAL -->
   <div id="priceModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('priceModal').style.display='none'">&times;</span>
@@ -617,7 +603,6 @@
     </div>
   </div>
 
-  <!-- OPEN / FREE STALL MODAL -->
   <div id="freeSeatModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('freeSeatModal').style.display='none'">&times;</span>
@@ -635,7 +620,6 @@
     </div>
   </div>
 
-  <!-- SPLIT / UNSPLIT STALL MODAL -->
   <div id="splitSeatModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('splitSeatModal').style.display='none'">&times;</span>
@@ -685,7 +669,6 @@
     </div>
   </div>
 
-  <!-- ADMIN DIRECT BOOKING MODAL -->
   <div id="adminBookingModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('adminBookingModal').style.display='none'">&times;</span>
@@ -837,7 +820,6 @@
     </div>
   </div>
 
-  <!-- EDIT USER BOOKING FORM MODAL -->
   <div id="editBookingModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('editBookingModal').style.display='none'">&times;</span>
@@ -993,7 +975,6 @@
     </div>
   </div>
 
-  <!-- EDIT CREATOR ENTRY MODAL -->
   <div id="editCreatorModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('editCreatorModal').style.display='none'">&times;</span>
@@ -1075,7 +1056,6 @@
     </div>
   </div>
 
-  <!-- Zoom Image Modal -->
   <div id="imgModal" class="image-modal" onclick="this.style.display='none'">
     <img id="modalImg" src="" alt="Proof Preview" />
   </div>
@@ -1083,7 +1063,7 @@
   <!-- Firebase & Admin JS Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDocs, getDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDocs, getDoc, query, orderBy, deleteField } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
@@ -1113,9 +1093,7 @@
     const totalPendingAmountEl = document.getElementById('totalPendingAmount');
     const downloadExcelBtn = document.getElementById('downloadExcelBtn');
 
-    // ----------------------------------------------------
     // 1. LIVE STALL BOOKINGS LISTENER
-    // ----------------------------------------------------
     onSnapshot(collection(db, "bookings"), (snapshot) => {
       allBookings = [];
       let pendingCount = 0;
@@ -1147,16 +1125,13 @@
       renderTable();
     });
 
-    // ----------------------------------------------------
-    // 2. CREATOR CONTEST ANALYTICS & GRAPH ENGINE
-    // ----------------------------------------------------
+    // 2. CREATOR CONTEST ANALYTICS ENGINE
     const creatorTotalEl = document.getElementById("creatorTotal");
     const creatorIgEl = document.getElementById("creatorIg");
     const creatorYtEl = document.getElementById("creatorYt");
     const creatorOtherEl = document.getElementById("creatorOther");
     const creatorTableBody = document.getElementById("creatorTableBody");
 
-    // Initialize Chart.js Bar Graph
     const barCtx = document.getElementById('platformBarChart').getContext('2d');
     const platformBarChart = new Chart(barCtx, {
       type: 'bar',
@@ -1181,7 +1156,6 @@
       }
     });
 
-    // Initialize Chart.js Doughnut Chart
     const doughnutCtx = document.getElementById('postingDoughnutChart').getContext('2d');
     const postingDoughnutChart = new Chart(doughnutCtx, {
       type: 'doughnut',
@@ -1195,7 +1169,6 @@
       options: { responsive: true }
     });
 
-    // Firestore Listener for Creator Registrations
     const creatorQuery = query(collection(db, "creator_registrations"), orderBy("timestamp", "desc"));
     onSnapshot(creatorQuery, (snapshot) => {
       allCreators = [];
@@ -1218,19 +1191,16 @@
           allCreators.push(creatorItem);
           total++;
 
-          // Count Platform breakdown
           if (data.primaryPlatform === "Instagram") igCount++;
           else if (data.primaryPlatform === "YouTube") ytCount++;
           else if (data.primaryPlatform === "Facebook") fbCount++;
           else otherCount++;
 
-          // Count Date breakdown
           if (data.reelPostingDate === "2026-08-25") dateMap['2026-08-25']++;
           else if (data.reelPostingDate === "2026-08-26") dateMap['2026-08-26']++;
           else if (data.reelPostingDate === "2026-08-27") dateMap['2026-08-27']++;
           else dateMap['other']++;
 
-          // Badge Styling
           let badgeClass = "badge-oth";
           if (data.primaryPlatform === "Instagram") badgeClass = "badge-ig";
           if (data.primaryPlatform === "YouTube") badgeClass = "badge-yt";
@@ -1267,26 +1237,19 @@
         });
       }
 
-      // Update Creator Counters
       creatorTotalEl.innerText = total;
       creatorIgEl.innerText = igCount;
       creatorYtEl.innerText = ytCount;
       creatorOtherEl.innerText = fbCount + otherCount;
 
-      // Update Bar Graph Datasets
       platformBarChart.data.datasets[0].data = [igCount, ytCount, fbCount, otherCount];
       platformBarChart.update();
 
-      // Update Doughnut Chart Datasets
       postingDoughnutChart.data.datasets[0].data = [dateMap['2026-08-25'], dateMap['2026-08-26'], dateMap['2026-08-27'], dateMap['other']];
       postingDoughnutChart.update();
 
-    }, (error) => {
-      console.error("Creator Firestore fetch error:", error);
-      creatorTableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#e53e3e;">Failed to load creator registrations.</td></tr>`;
     });
 
-    // View Creator Entry Details Modal Trigger
     window.viewCreatorDetails = (docId) => {
       const creator = allCreators.find(c => c.id === docId);
       if (!creator) return alert("Creator entry not found!");
@@ -1314,7 +1277,6 @@
       document.getElementById('creatorDetailsModal').style.display = 'flex';
     };
 
-    // Approve Creator Entry
     window.approveCreatorEntry = async (docId) => {
       if (!confirm("Are you sure you want to APPROVE this creator entry?")) return;
       try {
@@ -1325,7 +1287,6 @@
       }
     };
 
-    // Open Edit Creator Modal
     window.editCreatorEntry = (docId) => {
       const creator = allCreators.find(c => c.id === docId);
       if (!creator) return alert("Creator entry not found!");
@@ -1346,7 +1307,6 @@
       document.getElementById('editCreatorModal').style.display = 'flex';
     };
 
-    // Save Creator Edit Form Submit
     document.getElementById('editCreatorForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -1384,7 +1344,6 @@
       }
     });
 
-    // Delete Creator Registration Entry
     window.deleteCreatorEntry = async (docId) => {
       if (!confirm("⚠️ Are you sure you want to delete this creator registration?")) return;
       try {
@@ -1395,7 +1354,6 @@
       }
     };
 
-    // Render Stall Bookings Table
     function renderTable() {
       const searchTerm = searchInput.value.toLowerCase();
       tableBody.innerHTML = '';
@@ -1470,13 +1428,11 @@
       });
     }
 
-    // Helper to prevent XSS
     function escapeHtml(text) {
       if (!text) return "";
       return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
 
-    // Modal Control Helpers
     document.getElementById('openPriceModalBtn').addEventListener('click', () => {
       document.getElementById('priceModal').style.display = 'flex';
     });
@@ -1494,7 +1450,7 @@
       document.getElementById('adminBookingModal').style.display = 'flex';
     });
 
-    // Open / Free Seat Logic
+    // OPEN / FREE SEAT LOGIC (FIXED: PERMANENTLY DELETES ORPHAN COMPANY DATA)
     document.getElementById('confirmFreeSeatBtn').addEventListener('click', async () => {
       const rawInput = document.getElementById('freeStallIds').value.trim();
       if (!rawInput) return alert("Please enter Stall ID(s)!");
@@ -1506,9 +1462,14 @@
 
       try {
         for (const seatId of stallIds) {
-          await setDoc(doc(db, "seats", seatId), { status: "available" }, { merge: true });
+          await setDoc(doc(db, "seats", seatId), { 
+            status: "available",
+            companyName: deleteField(),
+            userName: deleteField(),
+            bookingId: deleteField()
+          }, { merge: true });
         }
-        alert(`Success! Stall(s) ${stallIds.join(', ')} are now unlocked and set to AVAILABLE.`);
+        alert(`Success! Stall(s) ${stallIds.join(', ')} are now unlocked, wiped, and set to AVAILABLE.`);
         document.getElementById('freeSeatModal').style.display = 'none';
         document.getElementById('freeStallIds').value = '';
       } catch (err) {
@@ -1520,7 +1481,7 @@
       }
     });
 
-    // Price Update Logic
+    // PRICE UPDATE LOGIC
     const priceUpdateType = document.getElementById('priceUpdateType');
     const singleStallGroup = document.getElementById('singleStallGroup');
     const categoryGroup = document.getElementById('categoryGroup');
@@ -1642,7 +1603,9 @@
             parentId: targetId,
             price: p1,
             status: "available",
-            isSubSeat: true
+            isSubSeat: true,
+            companyName: deleteField(),
+            userName: deleteField()
           }, { merge: true });
 
           await setDoc(doc(db, "seats", s2Name), {
@@ -1651,7 +1614,9 @@
             parentId: targetId,
             price: p2,
             status: "available",
-            isSubSeat: true
+            isSubSeat: true,
+            companyName: deleteField(),
+            userName: deleteField()
           }, { merge: true });
 
           alert(`Success! Stall ${targetId} split into ${s1Name} (₹${p1}) and ${s2Name} (₹${p2}). Reflected on Map in Realtime!`);
@@ -1675,7 +1640,9 @@
           await setDoc(doc(db, "seats", targetId), {
             status: "available",
             isSplit: false,
-            children: []
+            children: [],
+            companyName: deleteField(),
+            userName: deleteField()
           }, { merge: true });
 
           alert(`Success! Sub-stalls merged back into original Stall ${targetId}.`);
@@ -1696,7 +1663,6 @@
       }
     });
 
-    // Cloudinary Helper
     async function uploadToCloudinary(file, folderPath) {
       const formData = new FormData();
       formData.append('file', file);
@@ -1713,7 +1679,6 @@
       return cloudData.secure_url;
     }
 
-    // Admin Direct Booking Form Calculation
     const adminTotalAmt = document.getElementById('adminTotalAmt');
     const adminPaidAmt = document.getElementById('adminPaidAmt');
     const adminPendingAmt = document.getElementById('adminPendingAmt');
@@ -1738,7 +1703,6 @@
       calcAdminPending();
     });
 
-    // Edit Form Calculation
     const editTotalAmt = document.getElementById('editTotalAmt');
     const editPaidAmt = document.getElementById('editPaidAmt');
     const editPendingAmt = document.getElementById('editPendingAmt');
@@ -1763,7 +1727,7 @@
       calcEditPending();
     });
 
-    // Admin Direct Booking Submit
+    // ADMIN DIRECT BOOKING SUBMIT (FIXED: SEAT METADATA SYNC)
     document.getElementById('adminBookingForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -1838,7 +1802,12 @@
 
         const seatStatus = status === 'approved' ? 'booked' : 'pending';
         for (const seatId of seats) {
-          await setDoc(doc(db, "seats", seatId), { status: seatStatus }, { merge: true });
+          await setDoc(doc(db, "seats", seatId), { 
+            status: seatStatus,
+            companyName: companyName,
+            userName: userName,
+            bookingId: bookingRef.id
+          }, { merge: true });
         }
 
         alert(`Admin Booking Created Successfully!\nStalls: ${seats.join(', ')}\nStatus: ${status.toUpperCase()}`);
@@ -1853,7 +1822,6 @@
       }
     });
 
-    // EDIT FORM TRIGGER
     window.editBooking = (bookingId) => {
       const item = allBookings.find(b => b.id === bookingId);
       if (!item) return alert("Booking entry not found!");
@@ -1903,7 +1871,7 @@
       document.getElementById('editBookingModal').style.display = 'flex';
     };
 
-    // EDIT FORM SUBMIT
+    // EDIT FORM SUBMIT (FIXED: HANDLES STALL SHIFTING LIKE B-13 TO B-7 PERFECTLY)
     document.getElementById('editBookingForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -1981,20 +1949,41 @@
 
         await updateDoc(doc(db, "bookings", bookingId), updatedDoc);
 
+        // RELEASE REMOVED SEATS (e.g. B-13) & CLEAR THEIR METADATA
         const removedSeats = originalSeats.filter(s => !newSeats.includes(s));
         for (const remSeat of removedSeats) {
-          await setDoc(doc(db, "seats", remSeat), { status: "available" }, { merge: true });
+          await setDoc(doc(db, "seats", remSeat), { 
+            status: "available",
+            companyName: deleteField(),
+            userName: deleteField(),
+            bookingId: deleteField()
+          }, { merge: true });
         }
 
+        // UPDATE NEW SEATS (e.g. B-7) WITH UPDATED STATUS & METADATA
         let targetSeatStatus = "available";
         if (status === 'approved') targetSeatStatus = "booked";
         else if (status === 'pending') targetSeatStatus = "pending";
 
         for (const newSeat of newSeats) {
-          await setDoc(doc(db, "seats", newSeat), { status: targetSeatStatus }, { merge: true });
+          if (targetSeatStatus === "available") {
+            await setDoc(doc(db, "seats", newSeat), { 
+              status: "available",
+              companyName: deleteField(),
+              userName: deleteField(),
+              bookingId: deleteField()
+            }, { merge: true });
+          } else {
+            await setDoc(doc(db, "seats", newSeat), { 
+              status: targetSeatStatus,
+              companyName: companyName,
+              userName: userName,
+              bookingId: bookingId
+            }, { merge: true });
+          }
         }
 
-        alert(`Registration entry updated successfully for ${userName}!`);
+        alert(`Registration entry updated successfully for ${userName}! Seats sync complete.`);
         document.getElementById('editBookingModal').style.display = 'none';
 
       } catch (err) {
@@ -2006,7 +1995,6 @@
       }
     });
 
-    // View Details Modal Trigger
     window.viewDetails = (bookingId) => {
       const item = allBookings.find(b => b.id === bookingId);
       if (!item) return;
@@ -2044,15 +2032,25 @@
       document.getElementById('detailsModal').style.display = 'flex';
     };
 
-    // Approve Logic
+    // APPROVE LOGIC (FIXED: ATTACHES COMPANY DETAILS TO SEAT DOC)
     window.approveBooking = async (bookingId, seatIdsStr) => {
       if (!confirm("Are you sure you want to APPROVE this booking payment?")) return;
       const seatIds = seatIdsStr.split(',');
 
       try {
+        const bookingSnap = await getDoc(doc(db, "bookings", bookingId));
+        const bData = bookingSnap.exists() ? bookingSnap.data() : {};
+
         await updateDoc(doc(db, "bookings", bookingId), { status: "approved" });
         for (const seatId of seatIds) {
-          if (seatId) await updateDoc(doc(db, "seats", seatId), { status: "booked" });
+          if (seatId) {
+            await setDoc(doc(db, "seats", seatId), { 
+              status: "booked",
+              companyName: bData.companyName || "",
+              userName: bData.userName || "",
+              bookingId: bookingId
+            }, { merge: true });
+          }
         }
         alert("Booking Approved Successfully! Seat map updated to Booked (Red).");
       } catch (err) {
@@ -2061,7 +2059,7 @@
       }
     };
 
-    // Reject Logic
+    // REJECT LOGIC (FIXED: WIPES SEAT METADATA)
     window.rejectBooking = async (bookingId, seatIdsStr) => {
       if (!confirm("Are you sure you want to REJECT this booking payment?")) return;
       const seatIds = seatIdsStr.split(',');
@@ -2069,7 +2067,14 @@
       try {
         await updateDoc(doc(db, "bookings", bookingId), { status: "rejected" });
         for (const seatId of seatIds) {
-          if (seatId) await updateDoc(doc(db, "seats", seatId), { status: "available" });
+          if (seatId) {
+            await setDoc(doc(db, "seats", seatId), { 
+              status: "available",
+              companyName: deleteField(),
+              userName: deleteField(),
+              bookingId: deleteField()
+            }, { merge: true });
+          }
         }
         alert("Booking Rejected! Seat map updated back to Available.");
       } catch (err) {
@@ -2078,7 +2083,7 @@
       }
     };
 
-    // Delete Booking
+    // DELETE BOOKING (FIXED: WIPES SEAT METADATA)
     window.deleteBooking = async (bookingId, seatIdsStr) => {
       if (!confirm("⚠️ Are you sure you want to PERMANENTLY DELETE this booking from the backend?")) return;
       const seatIds = seatIdsStr ? seatIdsStr.split(',').filter(s => s.trim()) : [];
@@ -2086,7 +2091,14 @@
       try {
         await deleteDoc(doc(db, "bookings", bookingId));
         for (const seatId of seatIds) {
-          if (seatId) await updateDoc(doc(db, "seats", seatId), { status: "available" });
+          if (seatId) {
+            await setDoc(doc(db, "seats", seatId), { 
+              status: "available",
+              companyName: deleteField(),
+              userName: deleteField(),
+              bookingId: deleteField()
+            }, { merge: true });
+          }
         }
         alert("Booking record deleted and seats released!");
       } catch (err) {
@@ -2095,7 +2107,6 @@
       }
     };
 
-    // Excel Export
     downloadExcelBtn.addEventListener('click', () => {
       if (allBookings.length === 0) return alert("No booking data available to download!");
 
@@ -2138,7 +2149,6 @@
       XLSX.writeFile(workbook, `Bandhan_Bazaar_Stall_Bookings_${Date.now()}.xlsx`);
     });
 
-    // Filter Buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
