@@ -11,6 +11,10 @@
   <!-- Chart.js Library for Graphs -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- jsPDF & AutoTable Library for PDF Download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -343,6 +347,45 @@
       word-break: break-word;
     }
 
+    /* Modal Download Action Wrapper & Button */
+    .details-download-actions {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #e9ecef;
+      display: flex;
+      justify-content: center;
+    }
+
+    .btn-download-details {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .btn-download-details:hover {
+      background-color: #218838;
+      transform: translateY(-1px);
+    }
+
+    .btn-download-details:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
     .admin-form {
       display: flex;
       flex-direction: column;
@@ -550,6 +593,12 @@
       <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Complete information submitted during stall registration</p>
       
       <div class="details-grid" id="modalDetailsBody"></div>
+
+      <div class="details-download-actions">
+        <button id="downloadBookingDetailsBtn" class="btn-download-details">
+          ⬇️ Download Details
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1084,6 +1133,7 @@
     let allBookings = [];
     let allCreators = [];
     let currentFilter = 'pending';
+    let currentViewingBooking = null; // Tracks currently open customer booking in details modal
 
     const tableBody = document.getElementById('adminTableBody');
     const searchInput = document.getElementById('searchInput');
@@ -1999,6 +2049,8 @@
       const item = allBookings.find(b => b.id === bookingId);
       if (!item) return;
 
+      currentViewingBooking = item; // Store context dynamically for PDF Download
+
       document.getElementById('modalCustomerName').innerText = item.userName || 'Customer Details';
       const body = document.getElementById('modalDetailsBody');
 
@@ -2031,6 +2083,203 @@
 
       document.getElementById('detailsModal').style.display = 'flex';
     };
+
+    // DYNAMIC PDF DOWNLOAD FEATURE FOR VIEW DETAILS MODAL
+    const downloadBookingDetailsBtn = document.getElementById('downloadBookingDetailsBtn');
+    if (downloadBookingDetailsBtn) {
+      downloadBookingDetailsBtn.addEventListener('click', async () => {
+        if (!currentViewingBooking) {
+          return alert("No booking details currently loaded to download!");
+        }
+
+        const originalBtnText = downloadBookingDetailsBtn.innerHTML;
+        downloadBookingDetailsBtn.disabled = true;
+        downloadBookingDetailsBtn.innerHTML = "⏳ Generating Download...";
+
+        try {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: 'a4'
+          });
+
+          const b = currentViewingBooking;
+
+          // Safe Data Parsing
+          const name = b.userName || 'Customer';
+          const company = b.companyName || 'N/A';
+          const phone = b.whatsappNumber || 'N/A';
+          const altPhone = b.altMobileNumber || 'N/A';
+          const email = b.emailAddress || 'N/A';
+          const address = b.completeAddress || 'N/A';
+
+          const seats = Array.isArray(b.seats) ? b.seats.join(', ') : (b.seats || 'N/A');
+          const primarySeat = Array.isArray(b.seats) && b.seats.length > 0 ? b.seats[0] : (b.seats || '');
+
+          const cats = Array.isArray(b.businessCategories) 
+            ? b.businessCategories.join(', ') 
+            : (b.businessCategories || 'N/A');
+
+          const desc = b.businessDescription || 'N/A';
+          const extra = b.extraRequirements || 'None';
+
+          const totalAmt = b.totalAmount || 0;
+          const paidAmt = b.paidAmount !== undefined ? b.paidAmount : totalAmt;
+          const pendingAmt = b.pendingAmount !== undefined ? b.pendingAmount : Math.max(0, totalAmt - paidAmt);
+
+          const payMethod = b.paymentMethod || 'UPI';
+          const payOption = b.paymentOption || 'FULL_PAYMENT';
+          const txnId = b.transactionId || 'N/A';
+          const bDate = b.bookingDate || 'N/A';
+          const status = (b.status || 'pending').toUpperCase();
+
+          const idProof = b.idProofUrl ? b.idProofUrl : 'Not Uploaded';
+          const payProof = (b.paymentProofUrl || b.proofUrl) ? (b.paymentProofUrl || b.proofUrl) : 'N/A';
+
+          // PDF Header Banner
+          doc.setFillColor(26, 37, 47);
+          doc.rect(0, 0, 210, 32, 'F');
+
+          doc.setTextColor(255, 255, 255);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(20);
+          doc.text("BANDHAN BAZAAR", 14, 16);
+
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          doc.text("Stall Booking & Customer Registration Document", 14, 24);
+
+          const genTime = new Date().toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+          doc.setFontSize(9);
+          doc.text(`Generated: ${genTime}`, 145, 24);
+
+          // Customer Highlight Sub-Header Box
+          doc.setFillColor(244, 246, 249);
+          doc.roundedRect(14, 38, 182, 18, 3, 3, 'F');
+
+          doc.setTextColor(26, 37, 47);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(13);
+          doc.text(name, 18, 47);
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9.5);
+          doc.setTextColor(108, 117, 125);
+          doc.text(`Company: ${company}  |  Status: ${status}  |  Stalls: ${seats}`, 18, 52);
+
+          let startY = 62;
+
+          // Section 1: Customer Information
+          doc.autoTable({
+            startY: startY,
+            head: [['1. Customer & Contact Details', '']],
+            body: [
+              ['Full Name', name],
+              ['Company / Brand Name', company],
+              ['WhatsApp Number', phone],
+              ['Alternative Mobile', altPhone],
+              ['Email Address', email],
+              ['Complete Address', address]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [26, 37, 47], textColor: [255, 255, 255], fontStyle: 'bold' },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55, fillColor: [248, 249, 250] } },
+            margin: { left: 14, right: 14 },
+            styles: { fontSize: 9, cellPadding: 2.5 }
+          });
+
+          startY = doc.lastAutoTable.finalY + 5;
+
+          // Section 2: Stall & Financial Information
+          doc.autoTable({
+            startY: startY,
+            head: [['2. Stall & Payment Summary', '']],
+            body: [
+              ['Allocated Stall(s)', seats],
+              ['Booking Date', bDate],
+              ['Total Amount', `₹${totalAmt.toLocaleString('en-IN')}`],
+              ['Paid Amount', `₹${paidAmt.toLocaleString('en-IN')}`],
+              ['Pending Amount (Due)', `₹${pendingAmt.toLocaleString('en-IN')}`],
+              ['Payment Method & Option', `${payMethod} (${payOption})`],
+              ['Transaction ID / UTR', txnId]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [40, 167, 69], textColor: [255, 255, 255], fontStyle: 'bold' },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55, fillColor: [248, 249, 250] } },
+            margin: { left: 14, right: 14 },
+            styles: { fontSize: 9, cellPadding: 2.5 }
+          });
+
+          startY = doc.lastAutoTable.finalY + 5;
+
+          // Section 3: Business Information
+          doc.autoTable({
+            startY: startY,
+            head: [['3. Business Information & Requirements', '']],
+            body: [
+              ['Business Categories', cats],
+              ['Business Description', desc],
+              ['Extra Requirements', extra]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [0, 123, 255], textColor: [255, 255, 255], fontStyle: 'bold' },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55, fillColor: [248, 249, 250] } },
+            margin: { left: 14, right: 14 },
+            styles: { fontSize: 9, cellPadding: 2.5 }
+          });
+
+          startY = doc.lastAutoTable.finalY + 5;
+
+          // Section 4: Submitted Documents
+          doc.autoTable({
+            startY: startY,
+            head: [['4. Submitted Documents & Verification Info', '']],
+            body: [
+              ['ID Proof Document', idProof],
+              ['Payment Screenshot / Proof', payProof]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [108, 117, 125], textColor: [255, 255, 255], fontStyle: 'bold' },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55, fillColor: [248, 249, 250] } },
+            margin: { left: 14, right: 14 },
+            styles: { fontSize: 8.5, cellPadding: 2.5 }
+          });
+
+          // Footer Configuration
+          const pageCount = doc.internal.getNumberOfPages();
+          for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text(
+              `Generated from Bandhan Bazaar Admin Dashboard  |  Page ${i} of ${pageCount}`,
+              105,
+              287,
+              { align: 'center' }
+            );
+          }
+
+          // Dynamic Filename Generation
+          const cleanName = name.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+          const cleanSeat = primarySeat.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+
+          let filename = `Bandhan_Bazaar_Booking_${cleanName || 'Details'}.pdf`;
+          if (cleanSeat && cleanName) {
+            filename = `Bandhan_Bazaar_${cleanSeat}_${cleanName}.pdf`;
+          }
+
+          doc.save(filename);
+
+        } catch (err) {
+          console.error("Error generating PDF:", err);
+          alert("Failed to download details: " + err.message);
+        } finally {
+          downloadBookingDetailsBtn.disabled = false;
+          downloadBookingDetailsBtn.innerHTML = originalBtnText;
+        }
+      });
+    }
 
     // APPROVE LOGIC (FIXED: ATTACHES COMPANY DETAILS TO SEAT DOC)
     window.approveBooking = async (bookingId, seatIdsStr) => {
