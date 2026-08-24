@@ -4,10 +4,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard - Bandhan Bazaar Stall Approvals & Pricing</title>
+  <title>Admin Dashboard - Bandhan Bazaar Approvals & Analytics</title>
   
   <!-- Excel Export Library (SheetJS) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Chart.js Library for Graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- jsPDF & AutoTable Library for PDF Download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
   <style>
     * {
@@ -80,6 +86,17 @@
     .split-btn { background-color: #e83e8c; color: white; }
     .split-btn:hover { background-color: #d63384; }
 
+    .section-block-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #1e293b;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     .stats-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -98,6 +115,9 @@
     .stat-card.pending { border-left-color: #ffc107; }
     .stat-card.approved { border-left-color: #28a745; }
     .stat-card.due { border-left-color: #dc3545; }
+    .stat-card.purple { border-left-color: #8e24aa; }
+    .stat-card.pink { border-left-color: #e91e63; }
+    .stat-card.red { border-left-color: #c62828; }
 
     .stat-card h3 {
       font-size: 13px;
@@ -112,7 +132,26 @@
       color: #212529;
     }
 
-    /* Controls */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+
+    .chart-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .chart-card h3 {
+      font-size: 15px;
+      margin-bottom: 15px;
+      color: #334155;
+    }
+
     .table-controls {
       display: flex;
       justify-content: space-between;
@@ -154,12 +193,12 @@
       border-color: #007bff;
     }
 
-    /* Table Styling */
     .table-responsive {
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
       overflow-x: auto;
+      margin-bottom: 25px;
     }
 
     table {
@@ -201,6 +240,11 @@
     .badge-rejected { background-color: #f8d7da; color: #721c24; }
     .badge-method { background-color: #e2e3e5; color: #383d41; }
 
+    .badge-ig { background: #fce4ec; color: #c2185b; }
+    .badge-yt { background: #ffebee; color: #c62828; }
+    .badge-fb { background: #e8eaf6; color: #1a237e; }
+    .badge-oth { background: #f3e5f5; color: #4a148c; }
+
     .proof-img {
       width: 60px;
       height: 60px;
@@ -230,6 +274,9 @@
     .btn-view { background-color: #17a2b8; color: white; }
     .btn-view:hover { background-color: #138496; }
 
+    .btn-edit { background-color: #ffc107; color: #212529; }
+    .btn-edit:hover { background-color: #e0a800; }
+
     .btn-approve { background-color: #28a745; color: white; }
     .btn-approve:hover { background-color: #218838; }
 
@@ -239,7 +286,6 @@
     .btn-delete { background-color: #6c757d; color: white; }
     .btn-delete:hover { background-color: #343a40; }
 
-    /* Modals */
     .modal {
       display: none;
       position: fixed;
@@ -301,7 +347,45 @@
       word-break: break-word;
     }
 
-    /* Form Fields */
+    /* Modal Download Action Wrapper & Button */
+    .details-download-actions {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #e9ecef;
+      display: flex;
+      justify-content: center;
+    }
+
+    .btn-download-details {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .btn-download-details:hover {
+      background-color: #218838;
+      transform: translateY(-1px);
+    }
+
+    .btn-download-details:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
     .admin-form {
       display: flex;
       flex-direction: column;
@@ -363,6 +447,10 @@
       max-height: 90vh;
       border-radius: 8px;
     }
+
+    @media (max-width: 992px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 
@@ -380,7 +468,7 @@
       </div>
     </header>
 
-    <!-- Stats Bar -->
+    <div class="section-block-title">🎪 Stall Bookings Overview</div>
     <div class="stats-container">
       <div class="stat-card pending">
         <h3>Pending Approvals</h3>
@@ -400,7 +488,6 @@
       </div>
     </div>
 
-    <!-- Controls Bar -->
     <div class="table-controls">
       <input type="text" id="searchInput" class="search-input" placeholder="Search Name, Company, Phone, Seat, Txn ID..." />
       
@@ -412,7 +499,6 @@
       </div>
     </div>
 
-    <!-- Bookings Table -->
     <div class="table-responsive">
       <table>
         <thead>
@@ -439,9 +525,67 @@
         </tbody>
       </table>
     </div>
+
+    <div class="section-block-title">
+      <span>📊 Live Creator Contest Analytics & Registrations</span>
+      <span style="font-size: 12px; background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 12px; font-weight: bold;">● Live Sync Active</span>
+    </div>
+
+    <div class="stats-container">
+      <div class="stat-card purple">
+        <h3>Total Creators Registered</h3>
+        <div class="value" id="creatorTotal">0</div>
+      </div>
+      <div class="stat-card pink">
+        <h3>Instagram Creators</h3>
+        <div class="value" id="creatorIg">0</div>
+      </div>
+      <div class="stat-card red">
+        <h3>YouTube Creators</h3>
+        <div class="value" id="creatorYt">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Facebook / Other</h3>
+        <div class="value" id="creatorOther">0</div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>📊 Primary Content Platform Distribution (Bar Graph)</h3>
+        <canvas id="platformBarChart" height="120"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>📅 Reel Posting Target Share</h3>
+        <canvas id="postingDoughnutChart" height="120"></canvas>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Submission Date</th>
+            <th>Creator / Name</th>
+            <th>Contact Details</th>
+            <th>Platform & Handles</th>
+            <th>Reel Concept / Title</th>
+            <th>Posting Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="creatorTableBody">
+          <tr>
+            <td colspan="8" style="text-align: center; color: #777;">Loading creator submissions...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
   </div>
 
-  <!-- Full Details View Modal -->
+  <!-- Modals -->
   <div id="detailsModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('detailsModal').style.display='none'">&times;</span>
@@ -449,10 +593,25 @@
       <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Complete information submitted during stall registration</p>
       
       <div class="details-grid" id="modalDetailsBody"></div>
+
+      <div class="details-download-actions">
+        <button id="downloadBookingDetailsBtn" class="btn-download-details">
+          ⬇️ Download Details
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- 1. STALL PRICING MANAGEMENT MODAL -->
+  <div id="creatorDetailsModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="document.getElementById('creatorDetailsModal').style.display='none'">&times;</span>
+      <h2 style="margin-bottom: 5px; color: #1a252f;" id="modalCreatorChannelName">Creator Details</h2>
+      <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Complete information submitted during creator contest registration</p>
+      
+      <div class="details-grid" id="modalCreatorDetailsBody"></div>
+    </div>
+  </div>
+
   <div id="priceModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('priceModal').style.display='none'">&times;</span>
@@ -468,13 +627,11 @@
           </select>
         </div>
 
-        <!-- Single Stall Edit -->
         <div id="singleStallGroup" class="form-group">
           <label for="singleStallId">Enter Stall ID (e.g. C-12, A-1, A-7(A), B-12)</label>
           <input type="text" id="singleStallId" placeholder="e.g. C-12 or A-7(A)" />
         </div>
 
-        <!-- Category Edit -->
         <div id="categoryGroup" class="form-group" style="display: none;">
           <label for="stallCategorySelect">Select Category</label>
           <select id="stallCategorySelect">
@@ -495,7 +652,6 @@
     </div>
   </div>
 
-  <!-- 2. OPEN / FREE STALL MODAL -->
   <div id="freeSeatModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('freeSeatModal').style.display='none'">&times;</span>
@@ -513,7 +669,6 @@
     </div>
   </div>
 
-  <!-- 3. SPLIT / UNSPLIT STALL MODAL -->
   <div id="splitSeatModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('splitSeatModal').style.display='none'">&times;</span>
@@ -534,7 +689,6 @@
           <input type="text" id="targetStallId" placeholder="e.g. A-7" required />
         </div>
 
-        <!-- Split Fields Container -->
         <div id="splitFieldsContainer">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div class="form-group">
@@ -564,7 +718,6 @@
     </div>
   </div>
 
-  <!-- 4. ADMIN DIRECT BOOKING MODAL -->
   <div id="adminBookingModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="document.getElementById('adminBookingModal').style.display='none'">&times;</span>
@@ -572,13 +725,11 @@
       <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Book any stall directly on behalf of a customer or yourself.</p>
 
       <form id="adminBookingForm" class="admin-form">
-        <!-- Stall IDs -->
         <div class="form-group">
           <label for="adminStalls">Stall IDs * (Comma separated if multiple, e.g., A-1, A-7(A))</label>
           <input type="text" id="adminStalls" placeholder="e.g. A-1, A-7(A)" required />
         </div>
 
-        <!-- Name & Company -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
             <label for="adminUserName">Full Name *</label>
@@ -590,13 +741,11 @@
           </div>
         </div>
 
-        <!-- Address -->
         <div class="form-group">
           <label for="adminAddress">Complete Address *</label>
           <textarea id="adminAddress" rows="2" placeholder="Address..." required></textarea>
         </div>
 
-        <!-- Contacts -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
             <label for="adminWhatsapp">WhatsApp Number *</label>
@@ -608,13 +757,11 @@
           </div>
         </div>
 
-        <!-- Email -->
         <div class="form-group">
           <label for="adminEmail">Email Address *</label>
           <input type="email" id="adminEmail" placeholder="example@domain.com" required />
         </div>
 
-        <!-- Complete Business Categories List -->
         <div class="form-group">
           <label>Business Category * (Select all that apply)</label>
           <div class="category-grid">
@@ -643,7 +790,6 @@
           </div>
         </div>
 
-        <!-- Description & Extra -->
         <div class="form-group">
           <label for="adminDescription">Business Description *</label>
           <textarea id="adminDescription" rows="2" placeholder="Products description..." required></textarea>
@@ -654,7 +800,6 @@
           <textarea id="adminExtra" rows="1" placeholder="Tables, Power sockets etc."></textarea>
         </div>
 
-        <!-- Amount & Payment Details -->
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
           <div class="form-group">
             <label for="adminTotalAmt">Total Amount (₹) *</label>
@@ -694,7 +839,6 @@
           <input type="text" id="adminTxnId" placeholder="e.g. CASH / UPI Txn ID" />
         </div>
 
-        <!-- File Uploads -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
             <label for="adminIdProof">ID Proof Document (Optional)</label>
@@ -725,14 +869,250 @@
     </div>
   </div>
 
-  <!-- Zoom Image Modal -->
+  <div id="editBookingModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="document.getElementById('editBookingModal').style.display='none'">&times;</span>
+      <h2>✏️ Edit Registration Form Entry</h2>
+      <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Modify customer entries submitted by mistake. All updates will sync automatically.</p>
+
+      <form id="editBookingForm" class="admin-form">
+        <input type="hidden" id="editBookingId" />
+        <input type="hidden" id="editOriginalSeats" />
+
+        <div class="form-group">
+          <label for="editStalls">Stall IDs * (Comma separated if multiple, e.g., A-1, A-7(A))</label>
+          <input type="text" id="editStalls" placeholder="e.g. A-1, A-7(A)" required />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editUserName">Full Name *</label>
+            <input type="text" id="editUserName" placeholder="Full Name" required />
+          </div>
+          <div class="form-group">
+            <label for="editCompanyName">Company / Brand Name *</label>
+            <input type="text" id="editCompanyName" placeholder="Company Name" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editAddress">Complete Address *</label>
+          <textarea id="editAddress" rows="2" placeholder="Address..." required></textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editWhatsapp">WhatsApp Number *</label>
+            <input type="tel" id="editWhatsapp" placeholder="10-digit number" required />
+          </div>
+          <div class="form-group">
+            <label for="editAltMobile">Alternative Mobile No</label>
+            <input type="tel" id="editAltMobile" placeholder="Optional" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editEmail">Email Address *</label>
+          <input type="email" id="editEmail" placeholder="example@domain.com" required />
+        </div>
+
+        <div class="form-group">
+          <label>Business Category * (Select all that apply)</label>
+          <div class="category-grid">
+            <label class="category-item"><input type="checkbox" name="editCat" value="Fashion & Apparel"> Fashion & Apparel</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Women's Wear"> Women's Wear</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Men's Wear"> Men's Wear</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Kids Wear"> Kids Wear</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Footwear"> Footwear</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Gold & Silver Jewellery"> Gold & Silver Jewellery</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Artificial Jewellery"> Artificial Jewellery</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Handicrafts"> Handicrafts</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Home Decor"> Home Decor</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Kitchenware"> Kitchenware</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Gift Items"> Gift Items</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Cosmetics & Beauty Products"> Cosmetics & Beauty Products</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Bags & Accessories"> Bags & Accessories</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Electronics & Gadgets"> Electronics & Gadgets</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Books & Stationery"> Books & Stationery</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Organic Products"> Organic Products</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Health & Wellness"> Health & Wellness</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Toys & Games"> Toys & Games</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Furnishing & Textile"> Furnishing & Textile</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Mobile Accessories"> Mobile Accessories</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Food / Snacks"> Food / Snacks</label>
+            <label class="category-item"><input type="checkbox" name="editCat" value="Other (Please Specify)"> Other (Please Specify)</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editDescription">Business Description *</label>
+          <textarea id="editDescription" rows="2" placeholder="Products description..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="editExtra">Extra Requirements</label>
+          <textarea id="editExtra" rows="1" placeholder="Tables, Power sockets etc."></textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editTotalAmt">Total Amount (₹) *</label>
+            <input type="number" id="editTotalAmt" placeholder="Total" required />
+          </div>
+          <div class="form-group">
+            <label for="editPaidAmt">Paid Amount (₹) *</label>
+            <input type="number" id="editPaidAmt" placeholder="Paid" required />
+          </div>
+          <div class="form-group">
+            <label for="editPendingAmt">Pending Amount (₹)</label>
+            <input type="number" id="editPendingAmt" placeholder="Auto Calculated" readonly />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editPayMethod">Payment Method</label>
+            <select id="editPayMethod">
+              <option value="UPI">UPI Payment</option>
+              <option value="Cash">Cash Payment</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editPayOption">Payment Option</label>
+            <select id="editPayOption">
+              <option value="FULL_PAYMENT">100% Full Payment</option>
+              <option value="50_ADVANCE">50% Advance Payment</option>
+              <option value="CUSTOM">Custom Amount</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editTxnId">Transaction ID / UTR / Reference</label>
+          <input type="text" id="editTxnId" placeholder="e.g. UPI Txn ID / Reference" />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editIdProof">Replace ID Proof (Leave blank to keep existing)</label>
+            <input type="file" id="editIdProof" accept="image/*,application/pdf" />
+          </div>
+          <div class="form-group">
+            <label for="editPaymentProof">Replace Payment Screenshot (Leave blank to keep existing)</label>
+            <input type="file" id="editPaymentProof" accept="image/*" />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editBookingDate">Booking Date *</label>
+            <input type="date" id="editBookingDate" required />
+          </div>
+          <div class="form-group">
+            <label for="editStatusSelect">Booking Status *</label>
+            <select id="editStatusSelect">
+              <option value="approved">Approved (Lock Seats Red)</option>
+              <option value="pending">Pending Verification (Yellow)</option>
+              <option value="rejected">Rejected (Release Seats Gray)</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" id="editSubmitBookingBtn" class="btn btn-edit" style="padding: 12px; font-size: 15px; font-weight: bold;">💾 Save & Update Booking</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="editCreatorModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="document.getElementById('editCreatorModal').style.display='none'">&times;</span>
+      <h2>✏️ Edit Creator Registration</h2>
+      <p style="color: #6c757d; font-size: 13px; margin-bottom: 15px;">Update creator details, reel link, posting date, or status.</p>
+
+      <form id="editCreatorForm" class="admin-form">
+        <input type="hidden" id="editCreatorId" />
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editCreatorChannelName">Creator / Channel Name *</label>
+            <input type="text" id="editCreatorChannelName" required />
+          </div>
+          <div class="form-group">
+            <label for="editCreatorFullName">Full Name *</label>
+            <input type="text" id="editCreatorFullName" required />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editCreatorCity">City *</label>
+            <input type="text" id="editCreatorCity" required />
+          </div>
+          <div class="form-group">
+            <label for="editCreatorMobile">Mobile No *</label>
+            <input type="tel" id="editCreatorMobile" required />
+          </div>
+          <div class="form-group">
+            <label for="editCreatorEmail">Email Address *</label>
+            <input type="email" id="editCreatorEmail" required />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editCreatorPlatform">Primary Platform *</label>
+            <select id="editCreatorPlatform" required>
+              <option value="Instagram">Instagram</option>
+              <option value="YouTube">YouTube</option>
+              <option value="Facebook">Facebook</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editCreatorHandle">Handle / Username *</label>
+            <input type="text" id="editCreatorHandle" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editCreatorReelTitle">Reel Concept / Title *</label>
+          <input type="text" id="editCreatorReelTitle" required />
+        </div>
+
+        <div class="form-group">
+          <label for="editCreatorReelLink">Reel Link / URL</label>
+          <input type="url" id="editCreatorReelLink" placeholder="https://..." />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="editCreatorPostingDate">Posting Date *</label>
+            <input type="date" id="editCreatorPostingDate" required />
+          </div>
+          <div class="form-group">
+            <label for="editCreatorStatus">Approval Status *</label>
+            <select id="editCreatorStatus" required>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" id="saveCreatorEditBtn" class="btn btn-edit" style="padding: 12px; font-size: 15px; font-weight: bold;">💾 Save & Update Creator Entry</button>
+      </form>
+    </div>
+  </div>
+
   <div id="imgModal" class="image-modal" onclick="this.style.display='none'">
     <img id="modalImg" src="" alt="Proof Preview" />
   </div>
 
+  <!-- Firebase & Admin JS Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDocs, getDoc, query, orderBy, deleteField } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
@@ -751,7 +1131,9 @@
     const db = getFirestore(app, "default");
 
     let allBookings = [];
+    let allCreators = [];
     let currentFilter = 'pending';
+    let currentViewingBooking = null; // Tracks currently open customer booking in details modal
 
     const tableBody = document.getElementById('adminTableBody');
     const searchInput = document.getElementById('searchInput');
@@ -761,7 +1143,7 @@
     const totalPendingAmountEl = document.getElementById('totalPendingAmount');
     const downloadExcelBtn = document.getElementById('downloadExcelBtn');
 
-    // Live Snapshot Listener for Bookings
+    // 1. LIVE STALL BOOKINGS LISTENER
     onSnapshot(collection(db, "bookings"), (snapshot) => {
       allBookings = [];
       let pendingCount = 0;
@@ -793,7 +1175,235 @@
       renderTable();
     });
 
-    // Render Table
+    // 2. CREATOR CONTEST ANALYTICS ENGINE
+    const creatorTotalEl = document.getElementById("creatorTotal");
+    const creatorIgEl = document.getElementById("creatorIg");
+    const creatorYtEl = document.getElementById("creatorYt");
+    const creatorOtherEl = document.getElementById("creatorOther");
+    const creatorTableBody = document.getElementById("creatorTableBody");
+
+    const barCtx = document.getElementById('platformBarChart').getContext('2d');
+    const platformBarChart = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Instagram', 'YouTube', 'Facebook', 'Other'],
+        datasets: [{
+          label: 'Number of Creators',
+          data: [0, 0, 0, 0],
+          backgroundColor: [
+            'rgba(233, 30, 99, 0.85)',
+            'rgba(220, 38, 38, 0.85)',
+            'rgba(26, 35, 126, 0.85)',
+            'rgba(142, 36, 170, 0.85)'
+          ],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+
+    const doughnutCtx = document.getElementById('postingDoughnutChart').getContext('2d');
+    const postingDoughnutChart = new Chart(doughnutCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Aug 25', 'Aug 26', 'Aug 27', 'Other Dates'],
+        datasets: [{
+          data: [0, 0, 0, 0],
+          backgroundColor: ['#ff9800', '#8e24aa', '#e91e63', '#cbd5e1']
+        }]
+      },
+      options: { responsive: true }
+    });
+
+    const creatorQuery = query(collection(db, "creator_registrations"), orderBy("timestamp", "desc"));
+    onSnapshot(creatorQuery, (snapshot) => {
+      allCreators = [];
+      let total = 0;
+      let igCount = 0;
+      let ytCount = 0;
+      let fbCount = 0;
+      let otherCount = 0;
+
+      let dateMap = { '2026-08-25': 0, '2026-08-26': 0, '2026-08-27': 0, 'other': 0 };
+
+      creatorTableBody.innerHTML = "";
+
+      if (snapshot.empty) {
+        creatorTableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#888; padding:20px;">No creator entries registered yet.</td></tr>`;
+      } else {
+        snapshot.docs.forEach((docSnap) => {
+          const data = docSnap.data();
+          const creatorItem = { id: docSnap.id, ...data };
+          allCreators.push(creatorItem);
+          total++;
+
+          if (data.primaryPlatform === "Instagram") igCount++;
+          else if (data.primaryPlatform === "YouTube") ytCount++;
+          else if (data.primaryPlatform === "Facebook") fbCount++;
+          else otherCount++;
+
+          if (data.reelPostingDate === "2026-08-25") dateMap['2026-08-25']++;
+          else if (data.reelPostingDate === "2026-08-26") dateMap['2026-08-26']++;
+          else if (data.reelPostingDate === "2026-08-27") dateMap['2026-08-27']++;
+          else dateMap['other']++;
+
+          let badgeClass = "badge-oth";
+          if (data.primaryPlatform === "Instagram") badgeClass = "badge-ig";
+          if (data.primaryPlatform === "YouTube") badgeClass = "badge-yt";
+          if (data.primaryPlatform === "Facebook") badgeClass = "badge-fb";
+
+          const creatorStatus = data.status || 'pending';
+          let statusBadgeClass = 'badge-pending';
+          if (creatorStatus === 'approved') statusBadgeClass = 'badge-approved';
+          if (creatorStatus === 'rejected') statusBadgeClass = 'badge-rejected';
+
+          const subDate = data.timestamp ? new Date(data.timestamp).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : 'N/A';
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${subDate}</td>
+            <td><b>${escapeHtml(data.channelName)}</b><br><small style="color:#64748b;">${escapeHtml(data.fullName)} (${escapeHtml(data.city)})</small></td>
+            <td>📞 ${escapeHtml(data.mobile)}<br><small style="color:#64748b;">✉️ ${escapeHtml(data.email)}</small></td>
+            <td><span class="badge ${badgeClass}">${escapeHtml(data.primaryPlatform)}</span><br><small style="color:#007bff;">${escapeHtml(data.instagram)}</small></td>
+            <td><b>${escapeHtml(data.reelTitle)}</b>${data.reelLink ? `<br><a href="${escapeHtml(data.reelLink)}" target="_blank" style="color:#8e24aa; font-size:11px;">View Reel Link</a>` : ''}</td>
+            <td>📅 ${data.reelPostingDate || 'N/A'}</td>
+            <td><span class="badge ${statusBadgeClass}">${creatorStatus}</span></td>
+            <td>
+              <div class="action-btn-group">
+                <button class="btn btn-view" onclick="window.viewCreatorDetails('${docSnap.id}')">👁️ View Entry</button>
+                <button class="btn btn-edit" onclick="window.editCreatorEntry('${docSnap.id}')">✏️ Edit / Update</button>
+                ${creatorStatus !== 'approved' ? `
+                  <button class="btn btn-approve" onclick="window.approveCreatorEntry('${docSnap.id}')">Approve</button>
+                ` : ''}
+                <button class="btn btn-delete" onclick="window.deleteCreatorEntry('${docSnap.id}')">Delete</button>
+              </div>
+            </td>
+          `;
+          creatorTableBody.appendChild(tr);
+        });
+      }
+
+      creatorTotalEl.innerText = total;
+      creatorIgEl.innerText = igCount;
+      creatorYtEl.innerText = ytCount;
+      creatorOtherEl.innerText = fbCount + otherCount;
+
+      platformBarChart.data.datasets[0].data = [igCount, ytCount, fbCount, otherCount];
+      platformBarChart.update();
+
+      postingDoughnutChart.data.datasets[0].data = [dateMap['2026-08-25'], dateMap['2026-08-26'], dateMap['2026-08-27'], dateMap['other']];
+      postingDoughnutChart.update();
+
+    });
+
+    window.viewCreatorDetails = (docId) => {
+      const creator = allCreators.find(c => c.id === docId);
+      if (!creator) return alert("Creator entry not found!");
+
+      document.getElementById('modalCreatorChannelName').innerText = creator.channelName || 'Creator Details';
+      const body = document.getElementById('modalCreatorDetailsBody');
+
+      const subDate = creator.timestamp ? new Date(creator.timestamp).toLocaleString('en-IN', { dateStyle: 'full', timeStyle: 'short' }) : 'N/A';
+
+      body.innerHTML = `
+        <div class="detail-item"><label>Channel / Creator Name</label><p><b>${escapeHtml(creator.channelName || 'N/A')}</b></p></div>
+        <div class="detail-item"><label>Full Name</label><p>${escapeHtml(creator.fullName || 'N/A')}</p></div>
+        <div class="detail-item"><label>City</label><p>${escapeHtml(creator.city || 'N/A')}</p></div>
+        <div class="detail-item"><label>Mobile Number</label><p>📞 ${escapeHtml(creator.mobile || 'N/A')}</p></div>
+        <div class="detail-item"><label>Email Address</label><p>✉️ ${escapeHtml(creator.email || 'N/A')}</p></div>
+        <div class="detail-item"><label>Primary Platform</label><p><span class="badge badge-method">${escapeHtml(creator.primaryPlatform || 'N/A')}</span></p></div>
+        <div class="detail-item"><label>Social Handle / Username</label><p>${escapeHtml(creator.instagram || 'N/A')}</p></div>
+        <div class="detail-item"><label>Target Reel Posting Date</label><p>📅 ${creator.reelPostingDate || 'N/A'}</p></div>
+        <div class="detail-item"><label>Status</label><p><b>${(creator.status || 'pending').toUpperCase()}</b></p></div>
+        <div class="detail-item"><label>Submission Date & Time</label><p>${subDate}</p></div>
+        <div class="detail-item" style="grid-column: 1 / -1;"><label>Reel Concept / Title</label><p>${escapeHtml(creator.reelTitle || 'N/A')}</p></div>
+        <div class="detail-item" style="grid-column: 1 / -1;"><label>Reel URL / Link</label><p>${creator.reelLink ? `<a href="${escapeHtml(creator.reelLink)}" target="_blank" style="color:#007bff; font-weight:bold; word-break:break-all;">${escapeHtml(creator.reelLink)}</a>` : 'Not Provided'}</p></div>
+      `;
+
+      document.getElementById('creatorDetailsModal').style.display = 'flex';
+    };
+
+    window.approveCreatorEntry = async (docId) => {
+      if (!confirm("Are you sure you want to APPROVE this creator entry?")) return;
+      try {
+        await updateDoc(doc(db, "creator_registrations", docId), { status: "approved" });
+        alert("Creator approved successfully!");
+      } catch (err) {
+        alert("Approval failed: " + err.message);
+      }
+    };
+
+    window.editCreatorEntry = (docId) => {
+      const creator = allCreators.find(c => c.id === docId);
+      if (!creator) return alert("Creator entry not found!");
+
+      document.getElementById('editCreatorId').value = creator.id;
+      document.getElementById('editCreatorChannelName').value = creator.channelName || '';
+      document.getElementById('editCreatorFullName').value = creator.fullName || '';
+      document.getElementById('editCreatorCity').value = creator.city || '';
+      document.getElementById('editCreatorMobile').value = creator.mobile || '';
+      document.getElementById('editCreatorEmail').value = creator.email || '';
+      document.getElementById('editCreatorPlatform').value = creator.primaryPlatform || 'Instagram';
+      document.getElementById('editCreatorHandle').value = creator.instagram || '';
+      document.getElementById('editCreatorReelTitle').value = creator.reelTitle || '';
+      document.getElementById('editCreatorReelLink').value = creator.reelLink || '';
+      document.getElementById('editCreatorPostingDate').value = creator.reelPostingDate || '';
+      document.getElementById('editCreatorStatus').value = creator.status || 'pending';
+
+      document.getElementById('editCreatorModal').style.display = 'flex';
+    };
+
+    document.getElementById('editCreatorForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const creatorId = document.getElementById('editCreatorId').value;
+      if (!creatorId) return;
+
+      const submitBtn = document.getElementById('saveCreatorEditBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Saving Changes...";
+
+      try {
+        await updateDoc(doc(db, "creator_registrations", creatorId), {
+          channelName: document.getElementById('editCreatorChannelName').value.trim(),
+          fullName: document.getElementById('editCreatorFullName').value.trim(),
+          city: document.getElementById('editCreatorCity').value.trim(),
+          mobile: document.getElementById('editCreatorMobile').value.trim(),
+          email: document.getElementById('editCreatorEmail').value.trim(),
+          primaryPlatform: document.getElementById('editCreatorPlatform').value,
+          instagram: document.getElementById('editCreatorHandle').value.trim(),
+          reelTitle: document.getElementById('editCreatorReelTitle').value.trim(),
+          reelLink: document.getElementById('editCreatorReelLink').value.trim(),
+          reelPostingDate: document.getElementById('editCreatorPostingDate').value,
+          status: document.getElementById('editCreatorStatus').value,
+          lastEditedAt: new Date().toISOString()
+        });
+
+        alert("Creator registration updated successfully!");
+        document.getElementById('editCreatorModal').style.display = 'none';
+      } catch (err) {
+        console.error("Error updating creator:", err);
+        alert("Failed to update creator: " + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "💾 Save & Update Creator Entry";
+      }
+    });
+
+    window.deleteCreatorEntry = async (docId) => {
+      if (!confirm("⚠️ Are you sure you want to delete this creator registration?")) return;
+      try {
+        await deleteDoc(doc(db, "creator_registrations", docId));
+        alert("Creator registration deleted successfully!");
+      } catch (err) {
+        alert("Delete failed: " + err.message);
+      }
+    };
+
     function renderTable() {
       const searchTerm = searchInput.value.toLowerCase();
       tableBody.innerHTML = '';
@@ -855,6 +1465,7 @@
           <td>
             <div class="action-btn-group">
               <button class="btn btn-view" onclick="window.viewDetails('${item.id}')">View Details</button>
+              <button class="btn btn-edit" onclick="window.editBooking('${item.id}')">✏️ Edit Entry</button>
               ${item.status === 'pending' ? `
                 <button class="btn btn-approve" onclick="window.approveBooking('${item.id}', '${(item.seats || []).join(',')}')">Approve</button>
                 <button class="btn btn-reject" onclick="window.rejectBooking('${item.id}', '${(item.seats || []).join(',')}')">Reject</button>
@@ -867,7 +1478,11 @@
       });
     }
 
-    // Modal Control Helpers
+    function escapeHtml(text) {
+      if (!text) return "";
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
     document.getElementById('openPriceModalBtn').addEventListener('click', () => {
       document.getElementById('priceModal').style.display = 'flex';
     });
@@ -885,7 +1500,7 @@
       document.getElementById('adminBookingModal').style.display = 'flex';
     });
 
-    // Open / Free Seat Logic
+    // OPEN / FREE SEAT LOGIC (FIXED: PERMANENTLY DELETES ORPHAN COMPANY DATA)
     document.getElementById('confirmFreeSeatBtn').addEventListener('click', async () => {
       const rawInput = document.getElementById('freeStallIds').value.trim();
       if (!rawInput) return alert("Please enter Stall ID(s)!");
@@ -897,9 +1512,14 @@
 
       try {
         for (const seatId of stallIds) {
-          await setDoc(doc(db, "seats", seatId), { status: "available" }, { merge: true });
+          await setDoc(doc(db, "seats", seatId), { 
+            status: "available",
+            companyName: deleteField(),
+            userName: deleteField(),
+            bookingId: deleteField()
+          }, { merge: true });
         }
-        alert(`Success! Stall(s) ${stallIds.join(', ')} are now unlocked and set to AVAILABLE.`);
+        alert(`Success! Stall(s) ${stallIds.join(', ')} are now unlocked, wiped, and set to AVAILABLE.`);
         document.getElementById('freeSeatModal').style.display = 'none';
         document.getElementById('freeStallIds').value = '';
       } catch (err) {
@@ -911,7 +1531,7 @@
       }
     });
 
-    // Price Update Logic
+    // PRICE UPDATE LOGIC
     const priceUpdateType = document.getElementById('priceUpdateType');
     const singleStallGroup = document.getElementById('singleStallGroup');
     const categoryGroup = document.getElementById('categoryGroup');
@@ -976,7 +1596,7 @@
       }
     });
 
-    // ✂️ STALL SPLIT / MERGE LOGIC
+    // STALL SPLIT / MERGE LOGIC
     const splitActionTypeSelect = document.getElementById('splitActionType');
     const splitFieldsContainer = document.getElementById('splitFieldsContainer');
     const targetStallIdInput = document.getElementById('targetStallId');
@@ -1021,37 +1641,37 @@
           const p1 = parseFloat(subSeat1PriceInput.value) || 0;
           const p2 = parseFloat(subSeat2PriceInput.value) || 0;
 
-          // Mark parent seat as split in Firestore
           await setDoc(doc(db, "seats", targetId), {
             status: "split",
             isSplit: true,
             children: [s1Name, s2Name]
           }, { merge: true });
 
-          // Create Sub-Stall 1
           await setDoc(doc(db, "seats", s1Name), {
             id: s1Name,
             name: s1Name,
             parentId: targetId,
             price: p1,
             status: "available",
-            isSubSeat: true
+            isSubSeat: true,
+            companyName: deleteField(),
+            userName: deleteField()
           }, { merge: true });
 
-          // Create Sub-Stall 2
           await setDoc(doc(db, "seats", s2Name), {
             id: s2Name,
             name: s2Name,
             parentId: targetId,
             price: p2,
             status: "available",
-            isSubSeat: true
+            isSubSeat: true,
+            companyName: deleteField(),
+            userName: deleteField()
           }, { merge: true });
 
           alert(`Success! Stall ${targetId} split into ${s1Name} (₹${p1}) and ${s2Name} (₹${p2}). Reflected on Map in Realtime!`);
 
         } else {
-          // Unsplit / Merge Logic
           const targetSnap = await getDoc(doc(db, "seats", targetId));
           let children = [`${targetId}(A)`, `${targetId}(B)`];
 
@@ -1059,7 +1679,6 @@
             children = targetSnap.data().children;
           }
 
-          // Delete children docs
           for (const childId of children) {
             try {
               await deleteDoc(doc(db, "seats", childId));
@@ -1068,11 +1687,12 @@
             }
           }
 
-          // Reset parent seat
           await setDoc(doc(db, "seats", targetId), {
             status: "available",
             isSplit: false,
-            children: []
+            children: [],
+            companyName: deleteField(),
+            userName: deleteField()
           }, { merge: true });
 
           alert(`Success! Sub-stalls merged back into original Stall ${targetId}.`);
@@ -1093,7 +1713,6 @@
       }
     });
 
-    // Cloudinary Helper
     async function uploadToCloudinary(file, folderPath) {
       const formData = new FormData();
       formData.append('file', file);
@@ -1110,7 +1729,6 @@
       return cloudData.secure_url;
     }
 
-    // Admin Direct Booking Form Calculation
     const adminTotalAmt = document.getElementById('adminTotalAmt');
     const adminPaidAmt = document.getElementById('adminPaidAmt');
     const adminPendingAmt = document.getElementById('adminPendingAmt');
@@ -1124,7 +1742,6 @@
     adminTotalAmt.addEventListener('input', calcAdminPending);
     adminPaidAmt.addEventListener('input', calcAdminPending);
 
-    // Auto calculate on option selection
     document.getElementById('adminPayOption').addEventListener('change', (e) => {
       const opt = e.target.value;
       const tot = parseFloat(adminTotalAmt.value) || 0;
@@ -1136,7 +1753,31 @@
       calcAdminPending();
     });
 
-    // Admin Direct Booking Submit
+    const editTotalAmt = document.getElementById('editTotalAmt');
+    const editPaidAmt = document.getElementById('editPaidAmt');
+    const editPendingAmt = document.getElementById('editPendingAmt');
+
+    function calcEditPending() {
+      const tot = parseFloat(editTotalAmt.value) || 0;
+      const pd = parseFloat(editPaidAmt.value) || 0;
+      editPendingAmt.value = Math.max(0, tot - pd);
+    }
+
+    editTotalAmt.addEventListener('input', calcEditPending);
+    editPaidAmt.addEventListener('input', calcEditPending);
+
+    document.getElementById('editPayOption').addEventListener('change', (e) => {
+      const opt = e.target.value;
+      const tot = parseFloat(editTotalAmt.value) || 0;
+      if (opt === 'FULL_PAYMENT') {
+        editPaidAmt.value = tot;
+      } else if (opt === '50_ADVANCE') {
+        editPaidAmt.value = Math.ceil(tot / 2);
+      }
+      calcEditPending();
+    });
+
+    // ADMIN DIRECT BOOKING SUBMIT (FIXED: SEAT METADATA SYNC)
     document.getElementById('adminBookingForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -1182,7 +1823,6 @@
         if (idFile) idProofUrl = await uploadToCloudinary(idFile, `${folderPath}/id_proof`);
         if (payFile) paymentProofUrl = await uploadToCloudinary(payFile, `${folderPath}/payment_proof`);
 
-        // Create Booking Doc
         const bookingRef = doc(collection(db, "bookings"));
         await setDoc(bookingRef, {
           userName,
@@ -1210,10 +1850,14 @@
           timestamp: new Date().toISOString()
         });
 
-        // Update Seats status in Firestore
         const seatStatus = status === 'approved' ? 'booked' : 'pending';
         for (const seatId of seats) {
-          await setDoc(doc(db, "seats", seatId), { status: seatStatus }, { merge: true });
+          await setDoc(doc(db, "seats", seatId), { 
+            status: seatStatus,
+            companyName: companyName,
+            userName: userName,
+            bookingId: bookingRef.id
+          }, { merge: true });
         }
 
         alert(`Admin Booking Created Successfully!\nStalls: ${seats.join(', ')}\nStatus: ${status.toUpperCase()}`);
@@ -1228,10 +1872,184 @@
       }
     });
 
-    // View Details Modal Trigger
+    window.editBooking = (bookingId) => {
+      const item = allBookings.find(b => b.id === bookingId);
+      if (!item) return alert("Booking entry not found!");
+
+      document.getElementById('editBookingId').value = item.id;
+      document.getElementById('editOriginalSeats').value = (item.seats || []).join(', ');
+
+      document.getElementById('editStalls').value = (item.seats || []).join(', ');
+      document.getElementById('editUserName').value = item.userName || '';
+      document.getElementById('editCompanyName').value = item.companyName || '';
+      document.getElementById('editAddress').value = item.completeAddress || '';
+      document.getElementById('editWhatsapp').value = item.whatsappNumber || '';
+      document.getElementById('editAltMobile').value = item.altMobileNumber || '';
+      document.getElementById('editEmail').value = item.emailAddress || '';
+
+      const cats = Array.isArray(item.businessCategories) ? item.businessCategories : [];
+      document.querySelectorAll('input[name="editCat"]').forEach(cb => {
+        cb.checked = cats.includes(cb.value);
+      });
+
+      document.getElementById('editDescription').value = item.businessDescription || '';
+      document.getElementById('editExtra').value = item.extraRequirements || '';
+
+      const totalAmt = item.totalAmount || 0;
+      const paidAmt = item.paidAmount !== undefined ? item.paidAmount : totalAmt;
+      const pendingAmt = item.pendingAmount !== undefined ? item.pendingAmount : Math.max(0, totalAmt - paidAmt);
+
+      document.getElementById('editTotalAmt').value = totalAmt;
+      document.getElementById('editPaidAmt').value = paidAmt;
+      document.getElementById('editPendingAmt').value = pendingAmt;
+
+      document.getElementById('editPayMethod').value = item.paymentMethod || 'UPI';
+      document.getElementById('editPayOption').value = item.paymentOption || 'FULL_PAYMENT';
+      document.getElementById('editTxnId').value = item.transactionId || '';
+
+      if (item.bookingDate) {
+        document.getElementById('editBookingDate').value = item.bookingDate;
+      } else {
+        document.getElementById('editBookingDate').valueAsDate = new Date();
+      }
+
+      document.getElementById('editStatusSelect').value = item.status || 'pending';
+
+      document.getElementById('editIdProof').value = '';
+      document.getElementById('editPaymentProof').value = '';
+
+      document.getElementById('editBookingModal').style.display = 'flex';
+    };
+
+    // EDIT FORM SUBMIT (FIXED: HANDLES STALL SHIFTING LIKE B-13 TO B-7 PERFECTLY)
+    document.getElementById('editBookingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const bookingId = document.getElementById('editBookingId').value;
+      const originalItem = allBookings.find(b => b.id === bookingId);
+      if (!originalItem) return alert("Original booking context lost. Please try again.");
+
+      const rawStalls = document.getElementById('editStalls').value.trim();
+      if (!rawStalls) return alert("Please enter Stall IDs!");
+
+      const newSeats = rawStalls.split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+      const originalSeats = (document.getElementById('editOriginalSeats').value || '').split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+
+      const userName = document.getElementById('editUserName').value.trim();
+      const companyName = document.getElementById('editCompanyName').value.trim();
+      const completeAddress = document.getElementById('editAddress').value.trim();
+      const whatsappNumber = document.getElementById('editWhatsapp').value.trim();
+      const altMobileNumber = document.getElementById('editAltMobile').value.trim();
+      const emailAddress = document.getElementById('editEmail').value.trim();
+
+      const selectedCategories = [];
+      document.querySelectorAll('input[name="editCat"]:checked').forEach(cb => selectedCategories.push(cb.value));
+
+      const businessDescription = document.getElementById('editDescription').value.trim();
+      const extraRequirements = document.getElementById('editExtra').value.trim();
+
+      const totalAmount = parseFloat(editTotalAmt.value) || 0;
+      const paidAmount = parseFloat(editPaidAmt.value) || 0;
+      const pendingAmount = Math.max(0, totalAmount - paidAmount);
+
+      const paymentMethod = document.getElementById('editPayMethod').value;
+      const paymentOption = document.getElementById('editPayOption').value;
+      const transactionId = document.getElementById('editTxnId').value.trim();
+      const bookingDate = document.getElementById('editBookingDate').value;
+      const status = document.getElementById('editStatusSelect').value;
+
+      const submitBtn = document.getElementById('editSubmitBookingBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Saving Changes...";
+
+      try {
+        let idProofUrl = originalItem.idProofUrl || "";
+        let paymentProofUrl = originalItem.paymentProofUrl || originalItem.proofUrl || "";
+
+        const newIdFile = document.getElementById('editIdProof').files[0];
+        const newPayFile = document.getElementById('editPaymentProof').files[0];
+
+        const folderPath = `bandhan_bazaar_2026/edited_${userName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now()}`;
+        if (newIdFile) idProofUrl = await uploadToCloudinary(newIdFile, `${folderPath}/id_proof`);
+        if (newPayFile) paymentProofUrl = await uploadToCloudinary(newPayFile, `${folderPath}/payment_proof`);
+
+        const updatedDoc = {
+          userName,
+          companyName,
+          completeAddress,
+          whatsappNumber,
+          altMobileNumber,
+          emailAddress,
+          businessCategories: selectedCategories,
+          businessDescription,
+          extraRequirements,
+          idProofUrl,
+          seats: newSeats,
+          totalAmount,
+          paidAmount,
+          pendingAmount,
+          paymentMethod,
+          paymentOption,
+          transactionId,
+          paymentProofUrl,
+          bookingDate,
+          status,
+          lastEditedByAdminAt: new Date().toISOString()
+        };
+
+        await updateDoc(doc(db, "bookings", bookingId), updatedDoc);
+
+        // RELEASE REMOVED SEATS (e.g. B-13) & CLEAR THEIR METADATA
+        const removedSeats = originalSeats.filter(s => !newSeats.includes(s));
+        for (const remSeat of removedSeats) {
+          await setDoc(doc(db, "seats", remSeat), { 
+            status: "available",
+            companyName: deleteField(),
+            userName: deleteField(),
+            bookingId: deleteField()
+          }, { merge: true });
+        }
+
+        // UPDATE NEW SEATS (e.g. B-7) WITH UPDATED STATUS & METADATA
+        let targetSeatStatus = "available";
+        if (status === 'approved') targetSeatStatus = "booked";
+        else if (status === 'pending') targetSeatStatus = "pending";
+
+        for (const newSeat of newSeats) {
+          if (targetSeatStatus === "available") {
+            await setDoc(doc(db, "seats", newSeat), { 
+              status: "available",
+              companyName: deleteField(),
+              userName: deleteField(),
+              bookingId: deleteField()
+            }, { merge: true });
+          } else {
+            await setDoc(doc(db, "seats", newSeat), { 
+              status: targetSeatStatus,
+              companyName: companyName,
+              userName: userName,
+              bookingId: bookingId
+            }, { merge: true });
+          }
+        }
+
+        alert(`Registration entry updated successfully for ${userName}! Seats sync complete.`);
+        document.getElementById('editBookingModal').style.display = 'none';
+
+      } catch (err) {
+        console.error("Error editing booking:", err);
+        alert("Failed to update booking: " + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "💾 Save & Update Booking";
+      }
+    });
+
     window.viewDetails = (bookingId) => {
       const item = allBookings.find(b => b.id === bookingId);
       if (!item) return;
+
+      currentViewingBooking = item; // Store context dynamically for PDF Download
 
       document.getElementById('modalCustomerName').innerText = item.userName || 'Customer Details';
       const body = document.getElementById('modalDetailsBody');
@@ -1266,15 +2084,222 @@
       document.getElementById('detailsModal').style.display = 'flex';
     };
 
-    // Approve Logic
+    // DYNAMIC PDF DOWNLOAD FEATURE FOR VIEW DETAILS MODAL
+    const downloadBookingDetailsBtn = document.getElementById('downloadBookingDetailsBtn');
+    if (downloadBookingDetailsBtn) {
+      downloadBookingDetailsBtn.addEventListener('click', async () => {
+        if (!currentViewingBooking) {
+          return alert("No booking details currently loaded to download!");
+        }
+
+        const originalBtnText = downloadBookingDetailsBtn.innerHTML;
+        downloadBookingDetailsBtn.disabled = true;
+        downloadBookingDetailsBtn.innerHTML = "⏳ Generating Download...";
+
+        try {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: 'a4'
+          });
+
+          const b = currentViewingBooking;
+
+          // Safe Data Parsing
+          const name = b.userName || 'Customer';
+          const company = b.companyName || 'N/A';
+          const phone = b.whatsappNumber || 'N/A';
+          const altPhone = b.altMobileNumber || 'N/A';
+          const email = b.emailAddress || 'N/A';
+          const address = b.completeAddress || 'N/A';
+
+          const seats = Array.isArray(b.seats) ? b.seats.join(', ') : (b.seats || 'N/A');
+          const primarySeat = Array.isArray(b.seats) && b.seats.length > 0 ? b.seats[0] : (b.seats || '');
+
+          const cats = Array.isArray(b.businessCategories) 
+            ? b.businessCategories.join(', ') 
+            : (b.businessCategories || 'N/A');
+
+          const desc = b.businessDescription || 'N/A';
+          const extra = b.extraRequirements || 'None';
+
+          const totalAmt = b.totalAmount || 0;
+          const paidAmt = b.paidAmount !== undefined ? b.paidAmount : totalAmt;
+          const pendingAmt = b.pendingAmount !== undefined ? b.pendingAmount : Math.max(0, totalAmt - paidAmt);
+
+          const payMethod = b.paymentMethod || 'UPI';
+          const payOption = b.paymentOption || 'FULL_PAYMENT';
+          const txnId = b.transactionId || 'N/A';
+          const bDate = b.bookingDate || 'N/A';
+          const status = (b.status || 'pending').toUpperCase();
+
+          const idProof = b.idProofUrl ? b.idProofUrl : 'Not Uploaded';
+          const payProof = (b.paymentProofUrl || b.proofUrl) ? (b.paymentProofUrl || b.proofUrl) : 'N/A';
+
+          // PDF Header Banner
+          doc.setFillColor(26, 37, 47);
+          doc.rect(0, 0, 210, 32, 'F');
+
+          doc.setTextColor(255, 255, 255);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(20);
+          doc.text("BANDHAN BAZAAR", 14, 16);
+
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          doc.text("Stall Booking & Customer Registration Document", 14, 24);
+
+          const genTime = new Date().toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' });
+          doc.setFontSize(9);
+          doc.text(`Generated: ${genTime}`, 145, 24);
+
+          // Customer Highlight Sub-Header Box
+          doc.setFillColor(244, 246, 249);
+          doc.roundedRect(14, 38, 182, 18, 3, 3, 'F');
+
+          doc.setTextColor(26, 37, 47);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(13);
+          doc.text(name, 18, 47);
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9.5);
+          doc.setTextColor(108, 117, 125);
+          doc.text(`Company: ${company}  |  Status: ${status}  |  Stalls: ${seats}`, 18, 52);
+
+          let startY = 62;
+
+          // Section 1: Customer Information
+          doc.autoTable({
+            startY: startY,
+            head: [['1. Customer & Contact Details', '']],
+            body: [
+              ['Full Name', name],
+              ['Company / Brand Name', company],
+              ['WhatsApp Number', phone],
+              ['Alternative Mobile', altPhone],
+              ['Email Address', email],
+              ['Complete Address', address]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [26, 37, 47], textColor: [255, 255, 255], fontStyle: 'bold' },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55, fillColor: [248, 249, 250] } },
+            margin: { left: 14, right: 14 },
+            styles: { fontSize: 9, cellPadding: 2.5 }
+          });
+
+          startY = doc.lastAutoTable.finalY + 5;
+
+          // Section 2: Stall & Financial Information
+          doc.autoTable({
+            startY: startY,
+            head: [['2. Stall & Payment Summary', '']],
+            body: [
+              ['Allocated Stall(s)', seats],
+              ['Booking Date', bDate],
+              ['Total Amount', `₹${totalAmt.toLocaleString('en-IN')}`],
+              ['Paid Amount', `₹${paidAmt.toLocaleString('en-IN')}`],
+              ['Pending Amount (Due)', `₹${pendingAmt.toLocaleString('en-IN')}`],
+              ['Payment Method & Option', `${payMethod} (${payOption})`],
+              ['Transaction ID / UTR', txnId]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [40, 167, 69], textColor: [255, 255, 255], fontStyle: 'bold' },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55, fillColor: [248, 249, 250] } },
+            margin: { left: 14, right: 14 },
+            styles: { fontSize: 9, cellPadding: 2.5 }
+          });
+
+          startY = doc.lastAutoTable.finalY + 5;
+
+          // Section 3: Business Information
+          doc.autoTable({
+            startY: startY,
+            head: [['3. Business Information & Requirements', '']],
+            body: [
+              ['Business Categories', cats],
+              ['Business Description', desc],
+              ['Extra Requirements', extra]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [0, 123, 255], textColor: [255, 255, 255], fontStyle: 'bold' },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55, fillColor: [248, 249, 250] } },
+            margin: { left: 14, right: 14 },
+            styles: { fontSize: 9, cellPadding: 2.5 }
+          });
+
+          startY = doc.lastAutoTable.finalY + 5;
+
+          // Section 4: Submitted Documents
+          doc.autoTable({
+            startY: startY,
+            head: [['4. Submitted Documents & Verification Info', '']],
+            body: [
+              ['ID Proof Document', idProof],
+              ['Payment Screenshot / Proof', payProof]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [108, 117, 125], textColor: [255, 255, 255], fontStyle: 'bold' },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55, fillColor: [248, 249, 250] } },
+            margin: { left: 14, right: 14 },
+            styles: { fontSize: 8.5, cellPadding: 2.5 }
+          });
+
+          // Footer Configuration
+          const pageCount = doc.internal.getNumberOfPages();
+          for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text(
+              `Generated from Bandhan Bazaar Admin Dashboard  |  Page ${i} of ${pageCount}`,
+              105,
+              287,
+              { align: 'center' }
+            );
+          }
+
+          // Dynamic Filename Generation
+          const cleanName = name.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+          const cleanSeat = primarySeat.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+
+          let filename = `Bandhan_Bazaar_Booking_${cleanName || 'Details'}.pdf`;
+          if (cleanSeat && cleanName) {
+            filename = `Bandhan_Bazaar_${cleanSeat}_${cleanName}.pdf`;
+          }
+
+          doc.save(filename);
+
+        } catch (err) {
+          console.error("Error generating PDF:", err);
+          alert("Failed to download details: " + err.message);
+        } finally {
+          downloadBookingDetailsBtn.disabled = false;
+          downloadBookingDetailsBtn.innerHTML = originalBtnText;
+        }
+      });
+    }
+
+    // APPROVE LOGIC (FIXED: ATTACHES COMPANY DETAILS TO SEAT DOC)
     window.approveBooking = async (bookingId, seatIdsStr) => {
       if (!confirm("Are you sure you want to APPROVE this booking payment?")) return;
       const seatIds = seatIdsStr.split(',');
 
       try {
+        const bookingSnap = await getDoc(doc(db, "bookings", bookingId));
+        const bData = bookingSnap.exists() ? bookingSnap.data() : {};
+
         await updateDoc(doc(db, "bookings", bookingId), { status: "approved" });
         for (const seatId of seatIds) {
-          if (seatId) await updateDoc(doc(db, "seats", seatId), { status: "booked" });
+          if (seatId) {
+            await setDoc(doc(db, "seats", seatId), { 
+              status: "booked",
+              companyName: bData.companyName || "",
+              userName: bData.userName || "",
+              bookingId: bookingId
+            }, { merge: true });
+          }
         }
         alert("Booking Approved Successfully! Seat map updated to Booked (Red).");
       } catch (err) {
@@ -1283,7 +2308,7 @@
       }
     };
 
-    // Reject Logic
+    // REJECT LOGIC (FIXED: WIPES SEAT METADATA)
     window.rejectBooking = async (bookingId, seatIdsStr) => {
       if (!confirm("Are you sure you want to REJECT this booking payment?")) return;
       const seatIds = seatIdsStr.split(',');
@@ -1291,7 +2316,14 @@
       try {
         await updateDoc(doc(db, "bookings", bookingId), { status: "rejected" });
         for (const seatId of seatIds) {
-          if (seatId) await updateDoc(doc(db, "seats", seatId), { status: "available" });
+          if (seatId) {
+            await setDoc(doc(db, "seats", seatId), { 
+              status: "available",
+              companyName: deleteField(),
+              userName: deleteField(),
+              bookingId: deleteField()
+            }, { merge: true });
+          }
         }
         alert("Booking Rejected! Seat map updated back to Available.");
       } catch (err) {
@@ -1300,7 +2332,7 @@
       }
     };
 
-    // Delete Booking
+    // DELETE BOOKING (FIXED: WIPES SEAT METADATA)
     window.deleteBooking = async (bookingId, seatIdsStr) => {
       if (!confirm("⚠️ Are you sure you want to PERMANENTLY DELETE this booking from the backend?")) return;
       const seatIds = seatIdsStr ? seatIdsStr.split(',').filter(s => s.trim()) : [];
@@ -1308,7 +2340,14 @@
       try {
         await deleteDoc(doc(db, "bookings", bookingId));
         for (const seatId of seatIds) {
-          if (seatId) await updateDoc(doc(db, "seats", seatId), { status: "available" });
+          if (seatId) {
+            await setDoc(doc(db, "seats", seatId), { 
+              status: "available",
+              companyName: deleteField(),
+              userName: deleteField(),
+              bookingId: deleteField()
+            }, { merge: true });
+          }
         }
         alert("Booking record deleted and seats released!");
       } catch (err) {
@@ -1317,7 +2356,6 @@
       }
     };
 
-    // Excel Export
     downloadExcelBtn.addEventListener('click', () => {
       if (allBookings.length === 0) return alert("No booking data available to download!");
 
@@ -1360,7 +2398,6 @@
       XLSX.writeFile(workbook, `Bandhan_Bazaar_Stall_Bookings_${Date.now()}.xlsx`);
     });
 
-    // Filter Buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));

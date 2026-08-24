@@ -73,6 +73,49 @@
 
     .export-btn { background-color: #28a745; color: white; }
     .export-btn:hover { background-color: #218838; }
+    /* BULK SELECTION BUTTONS */
+    .bulk-pdf-btn {
+      background-color: #d9534f;
+      color: white;
+    }
+
+    .bulk-pdf-btn:hover {
+      background-color: #c9302c;
+    }
+
+    .bulk-print-btn {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .bulk-print-btn:hover {
+      background-color: #545b62;
+    }
+
+    .selection-info {
+      background: #eef5ff;
+      color: #1e3a5f;
+      border: 1px solid #cfe2ff;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .select-all-header,
+    .booking-select {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .select-cell {
+      text-align: center !important;
+      width: 50px;
+    }
 
     .price-btn { background-color: #ff9800; color: white; }
     .price-btn:hover { background-color: #e65100; }
@@ -465,6 +508,18 @@
         <button id="openSplitSeatModalBtn" class="btn-header split-btn">✂️ Split / Merge Stall</button>
         <button id="openAdminBookingModalBtn" class="btn-header book-btn">➕ Direct Admin Stall Booking</button>
         <button id="downloadExcelBtn" class="btn-header export-btn">📊 Download Excel Report</button>
+
+        <button id="downloadSelectedPdfBtn" class="btn-header bulk-pdf-btn" disabled>
+          📄 Download Selected PDF
+        </button>
+        
+        <button id="printSelectedBtn" class="btn-header bulk-print-btn" disabled>
+          🖨️ Print Selected
+        </button>
+        
+        <div id="selectionInfo" class="selection-info">
+          ☑️ <span id="selectedBookingCount">0</span> Selected
+        </div>
       </div>
     </header>
 
@@ -503,6 +558,9 @@
       <table>
         <thead>
           <tr>
+            <th class="select-cell">
+              <input type="checkbox" id="selectAllBookings" class="select-all-header">
+            </th>
             <th>Date & Time</th>
             <th>Full Name / Company</th>
             <th>Contact & Email</th>
@@ -520,7 +578,7 @@
         </thead>
         <tbody id="adminTableBody">
           <tr>
-            <td colspan="13" style="text-align: center; color: #777;">Loading bookings...</td>
+            <td colspan="14" style="text-align: center; color: #777;">Loading bookings...</td>
           </tr>
         </tbody>
       </table>
@@ -1134,6 +1192,7 @@
     let allCreators = [];
     let currentFilter = 'pending';
     let currentViewingBooking = null; // Tracks currently open customer booking in details modal
+    let selectedBookingIds = [];
 
     const tableBody = document.getElementById('adminTableBody');
     const searchInput = document.getElementById('searchInput');
@@ -1142,6 +1201,10 @@
     const totalRevenueEl = document.getElementById('totalRevenue');
     const totalPendingAmountEl = document.getElementById('totalPendingAmount');
     const downloadExcelBtn = document.getElementById('downloadExcelBtn');
+    const downloadSelectedPdfBtn = document.getElementById('downloadSelectedPdfBtn');
+    const printSelectedBtn =document.getElementById('printSelectedBtn');
+    const selectAllBookings =document.getElementById('selectAllBookings');
+  const selectedBookingCount =document.getElementById('selectedBookingCount');
 
     // 1. LIVE STALL BOOKINGS LISTENER
     onSnapshot(collection(db, "bookings"), (snapshot) => {
@@ -1450,6 +1513,9 @@
         ` : `<span style="color:#888; font-size:11px;">N/A</span>`;
 
         row.innerHTML = `
+        <td class="select-cell">
+          <input type="checkbox"class="booking-select" value="${item.id}" ${selectedBookingIds.includes(item.id) ? 'checked' : ''}>
+          </td>
           <td>${formattedDate}</td>
           <td><b>${item.userName || 'N/A'}</b><br><small style="color:#6c757d;">${item.companyName || ''}</small></td>
           <td>📞 ${item.whatsappNumber || 'N/A'}<br><small style="color:#6c757d;">✉️ ${item.emailAddress || 'N/A'}</small></td>
@@ -1477,6 +1543,338 @@
         tableBody.appendChild(row);
       });
     }
+
+        // ========================================
+    // INDIVIDUAL BOOKING SELECTION
+    // ========================================
+
+    tableBody.addEventListener('change', function (e) {
+
+      if (!e.target.classList.contains('booking-select')) {
+        return;
+      }
+
+      const bookingId = e.target.value;
+
+      if (e.target.checked) {
+
+        if (!selectedBookingIds.includes(bookingId)) {
+          selectedBookingIds.push(bookingId);
+        }
+
+      } else {
+
+        selectedBookingIds =
+          selectedBookingIds.filter(function (id) {
+            return id !== bookingId;
+          });
+
+      }
+
+      updateSelectionUI();
+
+    });
+
+
+    // ========================================
+    // UPDATE SELECTION UI
+    // ========================================
+
+    function updateSelectionUI() {
+
+      selectedBookingCount.innerText =
+        selectedBookingIds.length;
+
+      downloadSelectedPdfBtn.disabled =
+        selectedBookingIds.length === 0;
+
+      printSelectedBtn.disabled =
+        selectedBookingIds.length === 0;
+
+
+      // Update Select All checkbox
+      const visibleCheckboxes =
+        document.querySelectorAll('.booking-select');
+
+      let checkedCount = 0;
+
+      visibleCheckboxes.forEach(function (checkbox) {
+
+        if (selectedBookingIds.includes(checkbox.value)) {
+          checkedCount++;
+        }
+
+      });
+
+
+      if (visibleCheckboxes.length === 0) {
+
+        selectAllBookings.checked = false;
+        selectAllBookings.indeterminate = false;
+
+      } else {
+
+        selectAllBookings.checked =
+          checkedCount === visibleCheckboxes.length;
+
+        selectAllBookings.indeterminate =
+          checkedCount > 0 &&
+          checkedCount < visibleCheckboxes.length;
+
+      }
+
+    }
+
+
+    // ========================================
+    // SELECT ALL VISIBLE BOOKINGS
+    // ========================================
+
+    selectAllBookings.addEventListener(
+      'change',
+      function () {
+
+        const checkboxes =
+          document.querySelectorAll('.booking-select');
+
+
+        checkboxes.forEach(function (checkbox) {
+
+          const bookingId =
+            checkbox.value;
+
+
+          if (selectAllBookings.checked) {
+
+            if (!selectedBookingIds.includes(bookingId)) {
+              selectedBookingIds.push(bookingId);
+            }
+
+          } else {
+
+            selectedBookingIds =
+              selectedBookingIds.filter(function (id) {
+                return id !== bookingId;
+              });
+
+          }
+
+        });
+
+
+        // Re-render table so row checkboxes stay synced
+        renderTable();
+
+        updateSelectionUI();
+
+      }
+    );
+
+
+    // ========================================
+    // GET SELECTED BOOKINGS
+    // ========================================
+
+    function getSelectedBookings() {
+
+      return allBookings.filter(function (booking) {
+
+        return selectedBookingIds.includes(
+          booking.id
+        );
+
+      });
+
+    }
+
+
+    // Initial UI state
+    updateSelectionUI();
+
+    // ========================================
+  // DOWNLOAD SELECTED PDF
+  // ========================================
+
+  downloadSelectedPdfBtn.addEventListener(
+    'click',
+    function () {
+
+      const selectedBookings =
+        getSelectedBookings();
+
+
+      if (selectedBookings.length === 0) {
+
+        alert(
+          'Please select at least one booking first.'
+        );
+
+        return;
+      }
+
+
+      const jsPDFObject =
+        window.jspdf.jsPDF;
+
+      const pdf =
+        new jsPDFObject();
+
+
+      selectedBookings.forEach(
+        function (booking, index) {
+
+          if (index > 0) {
+            pdf.addPage();
+          }
+
+
+          pdf.setFontSize(18);
+
+          pdf.text(
+            'BANDHAN BAZAAR',
+            14,
+            15
+          );
+
+
+          pdf.setFontSize(11);
+
+          pdf.text(
+            'Selected Stall Booking Details',
+            14,
+            23
+          );
+
+
+          const total =
+            booking.totalAmount || 0;
+
+          const paid =
+            booking.paidAmount !== undefined
+              ? booking.paidAmount
+              : total;
+
+          const pending =
+            booking.pendingAmount !== undefined
+              ? booking.pendingAmount
+              : Math.max(
+                  0,
+                  total - paid
+                );
+
+
+          const stalls =
+            Array.isArray(booking.seats)
+              ? booking.seats.join(', ')
+              : (
+                  booking.seats ||
+                  'N/A'
+                );
+
+
+          pdf.autoTable({
+
+            startY: 30,
+
+            head: [
+              ['Field', 'Details']
+            ],
+
+            body: [
+
+              [
+                'Full Name',
+                booking.userName || 'N/A'
+              ],
+
+              [
+                'Company / Brand',
+                booking.companyName || 'N/A'
+              ],
+
+              [
+                'WhatsApp',
+                booking.whatsappNumber || 'N/A'
+              ],
+
+              [
+                'Email',
+                booking.emailAddress || 'N/A'
+              ],
+
+              [
+                'Address',
+                booking.completeAddress || 'N/A'
+              ],
+
+              [
+                'Selected Stalls',
+                stalls
+              ],
+
+              [
+                'Total Amount',
+                '₹' +
+                Number(total)
+                  .toLocaleString('en-IN')
+              ],
+
+              [
+                'Paid Amount',
+                '₹' +
+                Number(paid)
+                  .toLocaleString('en-IN')
+              ],
+
+              [
+                'Pending Amount',
+                '₹' +
+                Number(pending)
+                  .toLocaleString('en-IN')
+              ],
+
+              [
+                'Payment Method',
+                booking.paymentMethod || 'N/A'
+              ],
+
+              [
+                'Transaction ID / UTR',
+                booking.transactionId || 'N/A'
+              ],
+
+              [
+                'Booking Date',
+                booking.bookingDate || 'N/A'
+              ],
+
+              [
+                'Status',
+                (
+                  booking.status ||
+                  'pending'
+                ).toUpperCase()
+              ]
+
+            ],
+
+            styles: {
+              fontSize: 9,
+              cellPadding: 3
+            }
+
+          });
+
+        }
+      );
+
+
+      pdf.save(
+        'Bandhan_Bazaar_Selected_Bookings.pdf'
+      );
+
+    }
+  );
 
     function escapeHtml(text) {
       if (!text) return "";
