@@ -158,8 +158,8 @@
                         </div>
 
                         <div class="form-group">
-                              <label for="numMembers">Number of Members (Sath me kitne log hain?)</label>
-                              <input type="number" id="numMembers" min="0" max="10" value="0">
+                              <label for="numMembers">Number of Members (Maximum 5 member only)</label>
+                              <input type="number" id="numMembers" min="0" max="5" value="0">
                         </div>
 
                         <button type="submit" id="submitBtn" class="btn-submit">Submit & Download Pass PDF</button>
@@ -283,6 +283,21 @@
                   const address = document.getElementById('address').value.trim();
                   const mobile = document.getElementById('mobile').value.trim();
                   const numMembers = parseInt(document.getElementById('numMembers').value) || 0;
+
+                  // Members Count Validation (Maximum 5 Allowed)
+                  if (numMembers > 5) {
+                        statusMsg.style.color = "red";
+                        statusMsg.innerText = "⚠️ Aap अधिकतम 5 members (साथ में) ही जोड़ सकते हैं!";
+                        submitBtn.disabled = false;
+                        return;
+                  }
+
+                  if (numMembers < 0) {
+                        statusMsg.style.color = "red";
+                        statusMsg.innerText = "⚠️ Members ki sankhya negative nahi ho sakti!";
+                        submitBtn.disabled = false;
+                        return;
+                  }
 
                   try {
                         // 1. Real-time Backend Duplicate Check (By Mobile Number)
