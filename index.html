@@ -14,6 +14,91 @@
       <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
       <!-- jsPDF Library for PDF Generation -->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+      <style>
+            /* Download Success Popup Modal Styling */
+            .modal-overlay {
+                  position: fixed;
+                  top: 0;
+                  left: 0;
+                  width: 100%;
+                  height: 100%;
+                  background: rgba(0, 0, 0, 0.7);
+                  display: none;
+                  align-items: center;
+                  justify-content: center;
+                  z-index: 9999;
+                  padding: 20px;
+                  box-sizing: border-box;
+            }
+
+            .modal-card {
+                  background: #ffffff;
+                  border-radius: 16px;
+                  max-width: 420px;
+                  width: 100%;
+                  padding: 30px 24px;
+                  text-align: center;
+                  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                  animation: popupAnim 0.3s ease-out forwards;
+                  font-family: 'Poppins', sans-serif;
+            }
+
+            @keyframes popupAnim {
+                  from {
+                        transform: scale(0.8);
+                        opacity: 0;
+                  }
+                  to {
+                        transform: scale(1);
+                        opacity: 1;
+                  }
+            }
+
+            .modal-icon {
+                  width: 65px;
+                  height: 65px;
+                  background: #DCFCE7;
+                  color: #166534;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 32px;
+                  margin: 0 auto 16px auto;
+            }
+
+            .modal-title {
+                  font-size: 22px;
+                  font-weight: 700;
+                  color: #1E293B;
+                  margin-bottom: 8px;
+            }
+
+            .modal-desc {
+                  font-size: 14px;
+                  color: #64748B;
+                  margin-bottom: 24px;
+                  line-height: 1.5;
+            }
+
+            .btn-modal-redirect {
+                  width: 100%;
+                  background: #F97316;
+                  color: #ffffff;
+                  border: none;
+                  padding: 14px 20px;
+                  font-size: 16px;
+                  font-weight: 600;
+                  border-radius: 8px;
+                  cursor: pointer;
+                  transition: background 0.2s ease;
+            }
+
+            .btn-modal-redirect:hover {
+                  background: #EA580C;
+            }
+      </style>
 </head>
 
 <body>
@@ -141,6 +226,16 @@
 
       </div>
 
+      <!-- Success Popup Modal -->
+      <div id="successModal" class="modal-overlay">
+            <div class="modal-card">
+                  <div class="modal-icon">✓</div>
+                  <div class="modal-title">Successfully Downloaded!</div>
+                  <div class="modal-desc">Aapka Pass PDF successfully generate aur download ho gaya hai. Main website par jaane ke liye niche click karein.</div>
+                  <button id="redirectBtn" class="btn-modal-redirect">Go to Main Website</button>
+            </div>
+      </div>
+
       <!-- Offscreen Elements for QR & Canvas Rendering -->
       <div id="qrcode-temp" style="position: fixed; left: -9999px; top: -9999px;"></div>
       <canvas id="cardCanvas" style="display:none;"></canvas>
@@ -174,12 +269,14 @@
             const form = document.getElementById('visitorForm');
             const submitBtn = document.getElementById('submitBtn');
             const statusMsg = document.getElementById('statusMsg');
+            const successModal = document.getElementById('successModal');
+            const redirectBtn = document.getElementById('redirectBtn');
 
             form.addEventListener('submit', async (e) => {
                   e.preventDefault();
                   submitBtn.disabled = true;
                   statusMsg.style.color = "#F97316";
-                  statusMsg.innerText = "Checking record... Kpya prateeksha karein.";
+                  statusMsg.innerText = "Checking record... Kripya prateeksha karein.";
 
                   const name = document.getElementById('name').value.trim();
                   const fatherName = document.getElementById('fatherName').value.trim();
@@ -195,9 +292,9 @@
 
                         if (!querySnapshot.empty) {
                               statusMsg.style.color = "red";
-                              statusMsg.innerText = `⚠️ Mobile number (${mobile}) pehle se registered hai! Kpya dusra mobile number enter karein.`;
+                              statusMsg.innerText = `⚠️ Mobile number (${mobile}) pehle se registered hai! Kripya dusra mobile number enter karein.`;
                               submitBtn.disabled = false;
-                              return; // Stop form execution if duplicate found
+                              return;
                         }
 
                         statusMsg.style.color = "#F97316";
@@ -223,16 +320,15 @@
                               numMembers
                         });
 
-                        // 4. Trigger Cross-Device Download with Explicit Delay Buffer
                         statusMsg.style.color = "green";
-                        statusMsg.innerText = "Success! Pass PDF downloading... Website redirect ho rahi hai.";
+                        statusMsg.innerText = "Pass PDF ready! Download complete ho raha hai...";
 
+                        // 4. Download PDF & Wait for finish
                         await downloadPassAsPDF(canvas, `Bandhan_Bazaar_Pass_${name.replace(/\s+/g, '_')}.pdf`);
 
-                        // 1 Second Wait Delay Before Final Redirection
-                        setTimeout(() => {
-                              window.location.href = "https://bandhanbazaar.in/";
-                        }, 1000);
+                        // 5. Show Success Modal Popup (No Redirection until user clicks)
+                        statusMsg.innerText = "";
+                        successModal.style.display = "flex";
 
                   } catch (error) {
                         console.error("Submission Error: ", error);
@@ -240,6 +336,11 @@
                         statusMsg.innerText = "Error: " + (error.message || "Failed to submit. Check Firestore Rules!");
                         submitBtn.disabled = false;
                   }
+            });
+
+            // Redirect button click inside modal
+            redirectBtn.addEventListener('click', () => {
+                  window.location.href = "https://bandhanbazaar.in/";
             });
 
             // Helper for Preloading Canvas Assets
@@ -306,7 +407,6 @@
                                     clearInterval(interval);
 
                                     try {
-                                          // Preload All Assets
                                           const [headerLogo, poweredByImg, coPoweredByImg, associated1Img, associated2Img] = await Promise.all([
                                                 loadImage('assets/headerlogo.png'),
                                                 loadImage('assets/1 BCM.png'),
@@ -322,8 +422,7 @@
                                           const baseWidth = 800;
                                           const centerX = baseWidth / 2;
 
-                                          // 1. Calculate Full Width Header Logo Dimensions
-                                          const logoW = 740; // Full header width span
+                                          const logoW = 740;
                                           let logoH = 150;
                                           if (headerLogo && headerLogo.width > 0) {
                                                 logoH = (headerLogo.height / headerLogo.width) * logoW;
@@ -333,16 +432,10 @@
                                           const logoY = 15;
                                           const logoBottomY = logoY + logoH;
 
-                                          // 2. Separator Line + Name Position
                                           const lineY = logoBottomY + 28;
-
-                                          // Name will appear BELOW the separator line
                                           const nameY = lineY + 14;
-
-                                          // Middle section starts after the name
                                           const sectionY = nameY + 45;
 
-                                          // Calculate total base height dynamically
                                           const middleSectionH = 295;
                                           const footerH = 45;
                                           const baseHeight = Math.max(680, Math.round(sectionY + middleSectionH + footerH));
@@ -354,7 +447,6 @@
                                           ctx.imageSmoothingEnabled = true;
                                           ctx.imageSmoothingQuality = 'high';
 
-                                          // Outer Background & Orange Border
                                           ctx.fillStyle = '#FFFFFF';
                                           ctx.fillRect(0, 0, baseWidth, baseHeight);
 
@@ -362,19 +454,16 @@
                                           ctx.lineWidth = 6;
                                           ctx.strokeRect(3, 3, baseWidth - 6, baseHeight - 6);
 
-                                          // Draw Full Width Header Logo (Direct Draw)
                                           if (headerLogo) {
                                                 ctx.drawImage(headerLogo, logoX, logoY, logoW, logoH);
                                           }
 
-                                          // Visitor Name (Centered vertically between Logo and Line)
                                           ctx.fillStyle = '#1E293B';
                                           ctx.font = 'bold 30px Poppins, sans-serif';
                                           ctx.textAlign = 'center';
                                           ctx.textBaseline = 'top';
                                           ctx.fillText(name.toUpperCase(), centerX, nameY);
 
-                                          // Horizontal Separator Line (Placed cleanly below Name)
                                           ctx.strokeStyle = '#E2E8F0';
                                           ctx.lineWidth = 1.5;
                                           ctx.beginPath();
@@ -382,18 +471,14 @@
                                           ctx.lineTo(baseWidth - 35, lineY);
                                           ctx.stroke();
 
-                                          // Reset text baseline for remaining sections
                                           ctx.textBaseline = 'alphabetic';
 
-                                          // 3. Middle 3-Column Section Layout
                                           const sideBoxW = 190;
                                           const sideBoxH = 95;
 
-                                          // --- LEFT COLUMN: POWERED BY & CO-POWERED BY ---
                                           const leftColX = 35;
                                           const leftCenterX = leftColX + (sideBoxW / 2);
 
-                                          // Powered By Tag & Image
                                           ctx.fillStyle = '#FEF3C7';
                                           ctx.fillRect(leftCenterX - 65, sectionY, 130, 22);
                                           ctx.strokeStyle = '#FDE047';
@@ -404,7 +489,6 @@
 
                                           drawImageContain(ctx, poweredByImg, leftColX, sectionY + 28, sideBoxW, sideBoxH);
 
-                                          // Co-Powered By Tag & Image
                                           const coPoweredY = sectionY + 135;
                                           ctx.fillStyle = '#FEF3C7';
                                           ctx.fillRect(leftCenterX - 70, coPoweredY, 140, 22);
@@ -416,7 +500,6 @@
 
                                           drawImageContain(ctx, coPoweredByImg, leftColX, coPoweredY + 28, sideBoxW, sideBoxH);
 
-                                          // --- CENTER COLUMN: QR CODE & ACCOMPANYING MEMBERS ---
                                           const qrSize = 210;
                                           const qrX = Math.round(centerX - (qrSize / 2));
                                           const qrY = sectionY + 5;
@@ -430,7 +513,6 @@
                                           const qrSourceElement = qrCanvas || qrImg;
                                           ctx.drawImage(qrSourceElement, qrX, qrY, qrSize, qrSize);
 
-                                          // Accompanying Members Badge
                                           const membersY = qrY + qrSize + 30;
                                           ctx.fillStyle = '#FEF3C7';
                                           ctx.fillRect(centerX - 140, membersY - 18, 280, 34);
@@ -441,7 +523,6 @@
                                           ctx.font = 'bold 16px Poppins, sans-serif';
                                           ctx.fillText(`Accompanying Members: ${numMembers}`, centerX, membersY + 4);
 
-                                          // --- RIGHT COLUMN: ASSOCIATED WITH SPONSORS ---
                                           const rightColX = baseWidth - 35 - sideBoxW;
                                           const rightCenterX = rightColX + (sideBoxW / 2);
 
@@ -456,7 +537,6 @@
                                           drawImageContain(ctx, associated1Img, rightColX, sectionY + 28, sideBoxW, sideBoxH);
                                           drawImageContain(ctx, associated2Img, rightColX, coPoweredY + 28, sideBoxW, sideBoxH);
 
-                                          // 4. Footer Verification Notice
                                           ctx.fillStyle = '#FFF7ED';
                                           ctx.fillRect(6, baseHeight - 38, baseWidth - 12, 32);
                                           ctx.fillStyle = '#EA580C';
@@ -485,7 +565,8 @@
                         const pdfWidth = canvas.width / 2;
                         const pdfHeight = canvas.height / 2;
 
-                        const imgData = canvas.toDataURL('image/png', 1.0);
+                        // Memory & File size optimization using JPEG format
+                        const imgData = canvas.toDataURL('image/jpeg', 0.9);
 
                         const pdf = new jsPDF({
                               orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
@@ -493,13 +574,12 @@
                               format: [pdfWidth, pdfHeight]
                         });
 
-                        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
                         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
                         try {
                               if (isMobile) {
-                                    // Native jsPDF download triggers system save prompt cleanly on mobile devices
                                     pdf.save(filename);
                               } else {
                                     const pdfBlob = pdf.output('blob');
@@ -518,17 +598,17 @@
                                                 document.body.removeChild(link);
                                           }
                                           URL.revokeObjectURL(blobUrl);
-                                    }, 10000);
+                                    }, 5000);
                               }
                         } catch (e) {
                               console.warn("Fallback trigger standard pdf.save()", e);
                               pdf.save(filename);
                         }
 
-                        // Allow 1 second buffer delay for device download stack execution
+                        // Allow buffer time to trigger browser download engine
                         setTimeout(() => {
                               resolve(true);
-                        }, 1000);
+                        }, 1200);
                   });
             }
       </script>
