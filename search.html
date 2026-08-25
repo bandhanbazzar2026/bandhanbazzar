@@ -170,23 +170,6 @@
                   background: #15803D;
             }
 
-            .btn-delete-selected {
-                  background: #EF4444;
-                  color: white;
-                  border: none;
-                  padding: 9px 16px;
-                  border-radius: 8px;
-                  font-weight: 600;
-                  font-size: 0.88rem;
-                  cursor: pointer;
-                  display: none;
-                  transition: background 0.2s;
-            }
-
-            .btn-delete-selected:hover {
-                  background: #DC2626;
-            }
-
             /* Table Styling */
             .table-responsive {
                   background: #FFFFFF;
@@ -200,7 +183,7 @@
                   width: 100%;
                   border-collapse: collapse;
                   text-align: left;
-                  min-width: 750px;
+                  min-width: 700px;
             }
 
             th, td {
@@ -220,18 +203,6 @@
 
             tr:hover {
                   background: #FFF7ED;
-            }
-
-            .checkbox-cell {
-                  width: 40px;
-                  text-align: center;
-            }
-
-            input[type="checkbox"] {
-                  width: 18px;
-                  height: 18px;
-                  cursor: pointer;
-                  accent-color: var(--primary-orange);
             }
 
             .badge-members {
@@ -263,11 +234,6 @@
 
             .btn-edit {
                   background: #3B82F6;
-                  color: white;
-            }
-
-            .btn-delete {
-                  background: #EF4444;
                   color: white;
             }
 
@@ -628,7 +594,6 @@
                         <div class="stats-text" id="statsText">Loading records...</div>
                         <div class="action-buttons">
                               <button id="btnExportExcel" class="btn-excel">📊 Export Excel</button>
-                              <button id="btnDeleteSelected" class="btn-delete-selected">Delete Selected (0)</button>
                         </div>
                   </div>
             </div>
@@ -638,7 +603,6 @@
                   <table>
                         <thead>
                               <tr>
-                                    <th class="checkbox-cell"><input type="checkbox" id="selectAll"></th>
                                     <th>Name</th>
                                     <th>Father's Name</th>
                                     <th>Mobile</th>
@@ -649,7 +613,7 @@
                         </thead>
                         <tbody id="userTableBody">
                               <tr>
-                                    <td colspan="7" class="no-results">Fetching data from Firebase...</td>
+                                    <td colspan="6" class="no-results">Fetching data from Firebase...</td>
                               </tr>
                         </tbody>
                   </table>
@@ -759,8 +723,6 @@
                   getDocs, 
                   doc, 
                   updateDoc, 
-                  deleteDoc, 
-                  writeBatch,
                   query, 
                   orderBy 
             } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -780,15 +742,12 @@
 
             let allUsers = [];
             let filteredUsers = [];
-            const selectedDocIds = new Set();
             let currentPassUser = null;
 
             // DOM Elements
             const searchInput = document.getElementById('searchInput');
             const userTableBody = document.getElementById('userTableBody');
             const statsText = document.getElementById('statsText');
-            const selectAllCheckbox = document.getElementById('selectAll');
-            const btnDeleteSelected = document.getElementById('btnDeleteSelected');
             const btnExportExcel = document.getElementById('btnExportExcel');
             
             // Edit Modal DOM Elements
@@ -816,7 +775,7 @@
             // Fetch All Users From Firestore
             async function fetchUsers() {
                   try {
-                        userTableBody.innerHTML = `<tr><td colspan="7" class="no-results">Fetching data from Firebase...</td></tr>`;
+                        userTableBody.innerHTML = `<tr><td colspan="6" class="no-results">Fetching data from Firebase...</td></tr>`;
                         
                         const usersRef = collection(db, "Users");
                         const q = query(usersRef, orderBy("createdAt", "desc"));
@@ -833,7 +792,7 @@
                         filterAndRender();
                   } catch (error) {
                         console.error("Fetch Error: ", error);
-                        userTableBody.innerHTML = `<tr><td colspan="7" class="no-results" style="color:red;">Error loading users: ${error.message}</td></tr>`;
+                        userTableBody.innerHTML = `<tr><td colspan="6" class="no-results" style="color:red;">Error loading users: ${error.message}</td></tr>`;
                   }
             }
 
@@ -858,22 +817,15 @@
 
             // Render Table HTML
             function renderTable() {
-                  selectedDocIds.clear();
-                  selectAllCheckbox.checked = false;
-                  updateDeleteSelectedButton();
-
                   statsText.innerText = `Showing ${filteredUsers.length} of ${allUsers.length} total registrations`;
 
                   if (filteredUsers.length === 0) {
-                        userTableBody.innerHTML = `<tr><td colspan="7" class="no-results">No matching records found.</td></tr>`;
+                        userTableBody.innerHTML = `<tr><td colspan="6" class="no-results">No matching records found.</td></tr>`;
                         return;
                   }
 
                   userTableBody.innerHTML = filteredUsers.map(user => `
                         <tr>
-                              <td class="checkbox-cell">
-                                    <input type="checkbox" class="user-checkbox" data-id="${user.id}">
-                              </td>
                               <td><strong>${escapeHtml(user.name || '')}</strong></td>
                               <td>${escapeHtml(user.fatherName || '-')}</td>
                               <td>${escapeHtml(user.mobile || '-')}</td>
@@ -882,24 +834,11 @@
                               <td>
                                     <button class="btn-action btn-pass" data-id="${user.id}">🎟️ Pass</button>
                                     <button class="btn-action btn-edit" data-id="${user.id}">Edit</button>
-                                    <button class="btn-action btn-delete" data-id="${user.id}">Delete</button>
                               </td>
                         </tr>
                   `).join('');
 
                   // Attach Event Listeners to New Table Elements
-                  document.querySelectorAll('.user-checkbox').forEach(cb => {
-                        cb.addEventListener('change', (e) => {
-                              const id = e.target.getAttribute('data-id');
-                              if (e.target.checked) {
-                                    selectedDocIds.add(id);
-                              } else {
-                                    selectedDocIds.delete(id);
-                              }
-                              updateDeleteSelectedButton();
-                        });
-                  });
-
                   document.querySelectorAll('.btn-pass').forEach(btn => {
                         btn.addEventListener('click', (e) => {
                               const id = e.target.getAttribute('data-id');
@@ -911,13 +850,6 @@
                         btn.addEventListener('click', (e) => {
                               const id = e.target.getAttribute('data-id');
                               openEditModal(id);
-                        });
-                  });
-
-                  document.querySelectorAll('.btn-delete').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                              const id = e.target.getAttribute('data-id');
-                              deleteSingleUser(id);
                         });
                   });
             }
@@ -961,71 +893,6 @@
 
                   showToast("Excel file downloaded successfully!");
             }
-
-            // Select All Checkbox Handler
-            selectAllCheckbox.addEventListener('change', (e) => {
-                  const isChecked = e.target.checked;
-                  document.querySelectorAll('.user-checkbox').forEach(cb => {
-                        cb.checked = isChecked;
-                        const id = cb.getAttribute('data-id');
-                        if (isChecked) {
-                              selectedDocIds.add(id);
-                        } else {
-                              selectedDocIds.delete(id);
-                        }
-                  });
-                  updateDeleteSelectedButton();
-            });
-
-            function updateDeleteSelectedButton() {
-                  const count = selectedDocIds.size;
-                  if (count > 0) {
-                        btnDeleteSelected.innerText = `Delete Selected (${count})`;
-                        btnDeleteSelected.style.display = 'inline-block';
-                  } else {
-                        btnDeleteSelected.style.display = 'none';
-                  }
-            }
-
-            // Delete Single User
-            async function deleteSingleUser(id) {
-                  const user = allUsers.find(u => u.id === id);
-                  const name = user ? user.name : "this user";
-                  
-                  if (confirm(`Are you sure you want to delete "${name}"?`)) {
-                        try {
-                              await deleteDoc(doc(db, "Users", id));
-                              showToast(`Deleted "${name}" successfully!`);
-                              fetchUsers();
-                        } catch (err) {
-                              console.error("Delete error:", err);
-                              showToast("Failed to delete user.", true);
-                        }
-                  }
-            }
-
-            // Bulk Delete Selected Users
-            btnDeleteSelected.addEventListener('click', async () => {
-                  const count = selectedDocIds.size;
-                  if (count === 0) return;
-
-                  if (confirm(`Are you sure you want to delete all ${count} selected records?`)) {
-                        try {
-                              const batch = writeBatch(db);
-                              selectedDocIds.forEach(id => {
-                                    const docRef = doc(db, "Users", id);
-                                    batch.delete(docRef);
-                              });
-
-                              await batch.commit();
-                              showToast(`Successfully deleted ${count} users!`);
-                              fetchUsers();
-                        } catch (err) {
-                              console.error("Bulk delete error:", err);
-                              showToast("Failed to delete selected users.", true);
-                        }
-                  }
-            });
 
             // Open Edit Modal
             function openEditModal(id) {
@@ -1397,7 +1264,7 @@
                         showToast("Pass PDF successfully download ho gaya!");
                   } catch (err) {
                         console.error("Pass PDF Download Error:", err);
-                        showToast("Pass PDF generate karne mein error aaya: " + err.message, true);
+                        showToast("Pass PDF generate karne mein error आया: " + err.message, true);
                   } finally {
                         btnDownloadPass.disabled = false;
                         btnDownloadPass.innerText = "📄 Download PDF Pass";
