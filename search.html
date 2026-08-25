@@ -12,6 +12,12 @@
       <!-- SheetJS Library for Excel Export -->
       <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
       
+      <!-- QRCode.js Library for Pass QR Code Generation -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+      <!-- jsPDF Library for High Quality PDF Pass Generation -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
       <style>
             :root {
                   --primary-orange: #F97316;
@@ -31,7 +37,7 @@
             body {
                   background: #F8FAFC;
                   color: var(--text-dark);
-                  padding: 20px;
+                  padding: 15px;
                   min-height: 100vh;
             }
 
@@ -44,39 +50,41 @@
             .header-card {
                   background: #FFFFFF;
                   border-radius: 16px;
-                  padding: 20px 25px;
+                  padding: 15px 20px;
                   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-                  margin-bottom: 25px;
+                  margin-bottom: 20px;
                   display: flex;
                   justify-content: space-between;
                   align-items: center;
                   flex-wrap: wrap;
-                  gap: 15px;
+                  gap: 12px;
             }
 
             .header-title {
                   display: flex;
                   align-items: center;
-                  gap: 15px;
+                  gap: 12px;
+                  flex-wrap: wrap;
             }
 
             .header-title img {
-                  height: 50px;
+                  height: 42px;
+                  max-width: 100%;
             }
 
             .header-title h1 {
-                  font-size: 1.4rem;
+                  font-size: 1.25rem;
                   color: var(--primary-orange);
             }
 
             .btn-back {
                   background: #F1F5F9;
                   color: var(--text-dark);
-                  padding: 10px 18px;
+                  padding: 8px 16px;
                   border-radius: 8px;
                   text-decoration: none;
                   font-weight: 600;
-                  font-size: 0.9rem;
+                  font-size: 0.85rem;
                   transition: all 0.2s;
             }
 
@@ -88,25 +96,26 @@
             .controls-card {
                   background: #FFFFFF;
                   border-radius: 16px;
-                  padding: 20px 25px;
+                  padding: 15px 20px;
                   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-                  margin-bottom: 25px;
+                  margin-bottom: 20px;
             }
 
             .search-box-wrapper {
                   display: flex;
-                  gap: 15px;
+                  gap: 12px;
                   margin-bottom: 15px;
                   flex-wrap: wrap;
             }
 
             .search-input {
                   flex: 1;
-                  min-width: 280px;
-                  padding: 12px 18px;
+                  width: 100%;
+                  min-width: 240px;
+                  padding: 10px 15px;
                   border: 2px solid var(--border-color);
                   border-radius: 10px;
-                  font-size: 1rem;
+                  font-size: 0.95rem;
                   outline: none;
                   transition: border-color 0.2s;
             }
@@ -130,24 +139,29 @@
                   gap: 10px;
                   align-items: center;
                   flex-wrap: wrap;
+                  width: 100%;
+                  justify-content: flex-start;
             }
 
             .stats-text {
-                  font-size: 0.95rem;
+                  font-size: 0.88rem;
                   font-weight: 500;
                   color: #64748B;
+                  width: 100%;
             }
 
             .btn-excel {
                   background: #16A34A;
                   color: white;
                   border: none;
-                  padding: 10px 18px;
+                  padding: 9px 16px;
                   border-radius: 8px;
                   font-weight: 600;
+                  font-size: 0.88rem;
                   cursor: pointer;
                   display: inline-flex;
                   align-items: center;
+                  justify-content: center;
                   gap: 6px;
                   transition: background 0.2s;
             }
@@ -160,9 +174,10 @@
                   background: #EF4444;
                   color: white;
                   border: none;
-                  padding: 10px 20px;
+                  padding: 9px 16px;
                   border-radius: 8px;
                   font-weight: 600;
+                  font-size: 0.88rem;
                   cursor: pointer;
                   display: none;
                   transition: background 0.2s;
@@ -178,19 +193,20 @@
                   border-radius: 16px;
                   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
                   overflow-x: auto;
+                  -webkit-overflow-scrolling: touch;
             }
 
             table {
                   width: 100%;
                   border-collapse: collapse;
                   text-align: left;
-                  min-width: 800px;
+                  min-width: 750px;
             }
 
             th, td {
-                  padding: 14px 18px;
+                  padding: 12px 14px;
                   border-bottom: 1px solid var(--border-color);
-                  font-size: 0.92rem;
+                  font-size: 0.88rem;
             }
 
             th {
@@ -198,7 +214,7 @@
                   color: #854D0E;
                   font-weight: 600;
                   text-transform: uppercase;
-                  font-size: 0.8rem;
+                  font-size: 0.75rem;
                   letter-spacing: 0.5px;
             }
 
@@ -221,21 +237,28 @@
             .badge-members {
                   background: #E0F2FE;
                   color: #0369A1;
-                  padding: 4px 10px;
+                  padding: 3px 8px;
                   border-radius: 12px;
                   font-weight: 600;
-                  font-size: 0.85rem;
+                  font-size: 0.8rem;
+                  white-space: nowrap;
             }
 
             .btn-action {
-                  padding: 6px 12px;
+                  padding: 6px 10px;
                   border-radius: 6px;
                   border: none;
                   font-weight: 600;
-                  font-size: 0.8rem;
+                  font-size: 0.78rem;
                   cursor: pointer;
-                  margin-right: 5px;
+                  margin-right: 2px;
+                  margin-bottom: 2px;
                   transition: opacity 0.2s;
+            }
+
+            .btn-pass {
+                  background: #8B5CF6;
+                  color: white;
             }
 
             .btn-edit {
@@ -252,7 +275,7 @@
                   opacity: 0.85;
             }
 
-            /* Modal Styling */
+            /* FIXED & RESPONSIVE MODAL STYLING */
             .modal {
                   display: none;
                   position: fixed;
@@ -260,48 +283,52 @@
                   left: 0;
                   width: 100%;
                   height: 100%;
-                  background: rgba(0, 0, 0, 0.5);
+                  background: rgba(0, 0, 0, 0.65);
                   justify-content: center;
-                  align-items: center;
+                  align-items: flex-start;
                   z-index: 1000;
-                  padding: 20px;
+                  padding: 15px 10px;
+                  overflow-y: auto;
+                  -webkit-overflow-scrolling: touch;
             }
 
-            .modal-content {
+            .modal-content, .pass-modal-content {
                   background: white;
                   border-radius: 16px;
                   width: 100%;
-                  max-width: 500px;
-                  padding: 25px;
-                  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                  max-width: 480px;
+                  padding: 18px;
+                  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+                  margin: 20px auto;
+                  position: relative;
             }
 
             .modal-header {
-                  font-size: 1.2rem;
+                  font-size: 1.15rem;
                   font-weight: 700;
                   color: var(--primary-orange);
-                  margin-bottom: 20px;
+                  margin-bottom: 15px;
                   border-bottom: 2px solid #FEF3C7;
                   padding-bottom: 8px;
             }
 
             .form-group {
-                  margin-bottom: 15px;
+                  margin-bottom: 12px;
             }
 
             .form-group label {
                   display: block;
-                  font-size: 0.85rem;
+                  font-size: 0.82rem;
                   font-weight: 600;
-                  margin-bottom: 5px;
+                  margin-bottom: 4px;
             }
 
             .form-group input, .form-group textarea {
                   width: 100%;
-                  padding: 10px 12px;
+                  padding: 9px 12px;
                   border: 1.5px solid var(--border-color);
                   border-radius: 8px;
-                  font-size: 0.95rem;
+                  font-size: 0.9rem;
                   outline: none;
             }
 
@@ -313,32 +340,35 @@
                   display: flex;
                   justify-content: flex-end;
                   gap: 10px;
-                  margin-top: 20px;
+                  margin-top: 15px;
             }
 
             .btn-cancel {
                   background: #94A3B8;
                   color: white;
                   border: none;
-                  padding: 10px 18px;
+                  padding: 10px 16px;
                   border-radius: 8px;
                   cursor: pointer;
                   font-weight: 600;
+                  font-size: 0.88rem;
+                  text-align: center;
             }
 
             .btn-save {
                   background: var(--primary-orange);
                   color: white;
                   border: none;
-                  padding: 10px 20px;
+                  padding: 10px 18px;
                   border-radius: 8px;
                   cursor: pointer;
                   font-weight: 600;
+                  font-size: 0.88rem;
             }
 
             .no-results {
                   text-align: center;
-                  padding: 40px;
+                  padding: 30px;
                   color: #94A3B8;
                   font-weight: 500;
             }
@@ -346,15 +376,233 @@
             .status-toast {
                   position: fixed;
                   bottom: 20px;
-                  right: 20px;
+                  left: 50%;
+                  transform: translateX(-50%);
                   background: #10B981;
                   color: white;
-                  padding: 12px 24px;
+                  padding: 10px 20px;
                   border-radius: 8px;
-                  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
                   display: none;
                   font-weight: 600;
-                  z-index: 1001;
+                  font-size: 0.88rem;
+                  z-index: 2000;
+                  width: 90%;
+                  max-width: 360px;
+                  text-align: center;
+            }
+
+            /* PASS PREVIEW CARD STYLING */
+            .pass-card {
+                  background: linear-gradient(135deg, #ffffff 0%, #fff7ed 100%);
+                  border: 2px solid var(--primary-orange);
+                  border-radius: 14px;
+                  padding: 15px;
+                  position: relative;
+                  overflow: hidden;
+                  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.12);
+            }
+
+            .pass-header {
+                  text-align: center;
+                  border-bottom: 2px dashed #f97316;
+                  padding-bottom: 10px;
+                  margin-bottom: 12px;
+            }
+
+            .pass-header img {
+                  height: 38px;
+                  max-width: 100%;
+                  margin-bottom: 4px;
+            }
+
+            .pass-header h2 {
+                  font-size: 1.15rem;
+                  color: #ea580c;
+                  font-weight: 700;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+            }
+
+            .pass-badge {
+                  display: inline-block;
+                  background: #ea580c;
+                  color: white;
+                  font-size: 0.7rem;
+                  font-weight: 700;
+                  padding: 2px 10px;
+                  border-radius: 20px;
+                  letter-spacing: 0.8px;
+                  margin-top: 3px;
+            }
+
+            .pass-body {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  gap: 12px;
+                  margin-bottom: 12px;
+            }
+
+            .pass-details {
+                  flex: 1;
+            }
+
+            .pass-detail-item {
+                  margin-bottom: 6px;
+            }
+
+            .pass-detail-item label {
+                  display: block;
+                  font-size: 0.65rem;
+                  text-transform: uppercase;
+                  color: #64748B;
+                  font-weight: 600;
+            }
+
+            .pass-detail-item span {
+                  font-size: 0.88rem;
+                  font-weight: 600;
+                  color: #1E293B;
+                  word-break: break-word;
+            }
+
+            .pass-qr-container {
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  background: white;
+                  padding: 6px;
+                  border-radius: 8px;
+                  border: 1px solid #fed7aa;
+                  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+                  flex-shrink: 0;
+            }
+
+            .pass-qr-container #qrcodeCanvas canvas,
+            .pass-qr-container #qrcodeCanvas img {
+                  width: 85px !important;
+                  height: 85px !important;
+            }
+
+            .pass-qr-label {
+                  font-size: 0.6rem;
+                  color: #94A3B8;
+                  margin-top: 3px;
+                  font-weight: 600;
+            }
+
+            .pass-footer {
+                  background: #FFF7ED;
+                  border-top: 1px solid #fed7aa;
+                  padding: 8px 5px;
+                  text-align: center;
+                  border-radius: 6px;
+            }
+
+            .pass-venue {
+                  font-size: 0.75rem;
+                  color: #9a3412;
+                  font-weight: 600;
+                  line-height: 1.3;
+            }
+
+            .pass-date {
+                  font-size: 0.8rem;
+                  color: #ea580c;
+                  font-weight: 700;
+                  margin-top: 2px;
+            }
+
+            /* Responsive Action Buttons inside Pass Modal */
+            .pass-actions {
+                  display: flex;
+                  flex-direction: column;
+                  gap: 8px;
+                  margin-top: 12px;
+                  width: 100%;
+            }
+
+            .btn-download-pass {
+                  width: 100%;
+                  background: #16A34A;
+                  color: white;
+                  border: none;
+                  padding: 12px;
+                  border-radius: 8px;
+                  font-weight: 600;
+                  font-size: 0.9rem;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 6px;
+            }
+
+            .btn-download-pass:hover {
+                  background: #15803D;
+            }
+
+            .btn-print-pass {
+                  width: 100%;
+                  background: #0284C7;
+                  color: white;
+                  border: none;
+                  padding: 10px;
+                  border-radius: 8px;
+                  font-weight: 600;
+                  font-size: 0.88rem;
+                  cursor: pointer;
+            }
+
+            .btn-print-pass:hover {
+                  background: #0369A1;
+            }
+
+            /* Desktop / Tablet responsive adjustments */
+            @media (min-width: 520px) {
+                  .stats-text {
+                        width: auto;
+                  }
+                  .action-buttons {
+                        width: auto;
+                  }
+                  .pass-actions {
+                        flex-direction: row;
+                  }
+                  .btn-download-pass {
+                        flex: 1.5;
+                  }
+                  .btn-print-pass {
+                        flex: 1;
+                  }
+            }
+
+            @media (max-width: 460px) {
+                  .pass-body {
+                        flex-direction: column-reverse;
+                        text-align: center;
+                  }
+                  .pass-details {
+                        text-align: left;
+                        width: 100%;
+                  }
+            }
+
+            @media print {
+                  body * {
+                        visibility: hidden;
+                  }
+                  #passCard, #passCard * {
+                        visibility: visible;
+                  }
+                  #passCard {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                  }
             }
       </style>
 </head>
@@ -442,10 +690,67 @@
             </div>
       </div>
 
+      <!-- ENTRY PASS GENERATOR PREVIEW MODAL -->
+      <div id="passModal" class="modal">
+            <div class="pass-modal-content">
+                  <!-- Printable pass card container -->
+                  <div id="passCard" class="pass-card">
+                        <div class="pass-header">
+                              <img src="assets/headerlogo.png" alt="Bandhan Bazaar" onerror="this.style.display='none'">
+                              <h2>बंधन बाजार 2026</h2>
+                              <span class="pass-badge">OFFICIAL ENTRY PASS</span>
+                        </div>
+                        <div class="pass-body">
+                              <div class="pass-details">
+                                    <div class="pass-detail-item">
+                                          <label>Visitor Name</label>
+                                          <span id="passName">-</span>
+                                    </div>
+                                    <div class="pass-detail-item">
+                                          <label>Father's Name</label>
+                                          <span id="passFatherName">-</span>
+                                    </div>
+                                    <div class="pass-detail-item">
+                                          <label>Mobile Number</label>
+                                          <span id="passMobile">-</span>
+                                    </div>
+                                    <div class="pass-detail-item">
+                                          <label>Address</label>
+                                          <span id="passAddress">-</span>
+                                    </div>
+                                    <div class="pass-detail-item">
+                                          <label>Total Allowed Entry</label>
+                                          <span id="passTotalMembers" style="color:#ea580c; font-weight:700;">1 Person</span>
+                                    </div>
+                              </div>
+                              <div class="pass-qr-container">
+                                    <div id="qrcodeCanvas"></div>
+                                    <div class="pass-qr-label" id="passIdTag">ID: -</div>
+                              </div>
+                        </div>
+                        <div class="pass-footer">
+                              <div class="pass-venue">📍 राजा पार्क, बजरंग बाग रोड, पाली</div>
+                              <div class="pass-date">📅 25, 26 एवं 27 अगस्त 2026</div>
+                        </div>
+                  </div>
+
+                  <!-- Action buttons -->
+                  <div class="pass-actions">
+                        <button id="btnDownloadPass" class="btn-download-pass">📄 Download PDF Pass</button>
+                        <button id="btnPrintPass" class="btn-print-pass">🖨️ Print</button>
+                        <button id="btnCancelPass" class="btn-cancel">Close</button>
+                  </div>
+            </div>
+      </div>
+
       <!-- Status Toast Notification -->
       <div id="statusToast" class="status-toast"></div>
 
-      <!-- Firebase Module Script -->
+      <!-- Offscreen Elements for QR & Canvas PDF Pass Rendering -->
+      <div id="qrcode-temp" style="position: fixed; left: -9999px; top: -9999px;"></div>
+      <canvas id="cardCanvas" style="display:none;"></canvas>
+
+      <!-- Firebase & PDF Module Script -->
       <script type="module">
             import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
             import { 
@@ -476,6 +781,7 @@
             let allUsers = [];
             let filteredUsers = [];
             const selectedDocIds = new Set();
+            let currentPassUser = null;
 
             // DOM Elements
             const searchInput = document.getElementById('searchInput');
@@ -484,9 +790,17 @@
             const selectAllCheckbox = document.getElementById('selectAll');
             const btnDeleteSelected = document.getElementById('btnDeleteSelected');
             const btnExportExcel = document.getElementById('btnExportExcel');
+            
+            // Edit Modal DOM Elements
             const editModal = document.getElementById('editModal');
             const editForm = document.getElementById('editForm');
             const btnCancelEdit = document.getElementById('btnCancelEdit');
+
+            // Pass Modal DOM Elements
+            const passModal = document.getElementById('passModal');
+            const btnCancelPass = document.getElementById('btnCancelPass');
+            const btnDownloadPass = document.getElementById('btnDownloadPass');
+            const btnPrintPass = document.getElementById('btnPrintPass');
             const statusToast = document.getElementById('statusToast');
 
             // Show Toast Notification
@@ -566,6 +880,7 @@
                               <td>${escapeHtml(user.address || '-')}</td>
                               <td><span class="badge-members">+${user.numMembers || 0} (${user.totalMembersCount || (user.numMembers + 1) || 1} Total)</span></td>
                               <td>
+                                    <button class="btn-action btn-pass" data-id="${user.id}">🎟️ Pass</button>
                                     <button class="btn-action btn-edit" data-id="${user.id}">Edit</button>
                                     <button class="btn-action btn-delete" data-id="${user.id}">Delete</button>
                               </td>
@@ -582,6 +897,13 @@
                                     selectedDocIds.delete(id);
                               }
                               updateDeleteSelectedButton();
+                        });
+                  });
+
+                  document.querySelectorAll('.btn-pass').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                              const id = e.target.getAttribute('data-id');
+                              openPassModal(id);
                         });
                   });
 
@@ -607,7 +929,6 @@
                         return;
                   }
 
-                  // Format data array into clean readable JSON structure for Excel
                   const excelData = allUsers.map((user, index) => ({
                         "S.No": index + 1,
                         "Name": user.name || '',
@@ -619,10 +940,8 @@
                         "Registration Date": user.createdAt && user.createdAt.toDate ? user.createdAt.toDate().toLocaleString('en-IN') : ''
                   }));
 
-                  // Generate Worksheet
                   const worksheet = XLSX.utils.json_to_sheet(excelData);
 
-                  // Define Custom Column Widths
                   worksheet['!cols'] = [
                         { wch: 6 },  // S.No
                         { wch: 22 }, // Name
@@ -634,11 +953,9 @@
                         { wch: 22 }  // Registration Date
                   ];
 
-                  // Create Workbook & Append Sheet
                   const workbook = XLSX.utils.book_new();
                   XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
 
-                  // Trigger Automatic Download
                   const fileName = `Bandhan_Bazaar_Registrations_${new Date().toISOString().slice(0, 10)}.xlsx`;
                   XLSX.writeFile(workbook, fileName);
 
@@ -758,6 +1075,338 @@
                         console.error("Update error:", err);
                         showToast("Failed to update user.", true);
                   }
+            });
+
+            // OPEN ENTRY PASS PREVIEW MODAL
+            function openPassModal(id) {
+                  const user = allUsers.find(u => u.id === id);
+                  if (!user) return;
+
+                  currentPassUser = user;
+
+                  // Populate Pass Details
+                  document.getElementById('passName').innerText = user.name || '-';
+                  document.getElementById('passFatherName').innerText = user.fatherName || '-';
+                  document.getElementById('passMobile').innerText = user.mobile || '-';
+                  document.getElementById('passAddress').innerText = user.address || '-';
+                  
+                  const total = user.totalMembersCount || ((user.numMembers || 0) + 1);
+                  document.getElementById('passTotalMembers').innerText = `${total} Person(s) (${(user.numMembers || 0)} Guests)`;
+                  document.getElementById('passIdTag').innerText = `ID: ${user.id.slice(0, 8).toUpperCase()}`;
+
+                  // Generate QR Code dynamically
+                  const qrContainer = document.getElementById('qrcodeCanvas');
+                  qrContainer.innerHTML = ''; 
+                  
+                  const qrData = JSON.stringify({
+                        id: user.id,
+                        name: user.name,
+                        mobile: user.mobile,
+                        members: total
+                  });
+
+                  if (window.QRCode) {
+                        new QRCode(qrContainer, {
+                              text: qrData,
+                              width: 85,
+                              height: 85,
+                              colorDark: "#1E293B",
+                              colorLight: "#FFFFFF",
+                              correctLevel: QRCode.CorrectLevel.H
+                        });
+                  }
+
+                  passModal.style.display = 'flex';
+            }
+
+            btnCancelPass.addEventListener('click', () => {
+                  passModal.style.display = 'none';
+            });
+
+            // --- CANVAS & PDF PASS GENERATION FUNCTIONS ---
+
+            function loadImage(src) {
+                  return new Promise((resolve) => {
+                        if (!src) return resolve(null);
+                        const img = new Image();
+                        img.crossOrigin = "Anonymous";
+                        img.onload = () => resolve(img);
+                        img.onerror = () => resolve(null);
+                        img.src = src;
+                  });
+            }
+
+            function drawImageContain(ctx, img, x, y, maxW, maxH) {
+                  if (!img) return { drawW: 0, drawH: 0, drawX: x, drawY: y };
+                  const imgRatio = img.width / img.height;
+                  const containerRatio = maxW / maxH;
+                  let drawW, drawH;
+
+                  if (imgRatio > containerRatio) {
+                        drawW = maxW;
+                        drawH = maxW / imgRatio;
+                  } else {
+                        drawH = maxH;
+                        drawW = maxH * imgRatio;
+                  }
+
+                  const drawX = x + (maxW - drawW) / 2;
+                  const drawY = y + (maxH - drawH) / 2;
+                  ctx.drawImage(img, drawX, drawY, drawW, drawH);
+                  return { drawW, drawH, drawX, drawY };
+            }
+
+            function createHDPassCanvas(data) {
+                  const { docId, name, numMembers } = data;
+
+                  return new Promise((resolve, reject) => {
+                        const qrContainer = document.getElementById('qrcode-temp');
+                        qrContainer.innerHTML = '';
+
+                        const qrTextData = `BANDHAN BAZAAR PASS\n` +
+                              `Name: ${name}\n` +
+                              `Pass ID: ${docId}\n` +
+                              `Members: ${numMembers + 1}`;
+
+                        new QRCode(qrContainer, {
+                              text: qrTextData,
+                              width: 300,
+                              height: 300,
+                              correctLevel: QRCode.CorrectLevel.H
+                        });
+
+                        let checkCount = 0;
+                        const interval = setInterval(async () => {
+                              checkCount++;
+
+                              const qrCanvas = qrContainer.querySelector('canvas');
+                              const qrImg = qrContainer.querySelector('img');
+
+                              if (qrCanvas || (qrImg && qrImg.src)) {
+                                    clearInterval(interval);
+
+                                    try {
+                                          const [headerLogo, poweredByImg, coPoweredByImg, associated1Img, associated2Img] = await Promise.all([
+                                                loadImage('assets/headerlogo.png'),
+                                                loadImage('assets/1 BCM.png'),
+                                                loadImage('assets/2 MAHENDRA KUMAR MOOLCHAND & SONS.png'),
+                                                loadImage('assets/8 BALAJI WATER BOTTLES.png'),
+                                                loadImage('assets/bblogo.jpeg')
+                                          ]);
+
+                                          const canvas = document.getElementById('cardCanvas');
+                                          const ctx = canvas.getContext('2d');
+
+                                          const scaleFactor = 2;
+                                          const baseWidth = 800;
+                                          const centerX = baseWidth / 2;
+
+                                          const logoW = 740;
+                                          let logoH = 150;
+                                          if (headerLogo && headerLogo.width > 0) {
+                                                logoH = (headerLogo.height / headerLogo.width) * logoW;
+                                          }
+
+                                          const logoX = (baseWidth - logoW) / 2;
+                                          const logoY = 15;
+                                          const logoBottomY = logoY + logoH;
+
+                                          const lineY = logoBottomY + 28;
+                                          const nameY = lineY + 14;
+                                          const sectionY = nameY + 45;
+
+                                          const middleSectionH = 295;
+                                          const footerH = 45;
+                                          const baseHeight = Math.max(680, Math.round(sectionY + middleSectionH + footerH));
+
+                                          canvas.width = baseWidth * scaleFactor;
+                                          canvas.height = baseHeight * scaleFactor;
+
+                                          ctx.scale(scaleFactor, scaleFactor);
+                                          ctx.imageSmoothingEnabled = true;
+                                          ctx.imageSmoothingQuality = 'high';
+
+                                          ctx.fillStyle = '#FFFFFF';
+                                          ctx.fillRect(0, 0, baseWidth, baseHeight);
+
+                                          ctx.strokeStyle = '#F97316';
+                                          ctx.lineWidth = 6;
+                                          ctx.strokeRect(3, 3, baseWidth - 6, baseHeight - 6);
+
+                                          if (headerLogo) {
+                                                ctx.drawImage(headerLogo, logoX, logoY, logoW, logoH);
+                                          }
+
+                                          ctx.fillStyle = '#1E293B';
+                                          ctx.font = 'bold 30px Poppins, sans-serif';
+                                          ctx.textAlign = 'center';
+                                          ctx.textBaseline = 'top';
+                                          ctx.fillText(name.toUpperCase(), centerX, nameY);
+
+                                          ctx.strokeStyle = '#E2E8F0';
+                                          ctx.lineWidth = 1.5;
+                                          ctx.beginPath();
+                                          ctx.moveTo(35, lineY);
+                                          ctx.lineTo(baseWidth - 35, lineY);
+                                          ctx.stroke();
+
+                                          ctx.textBaseline = 'alphabetic';
+
+                                          const sideBoxW = 190;
+                                          const sideBoxH = 95;
+
+                                          const leftColX = 35;
+                                          const leftCenterX = leftColX + (sideBoxW / 2);
+
+                                          ctx.fillStyle = '#FEF3C7';
+                                          ctx.fillRect(leftCenterX - 65, sectionY, 130, 22);
+                                          ctx.strokeStyle = '#FDE047';
+                                          ctx.strokeRect(leftCenterX - 65, sectionY, 130, 22);
+                                          ctx.fillStyle = '#854D0E';
+                                          ctx.font = 'bold 10px Poppins, sans-serif';
+                                          ctx.fillText('POWERED BY', leftCenterX, sectionY + 15);
+
+                                          drawImageContain(ctx, poweredByImg, leftColX, sectionY + 28, sideBoxW, sideBoxH);
+
+                                          const coPoweredY = sectionY + 135;
+                                          ctx.fillStyle = '#FEF3C7';
+                                          ctx.fillRect(leftCenterX - 70, coPoweredY, 140, 22);
+                                          ctx.strokeStyle = '#FDE047';
+                                          ctx.strokeRect(leftCenterX - 70, coPoweredY, 140, 22);
+                                          ctx.fillStyle = '#854D0E';
+                                          ctx.font = 'bold 10px Poppins, sans-serif';
+                                          ctx.fillText('CO-POWERED BY', leftCenterX, coPoweredY + 15);
+
+                                          drawImageContain(ctx, coPoweredByImg, leftColX, coPoweredY + 28, sideBoxW, sideBoxH);
+
+                                          const qrSize = 210;
+                                          const qrX = Math.round(centerX - (qrSize / 2));
+                                          const qrY = sectionY + 5;
+
+                                          ctx.fillStyle = '#FAFAFA';
+                                          ctx.fillRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16);
+                                          ctx.strokeStyle = '#CBD5E1';
+                                          ctx.lineWidth = 2;
+                                          ctx.strokeRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16);
+
+                                          const qrSourceElement = qrCanvas || qrImg;
+                                          ctx.drawImage(qrSourceElement, qrX, qrY, qrSize, qrSize);
+
+                                          const membersY = qrY + qrSize + 30;
+                                          ctx.fillStyle = '#FEF3C7';
+                                          ctx.fillRect(centerX - 140, membersY - 18, 280, 34);
+                                          ctx.strokeStyle = '#FDE047';
+                                          ctx.strokeRect(centerX - 140, membersY - 18, 280, 34);
+
+                                          ctx.fillStyle = '#EA580C';
+                                          ctx.font = 'bold 16px Poppins, sans-serif';
+                                          ctx.fillText(`Accompanying Members: ${numMembers}`, centerX, membersY + 4);
+
+                                          const rightColX = baseWidth - 35 - sideBoxW;
+                                          const rightCenterX = rightColX + (sideBoxW / 2);
+
+                                          ctx.fillStyle = '#FEF3C7';
+                                          ctx.fillRect(rightCenterX - 70, sectionY, 140, 22);
+                                          ctx.strokeStyle = '#FDE047';
+                                          ctx.strokeRect(rightCenterX - 70, sectionY, 140, 22);
+                                          ctx.fillStyle = '#854D0E';
+                                          ctx.font = 'bold 10px Poppins, sans-serif';
+                                          ctx.fillText('ASSOCIATED WITH', rightCenterX, sectionY + 15);
+
+                                          drawImageContain(ctx, associated1Img, rightColX, sectionY + 28, sideBoxW, sideBoxH);
+                                          drawImageContain(ctx, associated2Img, rightColX, coPoweredY + 28, sideBoxW, sideBoxH);
+
+                                          ctx.fillStyle = '#FFF7ED';
+                                          ctx.fillRect(6, baseHeight - 38, baseWidth - 12, 32);
+                                          ctx.fillStyle = '#EA580C';
+                                          ctx.font = 'italic 500 12px Poppins, sans-serif';
+                                          ctx.fillText('Please present this QR Pass at the entry gate for scan verification.', centerX, baseHeight - 18);
+
+                                          resolve(canvas);
+                                    } catch (err) {
+                                          reject(err);
+                                    }
+                              }
+
+                              if (checkCount > 50) {
+                                    clearInterval(interval);
+                                    reject(new Error("Pass generation timed out. Please try again."));
+                              }
+                        }, 100);
+                  });
+            }
+
+            function downloadPassAsPDF(canvas, filename) {
+                  return new Promise((resolve, reject) => {
+                        try {
+                              const { jsPDF } = window.jspdf;
+
+                              const pdfWidth = canvas.width / 2;
+                              const pdfHeight = canvas.height / 2;
+                              const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+                              const pdf = new jsPDF({
+                                    orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+                                    unit: 'px',
+                                    format: [pdfWidth, pdfHeight]
+                              });
+
+                              pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+
+                              const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                              if (isMobile) {
+                                    try {
+                                          pdf.save(filename);
+                                    } catch (e) {
+                                          const pdfBlob = pdf.output('blob');
+                                          const blobUrl = URL.createObjectURL(pdfBlob);
+                                          window.open(blobUrl, '_blank');
+                                    }
+                              } else {
+                                    pdf.save(filename);
+                              }
+
+                              setTimeout(() => {
+                                    resolve(true);
+                              }, 1000);
+                        } catch (e) {
+                              reject(e);
+                        }
+                  });
+            }
+
+            // DOWNLOAD PASS AS HIGH QUALITY PDF
+            btnDownloadPass.addEventListener('click', async () => {
+                  if (!currentPassUser) return;
+
+                  try {
+                        btnDownloadPass.disabled = true;
+                        btnDownloadPass.innerText = "⏳ Generating Pass...";
+                        showToast("Pass PDF generate ho raha hai...");
+
+                        const canvas = await createHDPassCanvas({
+                              docId: currentPassUser.id,
+                              name: currentPassUser.name || 'Visitor',
+                              numMembers: currentPassUser.numMembers || 0
+                        });
+
+                        const fileName = `Bandhan_Bazaar_Pass_${(currentPassUser.name || 'Visitor').replace(/\s+/g, '_')}.pdf`;
+                        await downloadPassAsPDF(canvas, fileName);
+
+                        showToast("Pass PDF successfully download ho gaya!");
+                  } catch (err) {
+                        console.error("Pass PDF Download Error:", err);
+                        showToast("Pass PDF generate karne mein error aaya: " + err.message, true);
+                  } finally {
+                        btnDownloadPass.disabled = false;
+                        btnDownloadPass.innerText = "📄 Download PDF Pass";
+                  }
+            });
+
+            // PRINT PASS
+            btnPrintPass.addEventListener('click', () => {
+                  window.print();
             });
 
             // Utility HTML Escaper
