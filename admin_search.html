@@ -7,11 +7,12 @@
       <title>Bandhan Bazaar - User Search & Management</title>
 
       <!-- Google Fonts -->
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-      
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet">
+
       <!-- SheetJS Library for Excel Export -->
       <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-      
+
       <!-- QRCode.js Library for Pass QR Code Generation -->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
@@ -125,7 +126,7 @@
                   border-color: var(--primary-orange);
             }
 
-            /* Date Filter Styles */
+            /* Date & Database Filter Styles */
             .date-filter-group {
                   display: flex;
                   align-items: center;
@@ -133,7 +134,7 @@
                   flex-wrap: wrap;
             }
 
-            .date-input {
+            .date-input, .db-select {
                   padding: 9px 12px;
                   border: 2px solid var(--border-color);
                   border-radius: 10px;
@@ -141,9 +142,15 @@
                   outline: none;
                   color: var(--text-dark);
                   transition: border-color 0.2s;
+                  background-color: #ffffff;
             }
 
-            .date-input:focus {
+            .db-select {
+                  cursor: pointer;
+                  font-weight: 500;
+            }
+
+            .date-input:focus, .db-select:focus {
                   border-color: var(--primary-orange);
             }
 
@@ -254,7 +261,8 @@
                   min-width: 750px;
             }
 
-            th, td {
+            th,
+            td {
                   padding: 12px 14px;
                   border-bottom: 1px solid var(--border-color);
                   font-size: 0.88rem;
@@ -293,6 +301,24 @@
                   font-weight: 600;
                   font-size: 0.8rem;
                   white-space: nowrap;
+            }
+
+            .badge-db {
+                  padding: 2px 6px;
+                  border-radius: 4px;
+                  font-size: 0.7rem;
+                  font-weight: 600;
+                  margin-left: 5px;
+            }
+
+            .badge-db1 {
+                  background: #FEF3C7;
+                  color: #B45309;
+            }
+
+            .badge-db2 {
+                  background: #DCFCE7;
+                  color: #15803D;
             }
 
             .btn-action {
@@ -343,7 +369,8 @@
                   -webkit-overflow-scrolling: touch;
             }
 
-            .modal-content, .pass-modal-content {
+            .modal-content,
+            .pass-modal-content {
                   background: white;
                   border-radius: 16px;
                   width: 100%;
@@ -374,7 +401,8 @@
                   margin-bottom: 4px;
             }
 
-            .form-group input, .form-group textarea {
+            .form-group input,
+            .form-group textarea {
                   width: 100%;
                   padding: 9px 12px;
                   border: 1.5px solid var(--border-color);
@@ -383,7 +411,8 @@
                   outline: none;
             }
 
-            .form-group input:focus, .form-group textarea:focus {
+            .form-group input:focus,
+            .form-group textarea:focus {
                   border-color: var(--primary-orange);
             }
 
@@ -433,7 +462,7 @@
                   color: white;
                   padding: 10px 20px;
                   border-radius: 8px;
-                  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
                   display: none;
                   font-weight: 600;
                   font-size: 0.88rem;
@@ -527,7 +556,7 @@
                   padding: 6px;
                   border-radius: 8px;
                   border: 1px solid #fed7aa;
-                  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+                  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
                   flex-shrink: 0;
             }
 
@@ -616,15 +645,19 @@
                   .stats-text {
                         width: auto;
                   }
+
                   .action-buttons {
                         width: auto;
                   }
+
                   .pass-actions {
                         flex-direction: row;
                   }
+
                   .btn-download-pass {
                         flex: 1.5;
                   }
+
                   .btn-print-pass {
                         flex: 1;
                   }
@@ -635,6 +668,7 @@
                         flex-direction: column-reverse;
                         text-align: center;
                   }
+
                   .pass-details {
                         text-align: left;
                         width: 100%;
@@ -645,9 +679,12 @@
                   body * {
                         visibility: hidden;
                   }
-                  #passCard, #passCard * {
+
+                  #passCard,
+                  #passCard * {
                         visibility: visible;
                   }
+
                   #passCard {
                         position: absolute;
                         left: 0;
@@ -665,7 +702,7 @@
             <div class="header-card">
                   <div class="header-title">
                         <img src="assets/headerlogo.png" alt="Bandhan Bazaar" onerror="this.style.display='none'">
-                        <h1>User Search & Management</h1>
+                        <h1>User Search & Management (Multi-DB)</h1>
                   </div>
                   <a href="index.html" class="btn-back">← Back to Registration</a>
             </div>
@@ -673,8 +710,17 @@
             <!-- Controls Card -->
             <div class="controls-card">
                   <div class="search-box-wrapper">
-                        <input type="text" id="searchInput" class="search-input" placeholder="Search by Name, Mobile, Father's Name, or Address...">
-                        <!-- Feature 1: Date Filter Inputs -->
+                        <input type="text" id="searchInput" class="search-input"
+                              placeholder="Search by Name, Mobile, Father's Name, or Address...">
+                        
+                        <!-- Database Filter Dropdown -->
+                        <select id="dbFilter" class="db-select">
+                              <option value="all">All Databases</option>
+                              <option value="1">DB-1 Only</option>
+                              <option value="2">DB-2 Only</option>
+                        </select>
+
+                        <!-- Date Filter Inputs -->
                         <div class="date-filter-group">
                               <input type="date" id="startDate" class="date-input" title="From Date">
                               <span class="date-sep">to</span>
@@ -683,7 +729,7 @@
                         </div>
                   </div>
                   <div class="action-bar">
-                        <!-- Feature 2: Enhanced Stats Text with Total Sum of Members -->
+                        <!-- Stats Text -->
                         <div class="stats-text" id="statsText">Loading records...</div>
                         <div class="action-buttons">
                               <button id="btnExportExcel" class="btn-excel">📊 Export Excel</button>
@@ -708,7 +754,8 @@
                         </thead>
                         <tbody id="userTableBody">
                               <tr>
-                                    <td colspan="7" class="no-results">Fetching data from Firebase...</td>
+                                    <td colspan="7" class="no-results">Fetching data from multiple Firebase databases...
+                                    </td>
                               </tr>
                         </tbody>
                   </table>
@@ -721,6 +768,7 @@
                   <div class="modal-header">Edit Visitor Details</div>
                   <form id="editForm">
                         <input type="hidden" id="editDocId">
+                        <input type="hidden" id="editDbSource">
                         <div class="form-group">
                               <label>Full Name</label>
                               <input type="text" id="editName" required>
@@ -752,7 +800,6 @@
       <!-- ENTRY PASS GENERATOR PREVIEW MODAL -->
       <div id="passModal" class="modal">
             <div class="pass-modal-content">
-                  <!-- Printable pass card container -->
                   <div id="passCard" class="pass-card">
                         <div class="pass-header">
                               <img src="assets/headerlogo.png" alt="Bandhan Bazaar" onerror="this.style.display='none'">
@@ -779,7 +826,8 @@
                                     </div>
                                     <div class="pass-detail-item">
                                           <label>Total Allowed Entry</label>
-                                          <span id="passTotalMembers" style="color:#ea580c; font-weight:700;">1 Person</span>
+                                          <span id="passTotalMembers" style="color:#ea580c; font-weight:700;">1
+                                                Person</span>
                                     </div>
                               </div>
                               <div class="pass-qr-container">
@@ -793,7 +841,6 @@
                         </div>
                   </div>
 
-                  <!-- Action buttons -->
                   <div class="pass-actions">
                         <button id="btnDownloadPass" class="btn-download-pass">📄 Download PDF Pass</button>
                         <button id="btnPrintPass" class="btn-print-pass">🖨️ Print</button>
@@ -812,19 +859,20 @@
       <!-- Firebase & PDF Module Script -->
       <script type="module">
             import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-            import { 
-                  getFirestore, 
-                  collection, 
-                  getDocs, 
-                  doc, 
-                  updateDoc, 
-                  deleteDoc, 
+            import {
+                  getFirestore,
+                  collection,
+                  getDocs,
+                  doc,
+                  updateDoc,
+                  deleteDoc,
                   writeBatch,
-                  query, 
-                  orderBy 
+                  query,
+                  orderBy
             } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-            const firebaseConfig = {
+            // Database 1 Config
+            const firebaseConfig1 = {
                   apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
                   authDomain: "bandhanbazaarevent2026.firebaseapp.com",
                   projectId: "bandhanbazaarevent2026",
@@ -834,8 +882,23 @@
                   measurementId: "G-DVGBL2Z7BQ"
             };
 
-            const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app, "default");
+            // Database 2 Config
+            const firebaseConfig2 = {
+                  apiKey: "AIzaSyCaIdvQZ7A6Ghx8PtUCwOQoJCWajIArEnY",
+                  authDomain: "bandhanbaazar-2.firebaseapp.com",
+                  projectId: "bandhanbaazar-2",
+                  storageBucket: "bandhanbaazar-2.firebasestorage.app",
+                  messagingSenderId: "158970034513",
+                  appId: "1:158970034513:web:d2f643f8c7a0c7dca73b70",
+                  measurementId: "G-P5W20J10C1"
+            };
+
+            // Unique App Names
+            const app1 = initializeApp(firebaseConfig1, "app1");
+            const db1 = getFirestore(app1, 'default');
+
+            const app2 = initializeApp(firebaseConfig2, "app2");
+            const db2 = getFirestore(app2, 'default');
 
             let allUsers = [];
             let filteredUsers = [];
@@ -844,6 +907,7 @@
 
             // DOM Elements
             const searchInput = document.getElementById('searchInput');
+            const dbFilter = document.getElementById('dbFilter');
             const startDateInput = document.getElementById('startDate');
             const endDateInput = document.getElementById('endDate');
             const btnClearDate = document.getElementById('btnClearDate');
@@ -853,7 +917,7 @@
             const selectAllCheckbox = document.getElementById('selectAll');
             const btnDeleteSelected = document.getElementById('btnDeleteSelected');
             const btnExportExcel = document.getElementById('btnExportExcel');
-            
+
             // Edit Modal DOM Elements
             const editModal = document.getElementById('editModal');
             const editForm = document.getElementById('editForm');
@@ -876,33 +940,83 @@
                   }, 3000);
             }
 
-            // Fetch All Users From Firestore
-            async function fetchUsers() {
+            // Fetch Docs from Single DB
+            async function fetchDBDocs(dbInstance, dbSourceNum) {
                   try {
-                        userTableBody.innerHTML = `<tr><td colspan="7" class="no-results">Fetching data from Firebase...</td></tr>`;
-                        
-                        const usersRef = collection(db, "Users");
-                        const q = query(usersRef, orderBy("createdAt", "desc"));
-                        const querySnapshot = await getDocs(q);
+                        let snapshot;
+                        try {
+                              const q = query(
+                                    collection(dbInstance, "Users"),
+                                    orderBy("createdAt", "desc")
+                              );
+                              snapshot = await getDocs(q);
+                        } catch (orderError) {
+                              console.warn(`DB-${dbSourceNum}: orderBy failed. Plain fetch used.`, orderError);
+                              snapshot = await getDocs(collection(dbInstance, "Users"));
+                        }
 
-                        allUsers = [];
-                        querySnapshot.forEach((docSnapshot) => {
-                              allUsers.push({
-                                    id: docSnapshot.id,
-                                    ...docSnapshot.data()
-                              });
-                        });
+                        const users = snapshot.docs.map(documentSnapshot => ({
+                              id: documentSnapshot.id,
+                              dbSource: dbSourceNum,
+                              ...documentSnapshot.data()
+                        }));
 
-                        filterAndRender();
+                        console.log(`DB-${dbSourceNum}: ${users.length} users fetched`);
+                        return users;
                   } catch (error) {
-                        console.error("Fetch Error: ", error);
-                        userTableBody.innerHTML = `<tr><td colspan="7" class="no-results" style="color:red;">Error loading users: ${error.message}</td></tr>`;
+                        console.error(`DB-${dbSourceNum} FETCH ERROR:`, error);
+                        return [];
                   }
             }
 
-            // Filter Users Based on Search Text and Date Range
+            // Fetch All Users From Both Databases
+            async function fetchUsers() {
+                  try {
+                        userTableBody.innerHTML = `
+                              <tr>
+                                  <td colspan="7" class="no-results">
+                                      Fetching data from DB-1 and DB-2...
+                                  </td>
+                              </tr>
+                        `;
+
+                        const results = await Promise.allSettled([
+                              fetchDBDocs(db1, 1),
+                              fetchDBDocs(db2, 2)
+                        ]);
+
+                        const users1 = results[0].status === "fulfilled" ? results[0].value : [];
+                        const users2 = results[1].status === "fulfilled" ? results[1].value : [];
+
+                        allUsers = [...users1, ...users2];
+
+                        // Sort newest first
+                        allUsers.sort((a, b) => getTimeFromDoc(b.createdAt) - getTimeFromDoc(a.createdAt));
+
+                        filterAndRender();
+                  } catch (error) {
+                        console.error("Combined Fetch Error:", error);
+                        userTableBody.innerHTML = `
+                              <tr>
+                                  <td colspan="7" class="no-results" style="color:red;">
+                                      Error loading users: ${escapeHtml(error.message)}
+                                  </td>
+                              </tr>
+                        `;
+                  }
+            }
+
+            function getTimeFromDoc(createdAt) {
+                  if (!createdAt) return 0;
+                  if (typeof createdAt.toDate === 'function') return createdAt.toDate().getTime();
+                  if (createdAt.seconds) return createdAt.seconds * 1000;
+                  return new Date(createdAt).getTime() || 0;
+            }
+
+            // Filter Users Based on Search Text, Date Range, and Selected Database
             function filterAndRender() {
                   const searchTerm = searchInput.value.trim().toLowerCase();
+                  const selectedDb = dbFilter.value;
                   const startDateVal = startDateInput.value;
                   const endDateVal = endDateInput.value;
 
@@ -916,24 +1030,15 @@
                         const mobile = (user.mobile || "").toLowerCase();
                         const address = (user.address || "").toLowerCase();
 
-                        const matchesSearch = name.includes(searchTerm) || 
-                                               fatherName.includes(searchTerm) || 
-                                               mobile.includes(searchTerm) || 
-                                               address.includes(searchTerm);
+                        const matchesSearch = name.includes(searchTerm) ||
+                              fatherName.includes(searchTerm) ||
+                              mobile.includes(searchTerm) ||
+                              address.includes(searchTerm);
 
                         // 2. Date Filter
                         let matchesDate = true;
                         if (startMs || endMs) {
-                              let userTime = null;
-                              if (user.createdAt) {
-                                    if (typeof user.createdAt.toDate === 'function') {
-                                          userTime = user.createdAt.toDate().getTime();
-                                    } else if (user.createdAt.seconds) {
-                                          userTime = user.createdAt.seconds * 1000;
-                                    } else {
-                                          userTime = new Date(user.createdAt).getTime();
-                                    }
-                              }
+                              let userTime = getTimeFromDoc(user.createdAt);
 
                               if (userTime) {
                                     if (startMs && userTime < startMs) matchesDate = false;
@@ -943,7 +1048,13 @@
                               }
                         }
 
-                        return matchesSearch && matchesDate;
+                        // 3. Database Source Filter
+                        let matchesDb = true;
+                        if (selectedDb !== 'all') {
+                              matchesDb = String(user.dbSource) === selectedDb;
+                        }
+
+                        return matchesSearch && matchesDate && matchesDb;
                   });
 
                   renderTable();
@@ -955,7 +1066,6 @@
                   selectAllCheckbox.checked = false;
                   updateDeleteSelectedButton();
 
-                  // Feature 2: Calculate Sum of Total Members (Filtered & Overall)
                   const totalFilteredMembers = filteredUsers.reduce((sum, u) => {
                         const count = u.totalMembersCount || ((u.numMembers || 0) + 1);
                         return sum + count;
@@ -977,29 +1087,32 @@
                   userTableBody.innerHTML = filteredUsers.map(user => `
                         <tr>
                               <td class="checkbox-cell">
-                                    <input type="checkbox" class="user-checkbox" data-id="${user.id}">
+                                    <input type="checkbox" class="user-checkbox" data-id="${user.id}" data-db="${user.dbSource}">
                               </td>
-                              <td><strong>${escapeHtml(user.name || '')}</strong></td>
+                              <td>
+                                    <strong>${escapeHtml(user.name || '')}</strong>
+                                    <span class="badge-db badge-db${user.dbSource}">DB-${user.dbSource}</span>
+                              </td>
                               <td>${escapeHtml(user.fatherName || '-')}</td>
                               <td>${escapeHtml(user.mobile || '-')}</td>
                               <td>${escapeHtml(user.address || '-')}</td>
                               <td><span class="badge-members">+${user.numMembers || 0} (${user.totalMembersCount || (user.numMembers + 1) || 1} Total)</span></td>
                               <td>
                                     <button class="btn-action btn-pass" data-id="${user.id}">🎟️ Pass</button>
-                                    <button class="btn-action btn-edit" data-id="${user.id}">Edit</button>
-                                    <button class="btn-action btn-delete" data-id="${user.id}">Delete</button>
+                                    <button class="btn-action btn-edit" data-id="${user.id}" data-db="${user.dbSource}">Edit</button>
+                                    <button class="btn-action btn-delete" data-id="${user.id}" data-db="${user.dbSource}">Delete</button>
                               </td>
                         </tr>
                   `).join('');
 
-                  // Attach Event Listeners to New Table Elements
+                  // Attach Event Listeners to Table Buttons
                   document.querySelectorAll('.user-checkbox').forEach(cb => {
                         cb.addEventListener('change', (e) => {
-                              const id = e.target.getAttribute('data-id');
+                              const key = `${e.target.getAttribute('data-db')}:${e.target.getAttribute('data-id')}`;
                               if (e.target.checked) {
-                                    selectedDocIds.add(id);
+                                    selectedDocIds.add(key);
                               } else {
-                                    selectedDocIds.delete(id);
+                                    selectedDocIds.delete(key);
                               }
                               updateDeleteSelectedButton();
                         });
@@ -1015,19 +1128,21 @@
                   document.querySelectorAll('.btn-edit').forEach(btn => {
                         btn.addEventListener('click', (e) => {
                               const id = e.target.getAttribute('data-id');
-                              openEditModal(id);
+                              const dbSource = e.target.getAttribute('data-db');
+                              openEditModal(id, dbSource);
                         });
                   });
 
                   document.querySelectorAll('.btn-delete').forEach(btn => {
                         btn.addEventListener('click', (e) => {
                               const id = e.target.getAttribute('data-id');
-                              deleteSingleUser(id);
+                              const dbSource = parseInt(e.target.getAttribute('data-db'));
+                              deleteSingleUser(id, dbSource);
                         });
                   });
             }
 
-            // Download All Data to Excel File
+            // Export Data to Excel File
             function exportToExcel() {
                   const dataToExport = filteredUsers.length > 0 ? filteredUsers : allUsers;
 
@@ -1038,6 +1153,7 @@
 
                   const excelData = dataToExport.map((user, index) => ({
                         "S.No": index + 1,
+                        "DB Source": `DB-${user.dbSource}`,
                         "Name": user.name || '',
                         "Father's Name": user.fatherName || '',
                         "Mobile Number": user.mobile || '',
@@ -1048,16 +1164,9 @@
                   }));
 
                   const worksheet = XLSX.utils.json_to_sheet(excelData);
-
                   worksheet['!cols'] = [
-                        { wch: 6 },  // S.No
-                        { wch: 22 }, // Name
-                        { wch: 22 }, // Father's Name
-                        { wch: 15 }, // Mobile Number
-                        { wch: 30 }, // Address
-                        { wch: 22 }, // Accompanying Members
-                        { wch: 20 }, // Total Members Count
-                        { wch: 22 }  // Registration Date
+                        { wch: 6 },  { wch: 12 }, { wch: 22 }, { wch: 22 }, { wch: 15 }, 
+                        { wch: 30 }, { wch: 22 }, { wch: 20 }, { wch: 22 }
                   ];
 
                   const workbook = XLSX.utils.book_new();
@@ -1074,11 +1183,11 @@
                   const isChecked = e.target.checked;
                   document.querySelectorAll('.user-checkbox').forEach(cb => {
                         cb.checked = isChecked;
-                        const id = cb.getAttribute('data-id');
+                        const key = `${cb.getAttribute('data-db')}:${cb.getAttribute('data-id')}`;
                         if (isChecked) {
-                              selectedDocIds.add(id);
+                              selectedDocIds.add(key);
                         } else {
-                              selectedDocIds.delete(id);
+                              selectedDocIds.delete(key);
                         }
                   });
                   updateDeleteSelectedButton();
@@ -1095,13 +1204,14 @@
             }
 
             // Delete Single User
-            async function deleteSingleUser(id) {
-                  const user = allUsers.find(u => u.id === id);
+            async function deleteSingleUser(id, dbSource) {
+                  const user = allUsers.find(u => u.id === id && u.dbSource === dbSource);
                   const name = user ? user.name : "this user";
-                  
-                  if (confirm(`Are you sure you want to delete "${name}"?`)) {
+                  const targetDb = dbSource === 1 ? db1 : db2;
+
+                  if (confirm(`Are you sure you want to delete "${name}" from DB-${dbSource}?`)) {
                         try {
-                              await deleteDoc(doc(db, "Users", id));
+                              await deleteDoc(doc(targetDb, "Users", id));
                               showToast(`Deleted "${name}" successfully!`);
                               fetchUsers();
                         } catch (err) {
@@ -1116,15 +1226,28 @@
                   const count = selectedDocIds.size;
                   if (count === 0) return;
 
-                  if (confirm(`Are you sure you want to delete all ${count} selected records?`)) {
+                  if (confirm(`Are you sure you want to delete all ${count} selected records across databases?`)) {
                         try {
-                              const batch = writeBatch(db);
-                              selectedDocIds.forEach(id => {
-                                    const docRef = doc(db, "Users", id);
-                                    batch.delete(docRef);
+                              const batch1 = writeBatch(db1);
+                              const batch2 = writeBatch(db2);
+                              let count1 = 0, count2 = 0;
+
+                              selectedDocIds.forEach(key => {
+                                    const [dbSource, id] = key.split(':');
+                                    if (dbSource === '1') {
+                                          batch1.delete(doc(db1, "Users", id));
+                                          count1++;
+                                    } else {
+                                          batch2.delete(doc(db2, "Users", id));
+                                          count2++;
+                                    }
                               });
 
-                              await batch.commit();
+                              const promises = [];
+                              if (count1 > 0) promises.push(batch1.commit());
+                              if (count2 > 0) promises.push(batch2.commit());
+
+                              await Promise.all(promises);
                               showToast(`Successfully deleted ${count} users!`);
                               fetchUsers();
                         } catch (err) {
@@ -1135,11 +1258,12 @@
             });
 
             // Open Edit Modal
-            function openEditModal(id) {
-                  const user = allUsers.find(u => u.id === id);
+            function openEditModal(id, dbSource) {
+                  const user = allUsers.find(u => u.id === id && u.dbSource === Number(dbSource));
                   if (!user) return;
 
                   document.getElementById('editDocId').value = user.id;
+                  document.getElementById('editDbSource').value = user.dbSource;
                   document.getElementById('editName').value = user.name || '';
                   document.getElementById('editFatherName').value = user.fatherName || '';
                   document.getElementById('editMobile').value = user.mobile || '';
@@ -1158,14 +1282,17 @@
                   e.preventDefault();
 
                   const id = document.getElementById('editDocId').value;
+                  const dbSource = parseInt(document.getElementById('editDbSource').value);
                   const name = document.getElementById('editName').value.trim();
                   const fatherName = document.getElementById('editFatherName').value.trim();
                   const mobile = document.getElementById('editMobile').value.trim();
                   const address = document.getElementById('editAddress').value.trim();
                   const numMembers = parseInt(document.getElementById('editNumMembers').value) || 0;
 
+                  const targetDb = dbSource === 1 ? db1 : db2;
+
                   try {
-                        const userRef = doc(db, "Users", id);
+                        const userRef = doc(targetDb, "Users", id);
                         await updateDoc(userRef, {
                               name: name,
                               fatherName: fatherName,
@@ -1184,27 +1311,25 @@
                   }
             });
 
-            // OPEN ENTRY PASS PREVIEW MODAL
+            // Open Entry Pass Preview Modal
             function openPassModal(id) {
                   const user = allUsers.find(u => u.id === id);
                   if (!user) return;
 
                   currentPassUser = user;
 
-                  // Populate Pass Details
                   document.getElementById('passName').innerText = user.name || '-';
                   document.getElementById('passFatherName').innerText = user.fatherName || '-';
                   document.getElementById('passMobile').innerText = user.mobile || '-';
                   document.getElementById('passAddress').innerText = user.address || '-';
-                  
+
                   const total = user.totalMembersCount || ((user.numMembers || 0) + 1);
                   document.getElementById('passTotalMembers').innerText = `${total} Person(s) (${(user.numMembers || 0)} Guests)`;
                   document.getElementById('passIdTag').innerText = `ID: ${user.id.slice(0, 8).toUpperCase()}`;
 
-                  // Generate QR Code dynamically
                   const qrContainer = document.getElementById('qrcodeCanvas');
-                  qrContainer.innerHTML = ''; 
-                  
+                  qrContainer.innerHTML = '';
+
                   const qrData = JSON.stringify({
                         id: user.id,
                         name: user.name,
@@ -1230,8 +1355,7 @@
                   passModal.style.display = 'none';
             });
 
-            // --- CANVAS & PDF PASS GENERATION FUNCTIONS ---
-
+            // Canvas & PDF Pass Generation Functions
             function loadImage(src) {
                   return new Promise((resolve) => {
                         if (!src) return resolve(null);
@@ -1361,7 +1485,6 @@
 
                                           const sideBoxW = 190;
                                           const sideBoxH = 95;
-
                                           const leftColX = 35;
                                           const leftCenterX = leftColX + (sideBoxW / 2);
 
@@ -1483,7 +1606,7 @@
                   });
             }
 
-            // DOWNLOAD PASS AS HIGH QUALITY PDF
+            // Download Pass As PDF
             btnDownloadPass.addEventListener('click', async () => {
                   if (!currentPassUser) return;
 
@@ -1504,19 +1627,19 @@
                         showToast("Pass PDF successfully download ho gaya!");
                   } catch (err) {
                         console.error("Pass PDF Download Error:", err);
-                        showToast("Pass PDF generate karne mein error आया: " + err.message, true);
+                        showToast("Pass PDF generate karne mein error aaya: " + err.message, true);
                   } finally {
                         btnDownloadPass.disabled = false;
                         btnDownloadPass.innerText = "📄 Download PDF Pass";
                   }
             });
 
-            // PRINT PASS
+            // Print Pass
             btnPrintPass.addEventListener('click', () => {
                   window.print();
             });
 
-            // Utility HTML Escaper
+            // HTML Escaper
             function escapeHtml(str) {
                   return String(str)
                         .replace(/&/g, "&amp;")
@@ -1529,13 +1652,15 @@
             // Export Excel Button Event Listener
             btnExportExcel.addEventListener('click', exportToExcel);
 
-            // Real-Time Search & Date Filter Event Listeners
+            // Real-Time Search, DB Filter & Date Filter Event Listeners
             searchInput.addEventListener('input', filterAndRender);
+            dbFilter.addEventListener('change', filterAndRender);
             startDateInput.addEventListener('change', filterAndRender);
             endDateInput.addEventListener('change', filterAndRender);
             btnClearDate.addEventListener('click', () => {
                   startDateInput.value = '';
                   endDateInput.value = '';
+                  dbFilter.value = 'all';
                   filterAndRender();
             });
 

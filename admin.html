@@ -347,7 +347,6 @@
       word-break: break-word;
     }
 
-    /* Modal Download Action Wrapper & Button */
     .details-download-actions {
       margin-top: 20px;
       padding-top: 15px;
@@ -960,12 +959,46 @@
             <input type="number" id="editTotalAmt" placeholder="Total" required />
           </div>
           <div class="form-group">
-            <label for="editPaidAmt">Paid Amount (₹) *</label>
-            <input type="number" id="editPaidAmt" placeholder="Paid" required />
+            <label for="editPaidAmt">1st Paid Amount (₹) *</label>
+            <input type="number" id="editPaidAmt" placeholder="1st Paid Amount" required />
           </div>
           <div class="form-group">
             <label for="editPendingAmt">Pending Amount (₹)</label>
             <input type="number" id="editPendingAmt" placeholder="Auto Calculated" readonly />
+          </div>
+        </div>
+
+        <!-- 3-Part Installment Breakdown & Given To Fields -->
+        <div style="background: #f8f9fa; padding: 12px; border: 1px solid #ced4da; border-radius: 6px; margin-top: 5px;">
+          <label style="font-size: 13px; font-weight: bold; color: #007bff; display: block; margin-bottom: 8px;">💳 3-Part Payment Breakdown & Recipient Details</label>
+          
+          <div style="display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 10px;">
+            <div class="form-group">
+              <label for="editPaidTo1">1st Payment Given To (Kisko Amount Diya)</label>
+              <input type="text" id="editPaidTo1" placeholder="e.g. Person Name / Admin Name" />
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+            <div class="form-group">
+              <label for="editPaidAmt2">2nd Paid Amount (₹)</label>
+              <input type="number" id="editPaidAmt2" placeholder="2nd Part Amount" min="0" />
+            </div>
+            <div class="form-group">
+              <label for="editPaidTo2">2nd Payment Given To (Kisko Amount Diya)</label>
+              <input type="text" id="editPaidTo2" placeholder="e.g. Person Name / Admin Name" />
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label for="editPaidAmt3">3rd Paid Amount (₹)</label>
+              <input type="number" id="editPaidAmt3" placeholder="3rd Part Amount" min="0" />
+            </div>
+            <div class="form-group">
+              <label for="editPaidTo3">3rd Payment Given To (Kisko Amount Diya)</label>
+              <input type="text" id="editPaidTo3" placeholder="e.g. Person Name / Admin Name" />
+            </div>
           </div>
         </div>
 
@@ -1500,7 +1533,7 @@
       document.getElementById('adminBookingModal').style.display = 'flex';
     });
 
-    // OPEN / FREE SEAT LOGIC (FIXED: PERMANENTLY DELETES ORPHAN COMPANY DATA)
+    // OPEN / FREE SEAT LOGIC
     document.getElementById('confirmFreeSeatBtn').addEventListener('click', async () => {
       const rawInput = document.getElementById('freeStallIds').value.trim();
       if (!rawInput) return alert("Please enter Stall ID(s)!");
@@ -1753,31 +1786,42 @@
       calcAdminPending();
     });
 
+    // 3-PART EDIT PAYMENT CALCULATION
     const editTotalAmt = document.getElementById('editTotalAmt');
     const editPaidAmt = document.getElementById('editPaidAmt');
+    const editPaidAmt2 = document.getElementById('editPaidAmt2');
+    const editPaidAmt3 = document.getElementById('editPaidAmt3');
     const editPendingAmt = document.getElementById('editPendingAmt');
 
     function calcEditPending() {
       const tot = parseFloat(editTotalAmt.value) || 0;
-      const pd = parseFloat(editPaidAmt.value) || 0;
-      editPendingAmt.value = Math.max(0, tot - pd);
+      const pd1 = parseFloat(editPaidAmt.value) || 0;
+      const pd2 = parseFloat(editPaidAmt2 ? editPaidAmt2.value : 0) || 0;
+      const pd3 = parseFloat(editPaidAmt3 ? editPaidAmt3.value : 0) || 0;
+      
+      const totalPaid = pd1 + pd2 + pd3;
+      editPendingAmt.value = Math.max(0, tot - totalPaid);
     }
 
     editTotalAmt.addEventListener('input', calcEditPending);
     editPaidAmt.addEventListener('input', calcEditPending);
+    if (editPaidAmt2) editPaidAmt2.addEventListener('input', calcEditPending);
+    if (editPaidAmt3) editPaidAmt3.addEventListener('input', calcEditPending);
 
     document.getElementById('editPayOption').addEventListener('change', (e) => {
       const opt = e.target.value;
       const tot = parseFloat(editTotalAmt.value) || 0;
       if (opt === 'FULL_PAYMENT') {
         editPaidAmt.value = tot;
+        if(editPaidAmt2) editPaidAmt2.value = 0;
+        if(editPaidAmt3) editPaidAmt3.value = 0;
       } else if (opt === '50_ADVANCE') {
         editPaidAmt.value = Math.ceil(tot / 2);
       }
       calcEditPending();
     });
 
-    // ADMIN DIRECT BOOKING SUBMIT (FIXED: SEAT METADATA SYNC)
+    // ADMIN DIRECT BOOKING SUBMIT
     document.getElementById('adminBookingForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -1896,12 +1940,21 @@
       document.getElementById('editExtra').value = item.extraRequirements || '';
 
       const totalAmt = item.totalAmount || 0;
-      const paidAmt = item.paidAmount !== undefined ? item.paidAmount : totalAmt;
-      const pendingAmt = item.pendingAmount !== undefined ? item.pendingAmount : Math.max(0, totalAmt - paidAmt);
+      const paidAmt1 = item.paidAmount1 !== undefined ? item.paidAmount1 : (item.paidAmount || totalAmt);
+      const paidAmt2 = item.paidAmount2 !== undefined ? item.paidAmount2 : 0;
+      const paidAmt3 = item.paidAmount3 !== undefined ? item.paidAmount3 : 0;
 
       document.getElementById('editTotalAmt').value = totalAmt;
-      document.getElementById('editPaidAmt').value = paidAmt;
-      document.getElementById('editPendingAmt').value = pendingAmt;
+      document.getElementById('editPaidAmt').value = paidAmt1;
+      document.getElementById('editPaidTo1').value = item.paidTo1 || '';
+      
+      document.getElementById('editPaidAmt2').value = paidAmt2 || '';
+      document.getElementById('editPaidTo2').value = item.paidTo2 || '';
+      
+      document.getElementById('editPaidAmt3').value = paidAmt3 || '';
+      document.getElementById('editPaidTo3').value = item.paidTo3 || '';
+
+      calcEditPending();
 
       document.getElementById('editPayMethod').value = item.paymentMethod || 'UPI';
       document.getElementById('editPayOption').value = item.paymentOption || 'FULL_PAYMENT';
@@ -1921,7 +1974,7 @@
       document.getElementById('editBookingModal').style.display = 'flex';
     };
 
-    // EDIT FORM SUBMIT (FIXED: HANDLES STALL SHIFTING LIKE B-13 TO B-7 PERFECTLY)
+    // EDIT FORM SUBMIT (WITH 3-PART PAYMENT ENTIRES & METADATA SYNC)
     document.getElementById('editBookingForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -1949,8 +2002,19 @@
       const extraRequirements = document.getElementById('editExtra').value.trim();
 
       const totalAmount = parseFloat(editTotalAmt.value) || 0;
-      const paidAmount = parseFloat(editPaidAmt.value) || 0;
-      const pendingAmount = Math.max(0, totalAmount - paidAmount);
+      
+      // Part 1, Part 2, Part 3 Payment Processing
+      const paidAmt1 = parseFloat(editPaidAmt.value) || 0;
+      const paidTo1 = document.getElementById('editPaidTo1').value.trim();
+      
+      const paidAmt2 = parseFloat(document.getElementById('editPaidAmt2').value) || 0;
+      const paidTo2 = document.getElementById('editPaidTo2').value.trim();
+
+      const paidAmt3 = parseFloat(document.getElementById('editPaidAmt3').value) || 0;
+      const paidTo3 = document.getElementById('editPaidTo3').value.trim();
+
+      const totalPaidCalculated = paidAmt1 + paidAmt2 + paidAmt3;
+      const pendingAmount = Math.max(0, totalAmount - totalPaidCalculated);
 
       const paymentMethod = document.getElementById('editPayMethod').value;
       const paymentOption = document.getElementById('editPayOption').value;
@@ -1986,7 +2050,13 @@
           idProofUrl,
           seats: newSeats,
           totalAmount,
-          paidAmount,
+          paidAmount: totalPaidCalculated,
+          paidAmount1: paidAmt1,
+          paidTo1: paidTo1,
+          paidAmount2: paidAmt2,
+          paidTo2: paidTo2,
+          paidAmount3: paidAmt3,
+          paidTo3: paidTo3,
           pendingAmount,
           paymentMethod,
           paymentOption,
@@ -2010,7 +2080,7 @@
           }, { merge: true });
         }
 
-        // UPDATE NEW SEATS (e.g. B-7) WITH UPDATED STATUS & METADATA
+        // UPDATE NEW SEATS WITH UPDATED STATUS & METADATA
         let targetSeatStatus = "available";
         if (status === 'approved') targetSeatStatus = "booked";
         else if (status === 'pending') targetSeatStatus = "pending";
@@ -2033,7 +2103,7 @@
           }
         }
 
-        alert(`Registration entry updated successfully for ${userName}! Seats sync complete.`);
+        alert(`Registration entry updated successfully for ${userName}! Seats & Installments sync complete.`);
         document.getElementById('editBookingModal').style.display = 'none';
 
       } catch (err) {
@@ -2049,7 +2119,7 @@
       const item = allBookings.find(b => b.id === bookingId);
       if (!item) return;
 
-      currentViewingBooking = item; // Store context dynamically for PDF Download
+      currentViewingBooking = item;
 
       document.getElementById('modalCustomerName').innerText = item.userName || 'Customer Details';
       const body = document.getElementById('modalDetailsBody');
@@ -2060,6 +2130,16 @@
       const pendingAmt = item.pendingAmount !== undefined ? item.pendingAmount : Math.max(0, totalAmt - paidAmt);
       const paymentProof = item.paymentProofUrl || item.proofUrl;
 
+      // Installment Details Formatting
+      let installmentBreakdown = `₹${paidAmt.toLocaleString('en-IN')}`;
+      if (item.paidAmount1 !== undefined || item.paidAmount2 || item.paidAmount3) {
+        const parts = [];
+        if (item.paidAmount1) parts.push(`1st Part: ₹${item.paidAmount1.toLocaleString('en-IN')}${item.paidTo1 ? ` (To: ${item.paidTo1})` : ''}`);
+        if (item.paidAmount2) parts.push(`2nd Part: ₹${item.paidAmount2.toLocaleString('en-IN')}${item.paidTo2 ? ` (To: ${item.paidTo2})` : ''}`);
+        if (item.paidAmount3) parts.push(`3rd Part: ₹${item.paidAmount3.toLocaleString('en-IN')}${item.paidTo3 ? ` (To: ${item.paidTo3})` : ''}`);
+        if (parts.length > 0) installmentBreakdown = parts.join('<br>');
+      }
+
       body.innerHTML = `
         <div class="detail-item"><label>Full Name</label><p>${item.userName || 'N/A'}</p></div>
         <div class="detail-item"><label>Company / Brand</label><p>${item.companyName || 'N/A'}</p></div>
@@ -2068,9 +2148,10 @@
         <div class="detail-item"><label>Email Address</label><p>${item.emailAddress || 'N/A'}</p></div>
         <div class="detail-item"><label>Complete Address</label><p>${item.completeAddress || 'N/A'}</p></div>
         <div class="detail-item"><label>Business Categories</label><p>${cats}</p></div>
-        <div class="detail-item"><label>Selected Stalls</label><p><b>${(item.seats || []).join(', ')}</b></p></div>
+        <div class="detail-item"><label>Selected Stalls</label><p><b style="color:#007bff;">${(item.seats || []).join(', ')}</b></p></div>
         <div class="detail-item"><label>Total Amount</label><p>₹${totalAmt.toLocaleString('en-IN')}</p></div>
-        <div class="detail-item"><label>Paid Amount</label><p style="color:#28a745; font-weight:bold;">₹${paidAmt.toLocaleString('en-IN')}</p></div>
+        <div class="detail-item"><label>Total Paid Amount</label><p style="color:#28a745; font-weight:bold;">₹${paidAmt.toLocaleString('en-IN')}</p></div>
+        <div class="detail-item" style="grid-column: 1 / -1;"><label>Payment Installments & Recipient Details</label><p style="color:#28a745; font-weight:600;">${installmentBreakdown}</p></div>
         <div class="detail-item"><label>Pending Amount</label><p style="color:${pendingAmt > 0 ? '#dc3545' : '#28a745'}; font-weight:bold;">₹${pendingAmt.toLocaleString('en-IN')}</p></div>
         <div class="detail-item"><label>Payment Method & Option</label><p>${item.paymentMethod || 'UPI'} (${item.paymentOption || 'FULL_PAYMENT'})</p></div>
         <div class="detail-item"><label>Transaction ID / UTR</label><p><code>${item.transactionId || 'N/A'}</code></p></div>
@@ -2281,7 +2362,7 @@
       });
     }
 
-    // APPROVE LOGIC (FIXED: ATTACHES COMPANY DETAILS TO SEAT DOC)
+    // APPROVE LOGIC
     window.approveBooking = async (bookingId, seatIdsStr) => {
       if (!confirm("Are you sure you want to APPROVE this booking payment?")) return;
       const seatIds = seatIdsStr.split(',');
@@ -2308,7 +2389,7 @@
       }
     };
 
-    // REJECT LOGIC (FIXED: WIPES SEAT METADATA)
+    // REJECT LOGIC
     window.rejectBooking = async (bookingId, seatIdsStr) => {
       if (!confirm("Are you sure you want to REJECT this booking payment?")) return;
       const seatIds = seatIdsStr.split(',');
@@ -2332,7 +2413,7 @@
       }
     };
 
-    // DELETE BOOKING (FIXED: WIPES SEAT METADATA)
+    // DELETE BOOKING
     window.deleteBooking = async (bookingId, seatIdsStr) => {
       if (!confirm("⚠️ Are you sure you want to PERMANENTLY DELETE this booking from the backend?")) return;
       const seatIds = seatIdsStr ? seatIdsStr.split(',').filter(s => s.trim()) : [];
@@ -2367,52 +2448,39 @@
 
         return {
           "S.No": index + 1,
-          "Booking Date": b.bookingDate || '',
-          "Full Name": b.userName || '',
-          "Company / Brand Name": b.companyName || '',
-          "WhatsApp Contact": b.whatsappNumber || '',
-          "Alternative Mobile": b.altMobileNumber || '',
-          "Email Address": b.emailAddress || '',
-          "Complete Address": b.completeAddress || '',
-          "Business Category": cats,
-          "Business Description": b.businessDescription || '',
-          "Extra Requirements": b.extraRequirements || '',
-          "Stall Numbers": (b.seats || []).join(', '),
-          "Total Amount (₹)": totalAmt,
-          "Paid Amount (₹)": paidAmt,
-          "Pending Amount (₹)": pendingAmt,
-          "Payment Method": b.paymentMethod || '',
-          "Payment Option": b.paymentOption || '',
-          "Transaction ID / UTR": b.transactionId || '',
-          "Status": (b.status || '').toUpperCase(),
-          "ID Proof URL": b.idProofUrl || '',
-          "Payment Proof URL": b.paymentProofUrl || b.proofUrl || '',
-          "Submission Time": b.timestamp ? new Date(b.timestamp).toLocaleString('en-IN') : ''
+          "Booking ID": b.id,
+          "Full Name": b.userName || 'N/A',
+          "Company / Brand Name": b.companyName || 'N/A',
+          "WhatsApp Number": b.whatsappNumber || 'N/A',
+          "Alternative Mobile": b.altMobileNumber || 'N/A',
+          "Email Address": b.emailAddress || 'N/A',
+          "Stalls Allocated": Array.isArray(b.seats) ? b.seats.join(', ') : (b.seats || ''),
+          "Total Amount (INR)": totalAmt,
+          "Paid Amount (INR)": paidAmt,
+          "1st Part Amount": b.paidAmount1 || paidAmt,
+          "1st Part Given To": b.paidTo1 || 'N/A',
+          "2nd Part Amount": b.paidAmount2 || 0,
+          "2nd Part Given To": b.paidTo2 || 'N/A',
+          "3rd Part Amount": b.paidAmount3 || 0,
+          "3rd Part Given To": b.paidTo3 || 'N/A',
+          "Pending Amount (INR)": pendingAmt,
+          "Payment Method": b.paymentMethod || 'UPI',
+          "Payment Option": b.paymentOption || 'FULL_PAYMENT',
+          "Transaction ID / UTR": b.transactionId || 'N/A',
+          "Booking Date": b.bookingDate || 'N/A',
+          "Status": (b.status || 'pending').toUpperCase(),
+          "Business Categories": cats,
+          "Business Description": b.businessDescription || 'N/A',
+          "Extra Requirements": b.extraRequirements || 'None',
+          "Complete Address": b.completeAddress || 'N/A'
         };
       });
 
       const worksheet = XLSX.utils.json_to_sheet(excelData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Stall Bookings");
-      worksheet['!cols'] = Array(22).fill({ wch: 20 });
-      XLSX.writeFile(workbook, `Bandhan_Bazaar_Stall_Bookings_${Date.now()}.xlsx`);
+      XLSX.writeFile(workbook, `Bandhan_Bazaar_Stall_Bookings_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
     });
-
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        currentFilter = e.target.getAttribute('data-filter');
-        renderTable();
-      });
-    });
-
-    searchInput.addEventListener('input', renderTable);
-
-    window.openModal = (url) => {
-      document.getElementById('modalImg').src = url;
-      document.getElementById('imgModal').style.display = 'flex';
-    };
   </script>
 </body>
 
