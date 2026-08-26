@@ -106,6 +106,7 @@
                   gap: 12px;
                   margin-bottom: 15px;
                   flex-wrap: wrap;
+                  align-items: center;
             }
 
             .search-input {
@@ -122,6 +123,50 @@
 
             .search-input:focus {
                   border-color: var(--primary-orange);
+            }
+
+            /* Date Filter Styles */
+            .date-filter-group {
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  flex-wrap: wrap;
+            }
+
+            .date-input {
+                  padding: 9px 12px;
+                  border: 2px solid var(--border-color);
+                  border-radius: 10px;
+                  font-size: 0.88rem;
+                  outline: none;
+                  color: var(--text-dark);
+                  transition: border-color 0.2s;
+            }
+
+            .date-input:focus {
+                  border-color: var(--primary-orange);
+            }
+
+            .date-sep {
+                  font-size: 0.85rem;
+                  color: #64748B;
+                  font-weight: 500;
+            }
+
+            .btn-clear-date {
+                  background: #E2E8F0;
+                  color: #475569;
+                  border: none;
+                  padding: 9px 14px;
+                  border-radius: 8px;
+                  font-weight: 600;
+                  font-size: 0.82rem;
+                  cursor: pointer;
+                  transition: background 0.2s;
+            }
+
+            .btn-clear-date:hover {
+                  background: #CBD5E1;
             }
 
             .action-bar {
@@ -145,9 +190,15 @@
 
             .stats-text {
                   font-size: 0.88rem;
-                  font-weight: 500;
-                  color: #64748B;
+                  font-weight: 600;
+                  color: #334155;
                   width: 100%;
+                  line-height: 1.4;
+            }
+
+            .stats-highlight {
+                  color: var(--primary-orange);
+                  font-weight: 700;
             }
 
             .btn-excel {
@@ -623,8 +674,16 @@
             <div class="controls-card">
                   <div class="search-box-wrapper">
                         <input type="text" id="searchInput" class="search-input" placeholder="Search by Name, Mobile, Father's Name, or Address...">
+                        <!-- Feature 1: Date Filter Inputs -->
+                        <div class="date-filter-group">
+                              <input type="date" id="startDate" class="date-input" title="From Date">
+                              <span class="date-sep">to</span>
+                              <input type="date" id="endDate" class="date-input" title="To Date">
+                              <button type="button" id="btnClearDate" class="btn-clear-date">Clear Dates</button>
+                        </div>
                   </div>
                   <div class="action-bar">
+                        <!-- Feature 2: Enhanced Stats Text with Total Sum of Members -->
                         <div class="stats-text" id="statsText">Loading records...</div>
                         <div class="action-buttons">
                               <button id="btnExportExcel" class="btn-excel">📊 Export Excel</button>
@@ -785,6 +844,10 @@
 
             // DOM Elements
             const searchInput = document.getElementById('searchInput');
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+            const btnClearDate = document.getElementById('btnClearDate');
+
             const userTableBody = document.getElementById('userTableBody');
             const statsText = document.getElementById('statsText');
             const selectAllCheckbox = document.getElementById('selectAll');
@@ -837,32 +900,74 @@
                   }
             }
 
-            // Filter Users Based on Search Text
+            // Filter Users Based on Search Text and Date Range
             function filterAndRender() {
                   const searchTerm = searchInput.value.trim().toLowerCase();
+                  const startDateVal = startDateInput.value;
+                  const endDateVal = endDateInput.value;
+
+                  const startMs = startDateVal ? new Date(startDateVal + "T00:00:00").getTime() : null;
+                  const endMs = endDateVal ? new Date(endDateVal + "T23:59:59.999").getTime() : null;
 
                   filteredUsers = allUsers.filter(user => {
+                        // 1. Text Search Filter
                         const name = (user.name || "").toLowerCase();
                         const fatherName = (user.fatherName || "").toLowerCase();
                         const mobile = (user.mobile || "").toLowerCase();
                         const address = (user.address || "").toLowerCase();
 
-                        return name.includes(searchTerm) || 
-                               fatherName.includes(searchTerm) || 
-                               mobile.includes(searchTerm) || 
-                               address.includes(searchTerm);
+                        const matchesSearch = name.includes(searchTerm) || 
+                                               fatherName.includes(searchTerm) || 
+                                               mobile.includes(searchTerm) || 
+                                               address.includes(searchTerm);
+
+                        // 2. Date Filter
+                        let matchesDate = true;
+                        if (startMs || endMs) {
+                              let userTime = null;
+                              if (user.createdAt) {
+                                    if (typeof user.createdAt.toDate === 'function') {
+                                          userTime = user.createdAt.toDate().getTime();
+                                    } else if (user.createdAt.seconds) {
+                                          userTime = user.createdAt.seconds * 1000;
+                                    } else {
+                                          userTime = new Date(user.createdAt).getTime();
+                                    }
+                              }
+
+                              if (userTime) {
+                                    if (startMs && userTime < startMs) matchesDate = false;
+                                    if (endMs && userTime > endMs) matchesDate = false;
+                              } else {
+                                    matchesDate = false;
+                              }
+                        }
+
+                        return matchesSearch && matchesDate;
                   });
 
                   renderTable();
             }
 
-            // Render Table HTML
+            // Render Table HTML & Calculate Member Sum Statistics
             function renderTable() {
                   selectedDocIds.clear();
                   selectAllCheckbox.checked = false;
                   updateDeleteSelectedButton();
 
-                  statsText.innerText = `Showing ${filteredUsers.length} of ${allUsers.length} total registrations`;
+                  // Feature 2: Calculate Sum of Total Members (Filtered & Overall)
+                  const totalFilteredMembers = filteredUsers.reduce((sum, u) => {
+                        const count = u.totalMembersCount || ((u.numMembers || 0) + 1);
+                        return sum + count;
+                  }, 0);
+
+                  const overallMembersCount = allUsers.reduce((sum, u) => {
+                        const count = u.totalMembersCount || ((u.numMembers || 0) + 1);
+                        return sum + count;
+                  }, 0);
+
+                  // Update Stats Display Bar
+                  statsText.innerHTML = `Showing <strong>${filteredUsers.length}</strong> of <strong>${allUsers.length}</strong> Registrations | Total Members Count: <span class="stats-highlight">${totalFilteredMembers}</span> <small style="color:#64748B;">(Overall Total: ${overallMembersCount})</small>`;
 
                   if (filteredUsers.length === 0) {
                         userTableBody.innerHTML = `<tr><td colspan="7" class="no-results">No matching records found.</td></tr>`;
@@ -924,12 +1029,14 @@
 
             // Download All Data to Excel File
             function exportToExcel() {
-                  if (allUsers.length === 0) {
+                  const dataToExport = filteredUsers.length > 0 ? filteredUsers : allUsers;
+
+                  if (dataToExport.length === 0) {
                         showToast("No data available to export!", true);
                         return;
                   }
 
-                  const excelData = allUsers.map((user, index) => ({
+                  const excelData = dataToExport.map((user, index) => ({
                         "S.No": index + 1,
                         "Name": user.name || '',
                         "Father's Name": user.fatherName || '',
@@ -1397,7 +1504,7 @@
                         showToast("Pass PDF successfully download ho gaya!");
                   } catch (err) {
                         console.error("Pass PDF Download Error:", err);
-                        showToast("Pass PDF generate karne mein error aaya: " + err.message, true);
+                        showToast("Pass PDF generate karne mein error आया: " + err.message, true);
                   } finally {
                         btnDownloadPass.disabled = false;
                         btnDownloadPass.innerText = "📄 Download PDF Pass";
@@ -1422,8 +1529,15 @@
             // Export Excel Button Event Listener
             btnExportExcel.addEventListener('click', exportToExcel);
 
-            // Real-Time Search Event Listener
+            // Real-Time Search & Date Filter Event Listeners
             searchInput.addEventListener('input', filterAndRender);
+            startDateInput.addEventListener('change', filterAndRender);
+            endDateInput.addEventListener('change', filterAndRender);
+            btnClearDate.addEventListener('click', () => {
+                  startDateInput.value = '';
+                  endDateInput.value = '';
+                  filterAndRender();
+            });
 
             // Initial Fetch on Load
             fetchUsers();
