@@ -1166,7 +1166,7 @@
     let allBookings = [];
     let allCreators = [];
     let currentFilter = 'pending';
-    let currentViewingBooking = null; // Tracks currently open customer booking in details modal
+    let currentViewingBooking = null;
 
     const tableBody = document.getElementById('adminTableBody');
     const searchInput = document.getElementById('searchInput');
@@ -1175,6 +1175,65 @@
     const totalRevenueEl = document.getElementById('totalRevenue');
     const totalPendingAmountEl = document.getElementById('totalPendingAmount');
     const downloadExcelBtn = document.getElementById('downloadExcelBtn');
+
+    // IMAGE PREVIEW MODAL HELPER
+    window.openModal = (imgSrc) => {
+      const modalImg = document.getElementById('modalImg');
+      const imgModal = document.getElementById('imgModal');
+      if (modalImg && imgModal) {
+        modalImg.src = imgSrc;
+        imgModal.style.display = 'flex';
+      }
+    };
+
+    // SEARCH & FILTER TABS EVENT LISTENERS
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        renderTable();
+      });
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.getAttribute('data-filter');
+        renderTable();
+      });
+    });
+
+    // EXCEL EXPORT LISTENER
+    if (downloadExcelBtn) {
+      downloadExcelBtn.addEventListener('click', () => {
+        if (allBookings.length === 0) return alert("No booking data available to export!");
+
+        const exportData = allBookings.map(b => ({
+          "Booking Date": b.bookingDate || (b.timestamp ? new Date(b.timestamp).toLocaleString('en-IN') : ''),
+          "Customer Name": b.userName || '',
+          "Company Name": b.companyName || '',
+          "WhatsApp Number": b.whatsappNumber || '',
+          "Alt Mobile": b.altMobileNumber || '',
+          "Email": b.emailAddress || '',
+          "Address": b.completeAddress || '',
+          "Stalls": Array.isArray(b.seats) ? b.seats.join(', ') : (b.seats || ''),
+          "Total Amount (₹)": b.totalAmount || 0,
+          "Paid Amount (₹)": b.paidAmount !== undefined ? b.paidAmount : (b.totalAmount || 0),
+          "Pending Amount (₹)": b.pendingAmount !== undefined ? b.pendingAmount : 0,
+          "Payment Method": b.paymentMethod || '',
+          "Payment Option": b.paymentOption || '',
+          "Transaction ID": b.transactionId || '',
+          "Status": b.status || '',
+          "Business Categories": Array.isArray(b.businessCategories) ? b.businessCategories.join(', ') : (b.businessCategories || ''),
+          "Description": b.businessDescription || '',
+          "Extra Requirements": b.extraRequirements || ''
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Stall Bookings");
+        XLSX.writeFile(workbook, `Bandhan_Bazaar_Bookings_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      });
+    }
 
     // 1. LIVE STALL BOOKINGS LISTENER
     onSnapshot(collection(db, "bookings"), (snapshot) => {
@@ -1475,7 +1534,7 @@
 
         const paymentProof = item.paymentProofUrl || item.proofUrl;
         const proofCell = paymentProof ? `
-          <img src="${paymentProof}" class="proof-img" onclick="openModal('${paymentProof}')" alt="Payment Proof" />
+          <img src="${paymentProof}" class="proof-img" onclick="window.openModal('${paymentProof}')" alt="Payment Proof" />
         ` : `<span style="color:#888; font-size:11px;">N/A (${method})</span>`;
 
         const idProofCell = item.idProofUrl ? `
@@ -1484,14 +1543,14 @@
 
         row.innerHTML = `
           <td>${formattedDate}</td>
-          <td><b>${item.userName || 'N/A'}</b><br><small style="color:#6c757d;">${item.companyName || ''}</small></td>
-          <td>📞 ${item.whatsappNumber || 'N/A'}<br><small style="color:#6c757d;">✉️ ${item.emailAddress || 'N/A'}</small></td>
+          <td><b>${escapeHtml(item.userName || 'N/A')}</b><br><small style="color:#6c757d;">${escapeHtml(item.companyName || '')}</small></td>
+          <td>📞 ${escapeHtml(item.whatsappNumber || 'N/A')}<br><small style="color:#6c757d;">✉️ ${escapeHtml(item.emailAddress || 'N/A')}</small></td>
           <td><b style="color:#007bff;">${(item.seats || []).join(', ')}</b></td>
           <td>₹${totalAmt.toLocaleString('en-IN')}</td>
           <td style="color:#28a745; font-weight:bold;">₹${paidAmt.toLocaleString('en-IN')}</td>
           <td style="color:${pendingAmt > 0 ? '#dc3545' : '#28a745'}; font-weight:bold;">₹${pendingAmt.toLocaleString('en-IN')}</td>
           <td><span class="badge badge-method">${method}</span></td>
-          <td><code>${item.transactionId || 'N/A'}</code></td>
+          <td><code>${escapeHtml(item.transactionId || 'N/A')}</code></td>
           <td>${proofCell}</td>
           <td>${idProofCell}</td>
           <td><span class="badge badge-${item.status}">${item.status}</span></td>
@@ -1513,7 +1572,7 @@
 
     function escapeHtml(text) {
       if (!text) return "";
-      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
 
     document.getElementById('openPriceModalBtn').addEventListener('click', () => {
@@ -1552,7 +1611,7 @@
             bookingId: deleteField()
           }, { merge: true });
         }
-        alert(`Success! Stall(s) ${stallIds.join(', ')} are now unlocked, wiped, and set to AVAILABLE.`);
+        alert(`Success! Stall(s) ${stallIds.join(', ')} are now unlocked and set to AVAILABLE.`);
         document.getElementById('freeSeatModal').style.display = 'none';
         document.getElementById('freeStallIds').value = '';
       } catch (err) {
@@ -1974,7 +2033,7 @@
       document.getElementById('editBookingModal').style.display = 'flex';
     };
 
-    // EDIT FORM SUBMIT (WITH 3-PART PAYMENT ENTIRES & METADATA SYNC)
+    // EDIT FORM SUBMIT
     document.getElementById('editBookingForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -2003,7 +2062,6 @@
 
       const totalAmount = parseFloat(editTotalAmt.value) || 0;
       
-      // Part 1, Part 2, Part 3 Payment Processing
       const paidAmt1 = parseFloat(editPaidAmt.value) || 0;
       const paidTo1 = document.getElementById('editPaidTo1').value.trim();
       
@@ -2069,7 +2127,6 @@
 
         await updateDoc(doc(db, "bookings", bookingId), updatedDoc);
 
-        // RELEASE REMOVED SEATS (e.g. B-13) & CLEAR THEIR METADATA
         const removedSeats = originalSeats.filter(s => !newSeats.includes(s));
         for (const remSeat of removedSeats) {
           await setDoc(doc(db, "seats", remSeat), { 
@@ -2080,7 +2137,6 @@
           }, { merge: true });
         }
 
-        // UPDATE NEW SEATS WITH UPDATED STATUS & METADATA
         let targetSeatStatus = "available";
         if (status === 'approved') targetSeatStatus = "booked";
         else if (status === 'pending') targetSeatStatus = "pending";
@@ -2130,7 +2186,6 @@
       const pendingAmt = item.pendingAmount !== undefined ? item.pendingAmount : Math.max(0, totalAmt - paidAmt);
       const paymentProof = item.paymentProofUrl || item.proofUrl;
 
-      // Installment Details Formatting
       let installmentBreakdown = `₹${paidAmt.toLocaleString('en-IN')}`;
       if (item.paidAmount1 !== undefined || item.paidAmount2 || item.paidAmount3) {
         const parts = [];
@@ -2141,23 +2196,23 @@
       }
 
       body.innerHTML = `
-        <div class="detail-item"><label>Full Name</label><p>${item.userName || 'N/A'}</p></div>
-        <div class="detail-item"><label>Company / Brand</label><p>${item.companyName || 'N/A'}</p></div>
-        <div class="detail-item"><label>WhatsApp Number</label><p>${item.whatsappNumber || 'N/A'}</p></div>
-        <div class="detail-item"><label>Alternative Contact</label><p>${item.altMobileNumber || 'N/A'}</p></div>
-        <div class="detail-item"><label>Email Address</label><p>${item.emailAddress || 'N/A'}</p></div>
-        <div class="detail-item"><label>Complete Address</label><p>${item.completeAddress || 'N/A'}</p></div>
-        <div class="detail-item"><label>Business Categories</label><p>${cats}</p></div>
+        <div class="detail-item"><label>Full Name</label><p>${escapeHtml(item.userName || 'N/A')}</p></div>
+        <div class="detail-item"><label>Company / Brand</label><p>${escapeHtml(item.companyName || 'N/A')}</p></div>
+        <div class="detail-item"><label>WhatsApp Number</label><p>${escapeHtml(item.whatsappNumber || 'N/A')}</p></div>
+        <div class="detail-item"><label>Alternative Contact</label><p>${escapeHtml(item.altMobileNumber || 'N/A')}</p></div>
+        <div class="detail-item"><label>Email Address</label><p>${escapeHtml(item.emailAddress || 'N/A')}</p></div>
+        <div class="detail-item"><label>Complete Address</label><p>${escapeHtml(item.completeAddress || 'N/A')}</p></div>
+        <div class="detail-item"><label>Business Categories</label><p>${escapeHtml(cats)}</p></div>
         <div class="detail-item"><label>Selected Stalls</label><p><b style="color:#007bff;">${(item.seats || []).join(', ')}</b></p></div>
         <div class="detail-item"><label>Total Amount</label><p>₹${totalAmt.toLocaleString('en-IN')}</p></div>
         <div class="detail-item"><label>Total Paid Amount</label><p style="color:#28a745; font-weight:bold;">₹${paidAmt.toLocaleString('en-IN')}</p></div>
         <div class="detail-item" style="grid-column: 1 / -1;"><label>Payment Installments & Recipient Details</label><p style="color:#28a745; font-weight:600;">${installmentBreakdown}</p></div>
         <div class="detail-item"><label>Pending Amount</label><p style="color:${pendingAmt > 0 ? '#dc3545' : '#28a745'}; font-weight:bold;">₹${pendingAmt.toLocaleString('en-IN')}</p></div>
-        <div class="detail-item"><label>Payment Method & Option</label><p>${item.paymentMethod || 'UPI'} (${item.paymentOption || 'FULL_PAYMENT'})</p></div>
-        <div class="detail-item"><label>Transaction ID / UTR</label><p><code>${item.transactionId || 'N/A'}</code></p></div>
+        <div class="detail-item"><label>Payment Method & Option</label><p>${escapeHtml(item.paymentMethod || 'UPI')} (${escapeHtml(item.paymentOption || 'FULL_PAYMENT')})</p></div>
+        <div class="detail-item"><label>Transaction ID / UTR</label><p><code>${escapeHtml(item.transactionId || 'N/A')}</code></p></div>
         <div class="detail-item"><label>Booking Date</label><p>${item.bookingDate || 'N/A'}</p></div>
-        <div class="detail-item" style="grid-column: 1 / -1;"><label>Business Description</label><p>${item.businessDescription || 'N/A'}</p></div>
-        <div class="detail-item" style="grid-column: 1 / -1;"><label>Extra Requirements</label><p>${item.extraRequirements || 'None'}</p></div>
+        <div class="detail-item" style="grid-column: 1 / -1;"><label>Business Description</label><p>${escapeHtml(item.businessDescription || 'N/A')}</p></div>
+        <div class="detail-item" style="grid-column: 1 / -1;"><label>Extra Requirements</label><p>${escapeHtml(item.extraRequirements || 'None')}</p></div>
         <div class="detail-item"><label>ID Proof Document</label><p>${item.idProofUrl ? `<a href="${item.idProofUrl}" target="_blank" style="color:#007bff; font-weight:bold;">View Uploaded ID Proof</a>` : 'Not Uploaded'}</p></div>
         <div class="detail-item"><label>Payment Screenshot</label><p>${paymentProof ? `<a href="${paymentProof}" target="_blank" style="color:#007bff; font-weight:bold;">View Payment Screenshot</a>` : 'N/A'}</p></div>
       `;
@@ -2187,7 +2242,6 @@
 
           const b = currentViewingBooking;
 
-          // Safe Data Parsing
           const name = b.userName || 'Customer';
           const company = b.companyName || 'N/A';
           const phone = b.whatsappNumber || 'N/A';
@@ -2218,7 +2272,6 @@
           const idProof = b.idProofUrl ? b.idProofUrl : 'Not Uploaded';
           const payProof = (b.paymentProofUrl || b.proofUrl) ? (b.paymentProofUrl || b.proofUrl) : 'N/A';
 
-          // PDF Header Banner
           doc.setFillColor(26, 37, 47);
           doc.rect(0, 0, 210, 32, 'F');
 
@@ -2235,7 +2288,6 @@
           doc.setFontSize(9);
           doc.text(`Generated: ${genTime}`, 145, 24);
 
-          // Customer Highlight Sub-Header Box
           doc.setFillColor(244, 246, 249);
           doc.roundedRect(14, 38, 182, 18, 3, 3, 'F');
 
@@ -2251,7 +2303,6 @@
 
           let startY = 62;
 
-          // Section 1: Customer Information
           doc.autoTable({
             startY: startY,
             head: [['1. Customer & Contact Details', '']],
@@ -2272,7 +2323,6 @@
 
           startY = doc.lastAutoTable.finalY + 5;
 
-          // Section 2: Stall & Financial Information
           doc.autoTable({
             startY: startY,
             head: [['2. Stall & Payment Summary', '']],
@@ -2294,7 +2344,6 @@
 
           startY = doc.lastAutoTable.finalY + 5;
 
-          // Section 3: Business Information
           doc.autoTable({
             startY: startY,
             head: [['3. Business Information & Requirements', '']],
@@ -2312,7 +2361,6 @@
 
           startY = doc.lastAutoTable.finalY + 5;
 
-          // Section 4: Submitted Documents
           doc.autoTable({
             startY: startY,
             head: [['4. Submitted Documents & Verification Info', '']],
@@ -2327,7 +2375,6 @@
             styles: { fontSize: 8.5, cellPadding: 2.5 }
           });
 
-          // Footer Configuration
           const pageCount = doc.internal.getNumberOfPages();
           for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
@@ -2341,7 +2388,6 @@
             );
           }
 
-          // Dynamic Filename Generation
           const cleanName = name.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
           const cleanSeat = primarySeat.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
 
@@ -2365,7 +2411,7 @@
     // APPROVE LOGIC
     window.approveBooking = async (bookingId, seatIdsStr) => {
       if (!confirm("Are you sure you want to APPROVE this booking payment?")) return;
-      const seatIds = seatIdsStr.split(',');
+      const seatIds = seatIdsStr.split(',').map(s => s.trim()).filter(s => s);
 
       try {
         const bookingSnap = await getDoc(doc(db, "bookings", bookingId));
@@ -2392,7 +2438,7 @@
     // REJECT LOGIC
     window.rejectBooking = async (bookingId, seatIdsStr) => {
       if (!confirm("Are you sure you want to REJECT this booking payment?")) return;
-      const seatIds = seatIdsStr.split(',');
+      const seatIds = seatIdsStr.split(',').map(s => s.trim()).filter(s => s);
 
       try {
         await updateDoc(doc(db, "bookings", bookingId), { status: "rejected" });
@@ -2413,75 +2459,28 @@
       }
     };
 
-    // DELETE BOOKING
+    // DELETE BOOKING LOGIC
     window.deleteBooking = async (bookingId, seatIdsStr) => {
-      if (!confirm("⚠️ Are you sure you want to PERMANENTLY DELETE this booking from the backend?")) return;
-      const seatIds = seatIdsStr ? seatIdsStr.split(',').filter(s => s.trim()) : [];
+      if (!confirm("⚠️ Are you sure you want to DELETE this booking completely?")) return;
+      const seatIds = seatIdsStr ? seatIdsStr.split(',').map(s => s.trim()).filter(s => s) : [];
 
       try {
         await deleteDoc(doc(db, "bookings", bookingId));
         for (const seatId of seatIds) {
-          if (seatId) {
-            await setDoc(doc(db, "seats", seatId), { 
-              status: "available",
-              companyName: deleteField(),
-              userName: deleteField(),
-              bookingId: deleteField()
-            }, { merge: true });
-          }
+          await setDoc(doc(db, "seats", seatId), { 
+            status: "available",
+            companyName: deleteField(),
+            userName: deleteField(),
+            bookingId: deleteField()
+          }, { merge: true });
         }
-        alert("Booking record deleted and seats released!");
+        alert("Booking deleted successfully and stalls released!");
       } catch (err) {
-        console.error("Error deleting:", err);
+        console.error("Error deleting booking:", err);
         alert("Delete Failed: " + err.message);
       }
     };
-
-    downloadExcelBtn.addEventListener('click', () => {
-      if (allBookings.length === 0) return alert("No booking data available to download!");
-
-      const excelData = allBookings.map((b, index) => {
-        const totalAmt = b.totalAmount || 0;
-        const paidAmt = b.paidAmount !== undefined ? b.paidAmount : totalAmt;
-        const pendingAmt = b.pendingAmount !== undefined ? b.pendingAmount : Math.max(0, totalAmt - paidAmt);
-        const cats = Array.isArray(b.businessCategories) ? b.businessCategories.join(', ') : (b.businessCategories || '');
-
-        return {
-          "S.No": index + 1,
-          "Booking ID": b.id,
-          "Full Name": b.userName || 'N/A',
-          "Company / Brand Name": b.companyName || 'N/A',
-          "WhatsApp Number": b.whatsappNumber || 'N/A',
-          "Alternative Mobile": b.altMobileNumber || 'N/A',
-          "Email Address": b.emailAddress || 'N/A',
-          "Stalls Allocated": Array.isArray(b.seats) ? b.seats.join(', ') : (b.seats || ''),
-          "Total Amount (INR)": totalAmt,
-          "Paid Amount (INR)": paidAmt,
-          "1st Part Amount": b.paidAmount1 || paidAmt,
-          "1st Part Given To": b.paidTo1 || 'N/A',
-          "2nd Part Amount": b.paidAmount2 || 0,
-          "2nd Part Given To": b.paidTo2 || 'N/A',
-          "3rd Part Amount": b.paidAmount3 || 0,
-          "3rd Part Given To": b.paidTo3 || 'N/A',
-          "Pending Amount (INR)": pendingAmt,
-          "Payment Method": b.paymentMethod || 'UPI',
-          "Payment Option": b.paymentOption || 'FULL_PAYMENT',
-          "Transaction ID / UTR": b.transactionId || 'N/A',
-          "Booking Date": b.bookingDate || 'N/A',
-          "Status": (b.status || 'pending').toUpperCase(),
-          "Business Categories": cats,
-          "Business Description": b.businessDescription || 'N/A',
-          "Extra Requirements": b.extraRequirements || 'None',
-          "Complete Address": b.completeAddress || 'N/A'
-        };
-      });
-
-      const worksheet = XLSX.utils.json_to_sheet(excelData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Stall Bookings");
-      XLSX.writeFile(workbook, `Bandhan_Bazaar_Stall_Bookings_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    });
   </script>
-</body>
 
+</body>
 </html>
