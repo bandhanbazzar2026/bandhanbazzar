@@ -256,15 +256,14 @@
             } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
             const firebaseConfig = {
-                  apiKey: "AIzaSyCXsYxtk9Fj50QjNA2KoeqNd3VLrSAMfRQ",
-                  authDomain: "bandhanbazaar03.firebaseapp.com",
-                  projectId: "bandhanbazaar03",
-                  storageBucket: "bandhanbazaar03.firebasestorage.app",
-                  messagingSenderId: "866985755804",
-                  appId: "1:866985755804:web:3aba7a872486518c29d959",
-                  measurementId: "G-S2163PHN8X"
+                  apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
+  authDomain: "bandhanbazaarevent2026.firebaseapp.com",
+  projectId: "bandhanbazaarevent2026",
+  storageBucket: "bandhanbazaarevent2026.firebasestorage.app",
+  messagingSenderId: "430230410068",
+  appId: "1:430230410068:web:963bc22ebbe3d17faa2ec1",
+  measurementId: "G-DVGBL2Z7BQ"
             };
-
 
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app, "default");
@@ -344,14 +343,14 @@
                         // 4. Download PDF & Wait for finish
                         await downloadPassAsPDF(canvas, `Bandhan_Bazaar_Pass_${name.replace(/\s+/g, '_')}.pdf`);
 
-                        // 5. Show Success Modal Popup (No Redirection until user clicks)
+                        // 5. Show Success Modal Popup
                         statusMsg.innerText = "";
                         successModal.style.display = "flex";
 
                   } catch (error) {
                         console.error("Submission Error: ", error);
                         statusMsg.style.color = "red";
-                        statusMsg.innerText = "Error: " + (error.message || "Failed to submit. Check Firestore Rules!");
+                        statusMsg.innerText = "Error: " + (error.message || "Failed to submit.");
                         submitBtn.disabled = false;
                   }
             });
@@ -361,12 +360,11 @@
                   window.location.href = "https://bandhanbazaar.in/";
             });
 
-            // Helper for Preloading Canvas Assets
+            // Helper for Preloading Canvas Assets (Removed crossOrigin to prevent Tainted Canvas error on local files)
             function loadImage(src) {
                   return new Promise((resolve) => {
                         if (!src) return resolve(null);
                         const img = new Image();
-                        img.crossOrigin = "Anonymous";
                         img.onload = () => resolve(img);
                         img.onerror = () => resolve(null);
                         img.src = src;
@@ -421,7 +419,8 @@
                               const qrCanvas = qrContainer.querySelector('canvas');
                               const qrImg = qrContainer.querySelector('img');
 
-                              if (qrCanvas || (qrImg && qrImg.src)) {
+                              // Check if QR element is ready
+                              if (qrCanvas || (qrImg && qrImg.src && (qrImg.complete || qrImg.naturalWidth > 0))) {
                                     clearInterval(interval);
 
                                     try {
@@ -575,28 +574,30 @@
                   });
             }
 
-            // Cross-Platform PDF Download Function (Optimized for Mobile Browsers & Desktop)
+            // Safe & Robust PDF Download Function
             function downloadPassAsPDF(canvas, filename) {
-                  return new Promise((resolve) => {
-                        const { jsPDF } = window.jspdf;
-
-                        const pdfWidth = canvas.width / 2;
-                        const pdfHeight = canvas.height / 2;
-
-                        // Memory & File size optimization using JPEG format
-                        const imgData = canvas.toDataURL('image/jpeg', 0.9);
-
-                        const pdf = new jsPDF({
-                              orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
-                              unit: 'px',
-                              format: [pdfWidth, pdfHeight]
-                        });
-
-                        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-
-                        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
+                  return new Promise((resolve, reject) => {
                         try {
+                              const jsPDFClass = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+                              if (!jsPDFClass) {
+                                    return reject(new Error("jsPDF library initialize nahi ho sakti. Page refresh karein."));
+                              }
+
+                              const pdfWidth = canvas.width / 2;
+                              const pdfHeight = canvas.height / 2;
+
+                              const imgData = canvas.toDataURL('image/jpeg', 0.9);
+
+                              const pdf = new jsPDFClass({
+                                    orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+                                    unit: 'px',
+                                    format: [pdfWidth, pdfHeight]
+                              });
+
+                              pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+
+                              const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
                               if (isMobile) {
                                     pdf.save(filename);
                               } else {
@@ -618,15 +619,13 @@
                                           URL.revokeObjectURL(blobUrl);
                                     }, 5000);
                               }
-                        } catch (e) {
-                              console.warn("Fallback trigger standard pdf.save()", e);
-                              pdf.save(filename);
-                        }
 
-                        // Allow buffer time to trigger browser download engine
-                        setTimeout(() => {
-                              resolve(true);
-                        }, 1200);
+                              setTimeout(() => {
+                                    resolve(true);
+                              }, 1000);
+                        } catch (e) {
+                              reject(e);
+                        }
                   });
             }
       </script>
