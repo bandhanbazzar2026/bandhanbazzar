@@ -49,6 +49,7 @@
                         transform: scale(0.8);
                         opacity: 0;
                   }
+
                   to {
                         transform: scale(1);
                         opacity: 1;
@@ -231,7 +232,8 @@
             <div class="modal-card">
                   <div class="modal-icon">✓</div>
                   <div class="modal-title">Successfully Downloaded!</div>
-                  <div class="modal-desc">Aapka Pass PDF successfully generate aur download ho gaya hai. Main website par jaane ke liye niche click karein.</div>
+                  <div class="modal-desc">Aapka Pass PDF successfully generate aur download ho gaya hai. Main website
+                        par jaane ke liye niche click karein.</div>
                   <button id="redirectBtn" class="btn-modal-redirect">Go to Main Website</button>
             </div>
       </div>
@@ -243,25 +245,26 @@
       <!-- Firebase & HD Canvas Module -->
       <script type="module">
             import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-            import { 
-                  getFirestore, 
-                  collection, 
-                  addDoc, 
+            import {
+                  getFirestore,
+                  collection,
+                  addDoc,
                   serverTimestamp,
                   query,
                   where,
-                  getDocs 
+                  getDocs
             } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
             const firebaseConfig = {
-                   apiKey: "AIzaSyCaIdvQZ7A6Ghx8PtUCwOQoJCWajIArEnY",
-    authDomain: "bandhanbaazar-2.firebaseapp.com",
-    projectId: "bandhanbaazar-2",
-    storageBucket: "bandhanbaazar-2.firebasestorage.app",
-    messagingSenderId: "158970034513",
-    appId: "1:158970034513:web:d2f643f8c7a0c7dca73b70",
-    measurementId: "G-P5W20J10C1"
+                  apiKey: "AIzaSyCXsYxtk9Fj50QjNA2KoeqNd3VLrSAMfRQ",
+                  authDomain: "bandhanbazaar03.firebaseapp.com",
+                  projectId: "bandhanbazaar03",
+                  storageBucket: "bandhanbazaar03.firebasestorage.app",
+                  messagingSenderId: "866985755804",
+                  appId: "1:866985755804:web:3aba7a872486518c29d959",
+                  measurementId: "G-S2163PHN8X"
             };
+
 
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app, "default");
