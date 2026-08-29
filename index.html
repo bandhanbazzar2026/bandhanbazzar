@@ -16,7 +16,7 @@
       <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
       <style>
-            /* Download Success Popup Modal Styling */
+            /* Modal Overlay & Card Styling */
             .modal-overlay {
                   position: fixed;
                   top: 0;
@@ -59,14 +59,18 @@
             .modal-icon {
                   width: 65px;
                   height: 65px;
-                  background: #DCFCE7;
-                  color: #166534;
                   border-radius: 50%;
                   display: flex;
                   align-items: center;
                   justify-content: center;
                   font-size: 32px;
                   margin: 0 auto 16px auto;
+            }
+
+            /* Registration Closed Custom Styling */
+            .modal-icon-closed {
+                  background: #FEE2E2;
+                  color: #DC2626;
             }
 
             .modal-title {
@@ -98,6 +102,12 @@
 
             .btn-modal-redirect:hover {
                   background: #EA580C;
+            }
+
+            /* Disabled state button style */
+            .btn-submit:disabled {
+                  background: #94A3B8 !important;
+                  cursor: not-allowed;
             }
       </style>
 </head>
@@ -139,31 +149,30 @@
                   <form id="visitorForm">
                         <div class="form-group">
                               <label for="name">Name (Aapka Naam) *</label>
-                              <input type="text" id="name" required placeholder="Enter full name">
+                              <input type="text" id="name" disabled placeholder="Registration closed">
                         </div>
 
                         <div class="form-group">
                               <label for="fatherName">Father's Name *</label>
-                              <input type="text" id="fatherName" required placeholder="Enter father's name">
+                              <input type="text" id="fatherName" disabled placeholder="Registration closed">
                         </div>
 
                         <div class="form-group">
                               <label for="address">Address *</label>
-                              <textarea id="address" rows="2" required placeholder="Enter complete address"></textarea>
+                              <textarea id="address" rows="2" disabled placeholder="Registration closed"></textarea>
                         </div>
 
                         <div class="form-group">
                               <label for="mobile">Mobile No *</label>
-                              <input type="tel" id="mobile" pattern="[0-9]{10}" required
-                                    placeholder="10-digit mobile number">
+                              <input type="tel" id="mobile" pattern="[0-9]{10}" disabled placeholder="Registration closed">
                         </div>
 
                         <div class="form-group">
                               <label for="numMembers">Number of Members (Maximum 5 member only)</label>
-                              <input type="number" id="numMembers" min="0" max="5" value="0">
+                              <input type="number" id="numMembers" min="0" max="5" value="0" disabled>
                         </div>
 
-                        <button type="submit" id="submitBtn" class="btn-submit">Submit & Download Pass PDF</button>
+                        <button type="submit" id="submitBtn" class="btn-submit" disabled>Registration Closed</button>
                         <div id="statusMsg" class="status-msg"></div>
                   </form>
             </div>
@@ -227,407 +236,37 @@
 
       </div>
 
-      <!-- Success Popup Modal -->
-      <div id="successModal" class="modal-overlay">
+      <!-- Registration Closed Modal -->
+      <div id="closedModal" class="modal-overlay">
             <div class="modal-card">
-                  <div class="modal-icon">✓</div>
-                  <div class="modal-title">Successfully Downloaded!</div>
-                  <div class="modal-desc">Aapka Pass PDF successfully generate aur download ho gaya hai. Main website
-                        par jaane ke liye niche click karein.</div>
+                  <div class="modal-icon modal-icon-closed">✕</div>
+                  <div class="modal-title">Registration Closed!</div>
+                  <div class="modal-desc">Bandhan Bazaar 2026 ke liye visitor registrations ab band ho chuke hain. Aapka sahyog dene ke liye dhanyawad!</div>
                   <button id="redirectBtn" class="btn-modal-redirect">Go to Main Website</button>
             </div>
       </div>
 
-      <!-- Offscreen Elements for QR & Canvas Rendering -->
-      <div id="qrcode-temp" style="position: fixed; left: -9999px; top: -9999px;"></div>
-      <canvas id="cardCanvas" style="display:none;"></canvas>
+      <!-- Script for Registration Closed Handler -->
+      <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                  const closedModal = document.getElementById('closedModal');
+                  const redirectBtn = document.getElementById('redirectBtn');
+                  const form = document.getElementById('visitorForm');
 
-      <!-- Firebase & HD Canvas Module -->
-      <script type="module">
-            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-            import {
-                  getFirestore,
-                  collection,
-                  addDoc,
-                  serverTimestamp,
-                  query,
-                  where,
-                  getDocs
-            } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+                  // Show modal automatically on page load
+                  closedModal.style.display = "flex";
 
-            const firebaseConfig = {
-                  apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
-  authDomain: "bandhanbazaarevent2026.firebaseapp.com",
-  projectId: "bandhanbazaarevent2026",
-  storageBucket: "bandhanbazaarevent2026.firebasestorage.app",
-  messagingSenderId: "430230410068",
-  appId: "1:430230410068:web:963bc22ebbe3d17faa2ec1",
-  measurementId: "G-DVGBL2Z7BQ"
-            };
+                  // Show modal if form/button is clicked
+                  form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        closedModal.style.display = "flex";
+                  });
 
-            const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app, "default");
-
-            const form = document.getElementById('visitorForm');
-            const submitBtn = document.getElementById('submitBtn');
-            const statusMsg = document.getElementById('statusMsg');
-            const successModal = document.getElementById('successModal');
-            const redirectBtn = document.getElementById('redirectBtn');
-
-            form.addEventListener('submit', async (e) => {
-                  e.preventDefault();
-                  submitBtn.disabled = true;
-                  statusMsg.style.color = "#F97316";
-                  statusMsg.innerText = "Checking record... Kripya prateeksha karein.";
-
-                  const name = document.getElementById('name').value.trim();
-                  const fatherName = document.getElementById('fatherName').value.trim();
-                  const address = document.getElementById('address').value.trim();
-                  const mobile = document.getElementById('mobile').value.trim();
-                  const numMembers = parseInt(document.getElementById('numMembers').value) || 0;
-
-                  // Members Count Validation (Maximum 5 Allowed)
-                  if (numMembers > 5) {
-                        statusMsg.style.color = "red";
-                        statusMsg.innerText = "⚠️ Aap अधिकतम 5 members (साथ में) ही जोड़ सकते हैं!";
-                        submitBtn.disabled = false;
-                        return;
-                  }
-
-                  if (numMembers < 0) {
-                        statusMsg.style.color = "red";
-                        statusMsg.innerText = "⚠️ Members ki sankhya negative nahi ho sakti!";
-                        submitBtn.disabled = false;
-                        return;
-                  }
-
-                  try {
-                        // 1. Real-time Backend Duplicate Check (By Mobile Number)
-                        const usersRef = collection(db, "Users");
-                        const duplicateQuery = query(usersRef, where("mobile", "==", mobile));
-                        const querySnapshot = await getDocs(duplicateQuery);
-
-                        if (!querySnapshot.empty) {
-                              statusMsg.style.color = "red";
-                              statusMsg.innerText = `⚠️ Mobile number (${mobile}) pehle se registered hai! Kripya dusra mobile number enter karein.`;
-                              submitBtn.disabled = false;
-                              return;
-                        }
-
-                        statusMsg.style.color = "#F97316";
-                        statusMsg.innerText = "Processing... Data save ho raha hai aur Pass PDF generate ho rahi hai.";
-
-                        // 2. Data Save into Firestore
-                        const docRef = await addDoc(usersRef, {
-                              name: name,
-                              fatherName: fatherName,
-                              address: address,
-                              mobile: mobile,
-                              numMembers: numMembers,
-                              totalMembersCount: numMembers + 1,
-                              createdAt: serverTimestamp()
-                        });
-
-                        const docId = docRef.id;
-
-                        // 3. Generate Proportional Canvas Pass
-                        const canvas = await createHDPassCanvas({
-                              docId,
-                              name,
-                              numMembers
-                        });
-
-                        statusMsg.style.color = "green";
-                        statusMsg.innerText = "Pass PDF ready! Download complete ho raha hai...";
-
-                        // 4. Download PDF & Wait for finish
-                        await downloadPassAsPDF(canvas, `Bandhan_Bazaar_Pass_${name.replace(/\s+/g, '_')}.pdf`);
-
-                        // 5. Show Success Modal Popup
-                        statusMsg.innerText = "";
-                        successModal.style.display = "flex";
-
-                  } catch (error) {
-                        console.error("Submission Error: ", error);
-                        statusMsg.style.color = "red";
-                        statusMsg.innerText = "Error: " + (error.message || "Failed to submit.");
-                        submitBtn.disabled = false;
-                  }
+                  // Redirect to main website
+                  redirectBtn.addEventListener('click', () => {
+                        window.location.href = "https://bandhanbazaar.in/";
+                  });
             });
-
-            // Redirect button click inside modal
-            redirectBtn.addEventListener('click', () => {
-                  window.location.href = "https://bandhanbazaar.in/";
-            });
-
-            // Helper for Preloading Canvas Assets (Removed crossOrigin to prevent Tainted Canvas error on local files)
-            function loadImage(src) {
-                  return new Promise((resolve) => {
-                        if (!src) return resolve(null);
-                        const img = new Image();
-                        img.onload = () => resolve(img);
-                        img.onerror = () => resolve(null);
-                        img.src = src;
-                  });
-            }
-
-            // Aspect-Ratio Preserving Draw Function for Side Sponsors
-            function drawImageContain(ctx, img, x, y, maxW, maxH) {
-                  if (!img) return { drawW: 0, drawH: 0, drawX: x, drawY: y };
-                  const imgRatio = img.width / img.height;
-                  const containerRatio = maxW / maxH;
-                  let drawW, drawH;
-
-                  if (imgRatio > containerRatio) {
-                        drawW = maxW;
-                        drawH = maxW / imgRatio;
-                  } else {
-                        drawH = maxH;
-                        drawW = maxH * imgRatio;
-                  }
-
-                  const drawX = x + (maxW - drawW) / 2;
-                  const drawY = y + (maxH - drawH) / 2;
-                  ctx.drawImage(img, drawX, drawY, drawW, drawH);
-                  return { drawW, drawH, drawX, drawY };
-            }
-
-            // Canvas Pass Generator
-            function createHDPassCanvas(data) {
-                  const { docId, name, numMembers } = data;
-
-                  return new Promise((resolve, reject) => {
-                        const qrContainer = document.getElementById('qrcode-temp');
-                        qrContainer.innerHTML = '';
-
-                        const qrTextData = `BANDHAN BAZAAR PASS\n` +
-                              `Name: ${name}\n` +
-                              `Pass ID: ${docId}\n` +
-                              `Members: ${numMembers + 1}`;
-
-                        new QRCode(qrContainer, {
-                              text: qrTextData,
-                              width: 300,
-                              height: 300,
-                              correctLevel: QRCode.CorrectLevel.H
-                        });
-
-                        let checkCount = 0;
-                        const interval = setInterval(async () => {
-                              checkCount++;
-
-                              const qrCanvas = qrContainer.querySelector('canvas');
-                              const qrImg = qrContainer.querySelector('img');
-
-                              // Check if QR element is ready
-                              if (qrCanvas || (qrImg && qrImg.src && (qrImg.complete || qrImg.naturalWidth > 0))) {
-                                    clearInterval(interval);
-
-                                    try {
-                                          const [headerLogo, poweredByImg, coPoweredByImg, associated1Img, associated2Img] = await Promise.all([
-                                                loadImage('assets/headerlogo.png'),
-                                                loadImage('assets/1 BCM.png'),
-                                                loadImage('assets/2 MAHENDRA KUMAR MOOLCHAND & SONS.png'),
-                                                loadImage('assets/8 BALAJI WATER BOTTLES.png'),
-                                                loadImage('assets/bblogo.jpeg')
-                                          ]);
-
-                                          const canvas = document.getElementById('cardCanvas');
-                                          const ctx = canvas.getContext('2d');
-
-                                          const scaleFactor = 2;
-                                          const baseWidth = 800;
-                                          const centerX = baseWidth / 2;
-
-                                          const logoW = 740;
-                                          let logoH = 150;
-                                          if (headerLogo && headerLogo.width > 0) {
-                                                logoH = (headerLogo.height / headerLogo.width) * logoW;
-                                          }
-
-                                          const logoX = (baseWidth - logoW) / 2;
-                                          const logoY = 15;
-                                          const logoBottomY = logoY + logoH;
-
-                                          const lineY = logoBottomY + 28;
-                                          const nameY = lineY + 14;
-                                          const sectionY = nameY + 45;
-
-                                          const middleSectionH = 295;
-                                          const footerH = 45;
-                                          const baseHeight = Math.max(680, Math.round(sectionY + middleSectionH + footerH));
-
-                                          canvas.width = baseWidth * scaleFactor;
-                                          canvas.height = baseHeight * scaleFactor;
-
-                                          ctx.scale(scaleFactor, scaleFactor);
-                                          ctx.imageSmoothingEnabled = true;
-                                          ctx.imageSmoothingQuality = 'high';
-
-                                          ctx.fillStyle = '#FFFFFF';
-                                          ctx.fillRect(0, 0, baseWidth, baseHeight);
-
-                                          ctx.strokeStyle = '#F97316';
-                                          ctx.lineWidth = 6;
-                                          ctx.strokeRect(3, 3, baseWidth - 6, baseHeight - 6);
-
-                                          if (headerLogo) {
-                                                ctx.drawImage(headerLogo, logoX, logoY, logoW, logoH);
-                                          }
-
-                                          ctx.fillStyle = '#1E293B';
-                                          ctx.font = 'bold 30px Poppins, sans-serif';
-                                          ctx.textAlign = 'center';
-                                          ctx.textBaseline = 'top';
-                                          ctx.fillText(name.toUpperCase(), centerX, nameY);
-
-                                          ctx.strokeStyle = '#E2E8F0';
-                                          ctx.lineWidth = 1.5;
-                                          ctx.beginPath();
-                                          ctx.moveTo(35, lineY);
-                                          ctx.lineTo(baseWidth - 35, lineY);
-                                          ctx.stroke();
-
-                                          ctx.textBaseline = 'alphabetic';
-
-                                          const sideBoxW = 190;
-                                          const sideBoxH = 95;
-
-                                          const leftColX = 35;
-                                          const leftCenterX = leftColX + (sideBoxW / 2);
-
-                                          ctx.fillStyle = '#FEF3C7';
-                                          ctx.fillRect(leftCenterX - 65, sectionY, 130, 22);
-                                          ctx.strokeStyle = '#FDE047';
-                                          ctx.strokeRect(leftCenterX - 65, sectionY, 130, 22);
-                                          ctx.fillStyle = '#854D0E';
-                                          ctx.font = 'bold 10px Poppins, sans-serif';
-                                          ctx.fillText('POWERED BY', leftCenterX, sectionY + 15);
-
-                                          drawImageContain(ctx, poweredByImg, leftColX, sectionY + 28, sideBoxW, sideBoxH);
-
-                                          const coPoweredY = sectionY + 135;
-                                          ctx.fillStyle = '#FEF3C7';
-                                          ctx.fillRect(leftCenterX - 70, coPoweredY, 140, 22);
-                                          ctx.strokeStyle = '#FDE047';
-                                          ctx.strokeRect(leftCenterX - 70, coPoweredY, 140, 22);
-                                          ctx.fillStyle = '#854D0E';
-                                          ctx.font = 'bold 10px Poppins, sans-serif';
-                                          ctx.fillText('CO-POWERED BY', leftCenterX, coPoweredY + 15);
-
-                                          drawImageContain(ctx, coPoweredByImg, leftColX, coPoweredY + 28, sideBoxW, sideBoxH);
-
-                                          const qrSize = 210;
-                                          const qrX = Math.round(centerX - (qrSize / 2));
-                                          const qrY = sectionY + 5;
-
-                                          ctx.fillStyle = '#FAFAFA';
-                                          ctx.fillRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16);
-                                          ctx.strokeStyle = '#CBD5E1';
-                                          ctx.lineWidth = 2;
-                                          ctx.strokeRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16);
-
-                                          const qrSourceElement = qrCanvas || qrImg;
-                                          ctx.drawImage(qrSourceElement, qrX, qrY, qrSize, qrSize);
-
-                                          const membersY = qrY + qrSize + 30;
-                                          ctx.fillStyle = '#FEF3C7';
-                                          ctx.fillRect(centerX - 140, membersY - 18, 280, 34);
-                                          ctx.strokeStyle = '#FDE047';
-                                          ctx.strokeRect(centerX - 140, membersY - 18, 280, 34);
-
-                                          ctx.fillStyle = '#EA580C';
-                                          ctx.font = 'bold 16px Poppins, sans-serif';
-                                          ctx.fillText(`Accompanying Members: ${numMembers}`, centerX, membersY + 4);
-
-                                          const rightColX = baseWidth - 35 - sideBoxW;
-                                          const rightCenterX = rightColX + (sideBoxW / 2);
-
-                                          ctx.fillStyle = '#FEF3C7';
-                                          ctx.fillRect(rightCenterX - 70, sectionY, 140, 22);
-                                          ctx.strokeStyle = '#FDE047';
-                                          ctx.strokeRect(rightCenterX - 70, sectionY, 140, 22);
-                                          ctx.fillStyle = '#854D0E';
-                                          ctx.font = 'bold 10px Poppins, sans-serif';
-                                          ctx.fillText('ASSOCIATED WITH', rightCenterX, sectionY + 15);
-
-                                          drawImageContain(ctx, associated1Img, rightColX, sectionY + 28, sideBoxW, sideBoxH);
-                                          drawImageContain(ctx, associated2Img, rightColX, coPoweredY + 28, sideBoxW, sideBoxH);
-
-                                          ctx.fillStyle = '#FFF7ED';
-                                          ctx.fillRect(6, baseHeight - 38, baseWidth - 12, 32);
-                                          ctx.fillStyle = '#EA580C';
-                                          ctx.font = 'italic 500 12px Poppins, sans-serif';
-                                          ctx.fillText('Please present this QR Pass at the entry gate for scan verification.', centerX, baseHeight - 18);
-
-                                          resolve(canvas);
-                                    } catch (err) {
-                                          reject(err);
-                                    }
-                              }
-
-                              if (checkCount > 50) {
-                                    clearInterval(interval);
-                                    reject(new Error("Pass generation timed out. Please try again."));
-                              }
-                        }, 100);
-                  });
-            }
-
-            // Safe & Robust PDF Download Function
-            function downloadPassAsPDF(canvas, filename) {
-                  return new Promise((resolve, reject) => {
-                        try {
-                              const jsPDFClass = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
-                              if (!jsPDFClass) {
-                                    return reject(new Error("jsPDF library initialize nahi ho sakti. Page refresh karein."));
-                              }
-
-                              const pdfWidth = canvas.width / 2;
-                              const pdfHeight = canvas.height / 2;
-
-                              const imgData = canvas.toDataURL('image/jpeg', 0.9);
-
-                              const pdf = new jsPDFClass({
-                                    orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
-                                    unit: 'px',
-                                    format: [pdfWidth, pdfHeight]
-                              });
-
-                              pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-
-                              const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-                              if (isMobile) {
-                                    pdf.save(filename);
-                              } else {
-                                    const pdfBlob = pdf.output('blob');
-                                    const blobUrl = URL.createObjectURL(pdfBlob);
-
-                                    const link = document.createElement('a');
-                                    link.href = blobUrl;
-                                    link.download = filename;
-                                    link.style.display = 'none';
-                                    document.body.appendChild(link);
-
-                                    link.click();
-
-                                    setTimeout(() => {
-                                          if (document.body.contains(link)) {
-                                                document.body.removeChild(link);
-                                          }
-                                          URL.revokeObjectURL(blobUrl);
-                                    }, 5000);
-                              }
-
-                              setTimeout(() => {
-                                    resolve(true);
-                              }, 1000);
-                        } catch (e) {
-                              reject(e);
-                        }
-                  });
-            }
       </script>
 </body>
 
