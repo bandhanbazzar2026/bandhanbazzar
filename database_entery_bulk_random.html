@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Bandhan Bazaar - Manual Database Entry & Time Edit</title>
+
+      <!-- Google Fonts -->
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+      <style>
+            :root {
+                  --primary-orange: #F97316;
+                  --primary-orange-hover: #ea580c;
+                  --bg-gradient: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+                  --text-dark: #1E293B;
+                  --border-color: #E2E8F0;
+            }
+
+            * {
+                  box-sizing: border-box;
+                  margin: 0;
+                  padding: 0;
+                  font-family: 'Poppins', sans-serif;
+            }
+
+            body {
+                  background: #F8FAFC;
+                  color: var(--text-dark);
+                  padding: 15px;
+                  min-height: 100vh;
+            }
+
+            .container {
+                  max-width: 1100px;
+                  margin: 0 auto;
+            }
+
+            .header-card {
+                  background: #FFFFFF;
+                  border-radius: 16px;
+                  padding: 15px 20px;
+                  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+                  margin-bottom: 20px;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  flex-wrap: wrap;
+                  gap: 12px;
+            }
+
+            .header-title h1 {
+                  font-size: 1.25rem;
+                  color: var(--primary-orange);
+            }
+
+            .btn-back {
+                  background: #F1F5F9;
+                  color: var(--text-dark);
+                  padding: 8px 16px;
+                  border-radius: 8px;
+                  text-decoration: none;
+                  font-weight: 600;
+                  font-size: 0.85rem;
+            }
+
+            /* Entry Form Card */
+            .form-card {
+                  background: #FFFFFF;
+                  border-radius: 16px;
+                  padding: 20px;
+                  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+                  margin-bottom: 25px;
+                  border: 1px solid var(--border-color);
+            }
+
+            .form-card h2 {
+                  font-size: 1.1rem;
+                  color: var(--primary-orange);
+                  margin-bottom: 15px;
+                  padding-bottom: 8px;
+                  border-bottom: 2px solid #FEF3C7;
+            }
+
+            .form-grid {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                  gap: 15px;
+            }
+
+            .form-group {
+                  display: flex;
+                  flex-direction: column;
+                  gap: 6px;
+            }
+
+            .form-group label {
+                  font-size: 0.82rem;
+                  font-weight: 600;
+                  color: #475569;
+            }
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                  padding: 10px 12px;
+                  border: 1.5px solid var(--border-color);
+                  border-radius: 8px;
+                  font-size: 0.9rem;
+                  outline: none;
+                  background: #fff;
+            }
+
+            .form-group input:focus,
+            .form-group select:focus,
+            .form-group textarea:focus {
+                  border-color: var(--primary-orange);
+            }
+
+            .full-width {
+                  grid-column: 1 / -1;
+            }
+
+            .btn-submit {
+                  background: var(--bg-gradient);
+                  color: white;
+                  border: none;
+                  padding: 12px 24px;
+                  border-radius: 8px;
+                  font-weight: 600;
+                  font-size: 0.95rem;
+                  cursor: pointer;
+                  transition: opacity 0.2s;
+                  margin-top: 10px;
+            }
+
+            .btn-submit:hover {
+                  opacity: 0.9;
+            }
+
+
+            /* Bulk Random Entry Generator */
+            .bulk-card {
+                  background: #FFF7ED;
+                  border: 1px solid #FED7AA;
+                  border-radius: 16px;
+                  padding: 20px;
+                  box-shadow: 0 4px 20px rgba(249, 115, 22, 0.08);
+                  margin-bottom: 25px;
+            }
+            .bulk-card h2 { color: var(--primary-orange); margin-bottom: 8px; font-size: 1.1rem; }
+            .bulk-card p { color: #64748B; font-size: 0.86rem; margin-bottom: 14px; line-height: 1.5; }
+            .btn-bulk { background: #7C3AED; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+            .btn-bulk:disabled { opacity: .6; cursor: not-allowed; }
+
+            /* Table Section */
+            .table-card {
+                  background: #FFFFFF;
+                  border-radius: 16px;
+                  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+                  overflow-x: auto;
+            }
+
+            table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  text-align: left;
+                  min-width: 800px;
+            }
+
+            th, td {
+                  padding: 12px 14px;
+                  border-bottom: 1px solid var(--border-color);
+                  font-size: 0.88rem;
+            }
+
+            th {
+                  background: #FEF3C7;
+                  color: #854D0E;
+                  font-weight: 600;
+                  font-size: 0.75rem;
+                  text-transform: uppercase;
+            }
+
+            .badge-db {
+                  padding: 2px 6px;
+                  border-radius: 4px;
+                  font-size: 0.7rem;
+                  font-weight: 600;
+            }
+            .badge-db1 { background: #FEF3C7; color: #B45309; }
+            .badge-db2 { background: #DCFCE7; color: #15803D; }
+
+            .btn-edit {
+                  background: #3B82F6;
+                  color: white;
+                  border: none;
+                  padding: 6px 12px;
+                  border-radius: 6px;
+                  font-size: 0.78rem;
+                  font-weight: 600;
+                  cursor: pointer;
+            }
+
+            .btn-delete {
+                  background: #EF4444;
+                  color: white;
+                  border: none;
+                  padding: 6px 12px;
+                  border-radius: 6px;
+                  font-size: 0.78rem;
+                  font-weight: 600;
+                  cursor: pointer;
+                  margin-left: 4px;
+            }
+
+            /* Modal Styling */
+            .modal {
+                  display: none;
+                  position: fixed;
+                  top: 0; left: 0;
+                  width: 100%; height: 100%;
+                  background: rgba(0, 0, 0, 0.6);
+                  justify-content: center;
+                  align-items: center;
+                  z-index: 1000;
+                  padding: 15px;
+            }
+
+            .modal-content {
+                  background: white;
+                  border-radius: 16px;
+                  width: 100%;
+                  max-width: 500px;
+                  padding: 20px;
+                  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            }
+
+            .modal-header {
+                  font-size: 1.1rem;
+                  font-weight: 700;
+                  color: var(--primary-orange);
+                  margin-bottom: 15px;
+            }
+
+            .modal-actions {
+                  display: flex;
+                  justify-content: flex-end;
+                  gap: 10px;
+                  margin-top: 15px;
+            }
+
+            .btn-cancel {
+                  background: #94A3B8;
+                  color: white;
+                  border: none;
+                  padding: 9px 16px;
+                  border-radius: 8px;
+                  cursor: pointer;
+                  font-weight: 600;
+            }
+
+            .status-toast {
+                  position: fixed;
+                  bottom: 20px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  background: #10B981;
+                  color: white;
+                  padding: 10px 20px;
+                  border-radius: 8px;
+                  display: none;
+                  font-weight: 600;
+                  z-index: 2000;
+            }
+      </style>
+</head>
+
+<body>
+
+      <div class="container">
+            <!-- Header Card -->
+            <div class="header-card">
+                  <div class="header-title">
+                        <h1>➕ Manual Database Entry & Time Editor</h1>
+                  </div>
+                  <a href="admin_search.html" class="btn-back">← Back to Admin Search</a>
+            </div>
+
+            <!-- New Entry Form -->
+            <div class="form-card">
+                  <h2>📝 Add Entry (Custom Date & Time)</h2>
+                  <form id="entryForm">
+                        <div class="form-grid">
+                              <div class="form-group">
+                                    <label>Select Target Database</label>
+                                    <select id="targetDb" required>
+                                          <option value="1">Database 1 (DB-1)</option>
+                                          <option value="2">Database 2 (DB-2)</option>
+                                    </select>
+                              </div>
+
+                              <div class="form-group">
+                                    <label>Date & Time (Edit/Select Custom)</label>
+                                    <input type="datetime-local" id="entryDateTime" required>
+                              </div>
+
+                              <div class="form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" id="entryName" placeholder="Enter Full Name" required>
+                              </div>
+
+                              <div class="form-group">
+                                    <label>Father's Name</label>
+                                    <input type="text" id="entryFatherName" placeholder="Enter Father's Name" required>
+                              </div>
+
+                              <div class="form-group">
+                                    <label>Mobile Number</label>
+                                    <input type="tel" id="entryMobile" pattern="[0-9]{10}" placeholder="10 Digit Mobile" required>
+                              </div>
+
+                              <div class="form-group">
+                                    <label>Accompanying Members</label>
+                                    <input type="number" id="entryNumMembers" min="0" value="0" required>
+                              </div>
+
+                              <div class="form-group full-width">
+                                    <label>Address</label>
+                                    <textarea id="entryAddress" rows="2" placeholder="Enter full address..." required></textarea>
+                              </div>
+                        </div>
+
+                        <button type="submit" class="btn-submit">💾 Save Entry Date-Wise</button>
+                  </form>
+            </div>
+
+
+
+            <!-- Bulk Random Entry Generator -->
+            <div class="bulk-card">
+                  <h2>⚡ Generate 100 Random Entries in DB-2</h2>
+                  <p>Creates 100 entries in a separate <strong>User1</strong> collection. Real entries remain untouched in <strong>Users</strong>. Both collections are shown together in the table. Date distribution: 29 on 25 Aug, 35 on 26 Aug, and 36 on 27 Aug 2026. Entries are spaced randomly 10–15 minutes apart between 4:00 PM and 9:59 PM. Locations are mostly Pali, with some Jodhpur and Sojat.</p>
+                  <button type="button" id="btnGenerateRandom" class="btn-bulk">⚡ Generate & Save 100 Random Entries</button>
+            </div>
+
+            <!-- Table Card -->
+            <div class="table-card">
+                  <table>
+                        <thead>
+                              <tr>
+                                    <th>DB Source</th>
+                                    <th>Date & Time</th>
+                                    <th>Name</th>
+                                    <th>Father's Name</th>
+                                    <th>Mobile</th>
+                                    <th>Members</th>
+                                    <th>Actions</th>
+                              </tr>
+                        </thead>
+                        <tbody id="dataTableBody">
+                              <tr>
+                                    <td colspan="7" style="text-align:center; padding: 20px;">Loading records...</td>
+                              </tr>
+                        </tbody>
+                  </table>
+            </div>
+      </div>
+
+      <!-- Edit Modal -->
+      <div id="editModal" class="modal">
+            <div class="modal-content">
+                  <div class="modal-header">✏️ Edit Details & Change Date/Time</div>
+                  <form id="editForm">
+                        <input type="hidden" id="editDocId">
+                        <input type="hidden" id="editDbSource">
+
+                        <div class="form-group" style="margin-bottom:12px;">
+                              <label>Change Date & Time</label>
+                              <input type="datetime-local" id="editDateTime" required>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:12px;">
+                              <label>Full Name</label>
+                              <input type="text" id="editName" required>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:12px;">
+                              <label>Father's Name</label>
+                              <input type="text" id="editFatherName" required>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:12px;">
+                              <label>Mobile Number</label>
+                              <input type="tel" id="editMobile" pattern="[0-9]{10}" required>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:12px;">
+                              <label>Address</label>
+                              <textarea id="editAddress" rows="2" required></textarea>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:12px;">
+                              <label>Accompanying Members</label>
+                              <input type="number" id="editNumMembers" min="0" required>
+                        </div>
+
+                        <div class="modal-actions">
+                              <button type="button" class="btn-cancel" id="btnCancelEdit">Cancel</button>
+                              <button type="submit" class="btn-submit" style="margin-top:0;">Update Details</button>
+                        </div>
+                  </form>
+            </div>
+      </div>
+
+      <div id="statusToast" class="status-toast"></div>
+
+      <!-- Firebase Logic -->
+      <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+            import {
+                  getFirestore,
+                  collection,
+                  addDoc,
+                  getDocs,
+                  doc,
+                  updateDoc,
+                  deleteDoc,
+                  query,
+                  orderBy,
+                  Timestamp,
+                  writeBatch
+            } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+            const firebaseConfig1 = {
+                  apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
+                  authDomain: "bandhanbazaarevent2026.firebaseapp.com",
+                  projectId: "bandhanbazaarevent2026",
+                  storageBucket: "bandhanbazaarevent2026.firebasestorage.app",
+                  messagingSenderId: "430230410068",
+                  appId: "1:430230410068:web:963bc22ebbe3d17faa2ec1"
+            };
+
+            const firebaseConfig2 = {
+                  apiKey: "AIzaSyCaIdvQZ7A6Ghx8PtUCwOQoJCWajIArEnY",
+                  authDomain: "bandhanbaazar-2.firebaseapp.com",
+                  projectId: "bandhanbaazar-2",
+                  storageBucket: "bandhanbaazar-2.firebasestorage.app",
+                  messagingSenderId: "158970034513",
+                  appId: "1:158970034513:web:d2f643f8c7a0c7dca73b70"
+            };
+
+            // Exact Database Instance Setup with 'default' database target
+            const app1 = initializeApp(firebaseConfig1, "app1");
+            const db1 = getFirestore(app1, 'default');
+
+            const app2 = initializeApp(firebaseConfig2, "app2");
+            const db2 = getFirestore(app2, 'default');
+
+            let allRecords = [];
+
+            // Set default date-time picker to Current Time
+            const entryDateTimeInput = document.getElementById('entryDateTime');
+            function setNowTime() {
+                  const now = new Date();
+                  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                  entryDateTimeInput.value = now.toISOString().slice(0, 16);
+            }
+            setNowTime();
+
+            function showToast(msg, isError = false) {
+                  const toast = document.getElementById('statusToast');
+                  toast.innerText = msg;
+                  toast.style.background = isError ? "#EF4444" : "#10B981";
+                  toast.style.display = "block";
+                  setTimeout(() => { toast.style.display = "none"; }, 3000);
+            }
+
+            function formatDateForInput(timeMs) {
+                  if (!timeMs) return '';
+                  const d = new Date(timeMs);
+                  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                  return d.toISOString().slice(0, 16);
+            }
+
+            function getTimeFromDoc(createdAt) {
+                  if (!createdAt) return 0;
+                  if (typeof createdAt.toDate === 'function') return createdAt.toDate().getTime();
+                  if (createdAt.seconds) return createdAt.seconds * 1000;
+                  return new Date(createdAt).getTime() || 0;
+            }
+
+            // Safe fetch mechanism aligned with admin_search
+            async function fetchCollectionDocs(dbInstance, dbSourceNum, collectionName = "Users") {
+                  try {
+                        let snapshot;
+                        try {
+                              const q = query(collection(dbInstance, collectionName), orderBy("createdAt", "desc"));
+                              snapshot = await getDocs(q);
+                        } catch (orderError) {
+                              console.warn(`DB-${dbSourceNum}: orderBy failed. Plain fetch fallback used.`, orderError);
+                              snapshot = await getDocs(collection(dbInstance, collectionName));
+                        }
+                        return snapshot.docs.map(d => ({
+                              id: d.id,
+                              dbSource: dbSourceNum,
+                              collectionName: collectionName,
+                              ...d.data()
+                        }));
+                  } catch (err) {
+                        console.error(`Fetch Error DB-${dbSourceNum}:`, err);
+                        return [];
+                  }
+            }
+
+            async function loadAllRecords() {
+                  const tbody = document.getElementById('dataTableBody');
+                  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">Loading real and random records...</td></tr>`;
+
+                  const results = await Promise.allSettled([
+                        fetchCollectionDocs(db1, 1, "Users"),
+                        fetchCollectionDocs(db2, 2, "Users"),
+                        fetchCollectionDocs(db2, 2, "Users1")
+                  ]);
+
+                  const list1 = results[0].status === "fulfilled" ? results[0].value : [];
+                  const list2 = results[1].status === "fulfilled" ? results[1].value : [];
+                  const randomList = results[2].status === "fulfilled" ? results[2].value : [];
+
+                  allRecords = [...list1, ...list2, ...randomList];
+                  allRecords.sort((a, b) => getTimeFromDoc(b.createdAt) - getTimeFromDoc(a.createdAt));
+
+                  renderTable();
+            }
+
+            function renderTable() {
+                  const tbody = document.getElementById('dataTableBody');
+                  if (allRecords.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px; color: #64748B;">No records found.</td></tr>`;
+                        return;
+                  }
+
+                  tbody.innerHTML = allRecords.map(r => {
+                        const timeMs = getTimeFromDoc(r.createdAt);
+                        const dateFormatted = timeMs ? new Date(timeMs).toLocaleString('en-IN') : '-';
+
+                        return `
+                              <tr>
+                                    <td><span class="badge-db badge-db${r.dbSource}">DB-${r.dbSource}</span></td>
+                                    <td><strong>${dateFormatted}</strong></td>
+                                    <td>${r.name || ''}</td>
+                                    <td>${r.fatherName || '-'}</td>
+                                    <td>${r.mobile || '-'}</td>
+                                    <td>${r.totalMembersCount || ((r.numMembers || 0) + 1)}</td>
+                                    <td>
+                                          <button class="btn-edit" data-id="${r.id}" data-db="${r.dbSource}">✏️ Edit</button>
+                                          <button class="btn-delete" data-id="${r.id}" data-db="${r.dbSource}">🗑️ Delete</button>
+                                    </td>
+                              </tr>
+                        `;
+                  }).join('');
+
+                  // Dynamic Event Listeners attached after DOM render
+                  document.querySelectorAll('.btn-edit').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                              const id = e.target.getAttribute('data-id');
+                              const dbSource = parseInt(e.target.getAttribute('data-db'));
+                              openEditModal(id, dbSource);
+                        });
+                  });
+
+                  document.querySelectorAll('.btn-delete').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                              const id = e.target.getAttribute('data-id');
+                              const dbSource = parseInt(e.target.getAttribute('data-db'));
+                              deleteRecord(id, dbSource);
+                        });
+                  });
+            }
+
+            // Generate realistic random bulk entries for DB-2 using the same Users schema.
+            const randomFirstNames = [
+                  "Aarav", "Vivaan", "Aditya", "Arjun", "Rohan", "Kunal", "Rahul", "Mohit", "Vikas", "Suresh",
+                  "Mahesh", "Rakesh", "Nitesh", "Manish", "Deepak", "Prakash", "Amit", "Ravi", "Mukesh", "Dinesh",
+                  "Priya", "Neha", "Pooja", "Kavita", "Riya", "Anjali", "Suman", "Rekha", "Komal", "Nisha"
+            ];
+            const randomLastNames = [
+                  "Rathi", "Jain", "Sharma", "Mehta", "Choudhary", "Prajapat", "Solanki", "Soni", "Joshi", "Agarwal",
+                  "Bohra", "Kumawat", "Rajpurohit", "Lodha", "Mali", "Gehlot", "Vyas", "Parihar", "Bafna", "Khandelwal"
+            ];
+            const randomFatherNames = [
+                  "Mohan Lal", "Ramesh Kumar", "Suresh Chand", "Mahendra Kumar", "Gopal Lal", "Kailash Chand",
+                  "Ashok Kumar", "Om Prakash", "Bhanwar Lal", "Narayan Lal", "Shyam Lal", "Rajendra Kumar",
+                  "Prakash Chand", "Vijay Kumar", "Madan Lal"
+            ];
+            const locationPool = [
+                  ...Array(78).fill(["Mahaveer Nagar, Pali", "Shastri Nagar, Pali", "Mandiya Road, Pali", "Sumerpur Road, Pali", "Industrial Area, Pali", "Bapu Nagar, Pali", "Old Bus Stand Area, Pali", "Naya Gaon, Pali"]),
+                  ...Array(12).fill(["Sardarpura, Jodhpur", "Shastri Nagar, Jodhpur", "Ratanada, Jodhpur", "Basni, Jodhpur", "Paota, Jodhpur"]),
+                  ...Array(10).fill(["Main Market, Sojat", "Station Road, Sojat", "Marwar Road, Sojat", "Bus Stand Area, Sojat"])
+            ];
+
+            function pickRandom(list) {
+                  return list[Math.floor(Math.random() * list.length)];
+            }
+
+            function shuffle(list) {
+                  for (let i = list.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [list[i], list[j]] = [list[j], list[i]];
+                  }
+                  return list;
+            }
+
+            function createRandomMobile(usedNumbers) {
+                  let mobile;
+                  do {
+                        mobile = String(Math.floor(6000000000 + Math.random() * 3999999999));
+                  } while (usedNumbers.has(mobile));
+                  usedNumbers.add(mobile);
+                  return mobile;
+            }
+
+            function buildRandomEntries() {
+                  /*
+                   * EVENT DATE LOCK:
+                   * Generated random_data records can ONLY use:
+                   * 25, 26 or 27 August 2026.
+                   *
+                   * Daily counts remain:
+                   * 25 -> 29
+                   * 26 -> 35
+                   * 27 -> 36
+                   *
+                   * Time window: 4:00 PM to 9:59 PM.
+                   * Adjacent generated entries are always 10–15 minutes apart.
+                   *
+                   * The previous version could fail because choosing 10–15 minutes
+                   * independently can make 35/36 entries exceed the 6-hour window.
+                   * This version calculates the schedule progressively so it always fits.
+                   */
+                  const dailyCounts = {
+                        25: 29,
+                        26: 35,
+                        27: 36
+                  };
+
+                  const EVENT_YEAR = 2026;
+                  const EVENT_MONTH_INDEX = 7; // August, zero-based
+                  const EVENT_DAYS = [25, 26, 27];
+
+                  const usedNumbers = new Set();
+                  const usedNames = new Set();
+                  const allEntries = [];
+
+                  function getUniqueRandomName() {
+                        for (let attempt = 0; attempt < 500; attempt++) {
+                              const candidate = `${pickRandom(randomFirstNames)} ${pickRandom(randomLastNames)}`;
+                              if (!usedNames.has(candidate)) {
+                                    usedNames.add(candidate);
+                                    return candidate;
+                              }
+                        }
+                        return `${pickRandom(randomFirstNames)} ${pickRandom(randomLastNames)} ${usedNames.size + 1}`;
+                  }
+
+                  EVENT_DAYS.forEach(day => {
+                        const count = dailyCounts[day];
+
+                        // Randomly choose a valid starting time.
+                        // The latest possible start depends on the minimum 10-minute
+                        // gap required for every remaining entry.
+                        const minimumSpan = (count - 1) * 10;
+                        const maxWindowMinutes = (21 * 60 + 59) - (16 * 60); // 359
+                        const maxStartOffset = maxWindowMinutes - minimumSpan;
+
+                        if (maxStartOffset < 0) {
+                              throw new Error(`Too many entries for ${day} Aug ${EVENT_YEAR}`);
+                        }
+
+                        let currentMinutes = (16 * 60) +
+                              Math.floor(Math.random() * (maxStartOffset + 1));
+
+                        for (let i = 0; i < count; i++) {
+                              const remainingEntriesAfterThis = count - i - 1;
+                              const remainingMinimum = remainingEntriesAfterThis * 10;
+                              const minutesLeftInWindow = (21 * 60 + 59) - currentMinutes;
+
+                              if (minutesLeftInWindow < remainingMinimum) {
+                                    throw new Error(`Generated schedule does not fit on ${day} Aug ${EVENT_YEAR}`);
+                              }
+
+                              const hour = Math.floor(currentMinutes / 60);
+                              const minute = currentMinutes % 60;
+
+                              // Final hard time-range guard.
+                              if (
+                                    hour < 16 ||
+                                    hour > 21 ||
+                                    (hour === 21 && minute > 59)
+                              ) {
+                                    throw new Error(`Invalid generated time on ${day} Aug ${EVENT_YEAR}`);
+                              }
+
+                              const generatedDate = new Date(
+                                    EVENT_YEAR,
+                                    EVENT_MONTH_INDEX,
+                                    day,
+                                    hour,
+                                    minute,
+                                    Math.floor(Math.random() * 60)
+                              );
+
+                              // Final hard event-date guard.
+                              if (
+                                    generatedDate.getFullYear() !== EVENT_YEAR ||
+                                    generatedDate.getMonth() !== EVENT_MONTH_INDEX ||
+                                    !EVENT_DAYS.includes(generatedDate.getDate())
+                              ) {
+                                    throw new Error("Blocked a generated record outside the 25–27 Aug 2026 event dates.");
+                              }
+
+                              const addressOptions = pickRandom(locationPool);
+                              const totalMembersCount = 1 + Math.floor(Math.random() * 5);
+
+                              allEntries.push({
+                                    name: getUniqueRandomName(),
+                                    fatherName: pickRandom(randomFatherNames),
+                                    mobile: createRandomMobile(usedNumbers),
+                                    address: pickRandom(addressOptions),
+                                    numMembers: totalMembersCount - 1,
+                                    totalMembersCount,
+                                    createdAt: Timestamp.fromDate(generatedDate)
+                              });
+
+                              if (remainingEntriesAfterThis > 0) {
+                                    // Choose 10–15 min, but cap it so the remaining
+                                    // entries can still fit before 9:59 PM.
+                                    const maxAllowedGap = Math.min(
+                                          15,
+                                          minutesLeftInWindow - remainingMinimum
+                                    );
+                                    const gap = 10 + Math.floor(
+                                          Math.random() * (maxAllowedGap - 10 + 1)
+                                    );
+                                    currentMinutes += gap;
+                              }
+                        }
+                  });
+
+                  return shuffle(allEntries);
+            }
+
+            const btnGenerateRandom = document.getElementById('btnGenerateRandom');
+            btnGenerateRandom.addEventListener('click', async () => {
+                  const entries = buildRandomEntries();
+                  if (!confirm(`Generate and save ${entries.length} random entries directly into DB-2?`)) return;
+
+                  btnGenerateRandom.disabled = true;
+                  btnGenerateRandom.textContent = 'Saving 100 entries...';
+
+                  try {
+                        const batch = writeBatch(db2);
+                        entries.forEach(payload => {
+                              const newUserRef = doc(collection(db2, "Users1"));
+                              batch.set(newUserRef, payload);
+                        });
+                        await batch.commit();
+                        showToast('Successfully saved 100 random entries to DB-2/Users1');
+                        await loadAllRecords();
+                  } catch (err) {
+                        console.error('Bulk random insert error:', err);
+                        showToast('Failed to save random entries: ' + err.message, true);
+                  } finally {
+                        btnGenerateRandom.disabled = false;
+                        btnGenerateRandom.textContent = '⚡ Generate & Save 100 Random Entries';
+                  }
+            });
+
+            // Save Entry
+            document.getElementById('entryForm').addEventListener('submit', async (e) => {
+                  e.preventDefault();
+
+                  const dbChoice = document.getElementById('targetDb').value;
+                  const selectedDb = dbChoice === '1' ? db1 : db2;
+                  const customDateVal = document.getElementById('entryDateTime').value;
+                  const numMembers = parseInt(document.getElementById('entryNumMembers').value) || 0;
+
+                  const payload = {
+                        name: document.getElementById('entryName').value.trim(),
+                        fatherName: document.getElementById('entryFatherName').value.trim(),
+                        mobile: document.getElementById('entryMobile').value.trim(),
+                        address: document.getElementById('entryAddress').value.trim(),
+                        numMembers: numMembers,
+                        totalMembersCount: numMembers + 1,
+                        createdAt: Timestamp.fromDate(new Date(customDateVal))
+                  };
+
+                  try {
+                        await addDoc(collection(selectedDb, "Users"), payload);
+                        showToast(`Entry saved successfully to DB-${dbChoice}!`);
+                        document.getElementById('entryForm').reset();
+                        setNowTime();
+                        loadAllRecords();
+                  } catch (err) {
+                        console.error("Save Error:", err);
+                        showToast("Failed to save entry: " + err.message, true);
+                  }
+            });
+
+            // Open Edit Modal
+            function openEditModal(id, dbSource) {
+                  const record = allRecords.find(r => r.id === id && r.dbSource === dbSource);
+                  if (!record) return;
+
+                  document.getElementById('editDocId').value = record.id;
+                  document.getElementById('editDbSource').value = record.dbSource;
+                  document.getElementById('editDbSource').dataset.collectionName = record.collectionName || "Users";
+                  document.getElementById('editName').value = record.name || '';
+                  document.getElementById('editFatherName').value = record.fatherName || '';
+                  document.getElementById('editMobile').value = record.mobile || '';
+                  document.getElementById('editAddress').value = record.address || '';
+                  document.getElementById('editNumMembers').value = record.numMembers || 0;
+
+                  const timeMs = getTimeFromDoc(record.createdAt);
+                  document.getElementById('editDateTime').value = formatDateForInput(timeMs);
+
+                  document.getElementById('editModal').style.display = 'flex';
+            }
+
+            document.getElementById('btnCancelEdit').addEventListener('click', () => {
+                  document.getElementById('editModal').style.display = 'none';
+            });
+
+            // Update Record
+            document.getElementById('editForm').addEventListener('submit', async (e) => {
+                  e.preventDefault();
+
+                  const id = document.getElementById('editDocId').value;
+                  const dbSource = parseInt(document.getElementById('editDbSource').value);
+                  const selectedDb = dbSource === 1 ? db1 : db2;
+                  const collectionName = document.getElementById('editDbSource').dataset.collectionName || "Users";
+
+                  const newDateTimeVal = document.getElementById('editDateTime').value;
+                  const numMembers = parseInt(document.getElementById('editNumMembers').value) || 0;
+
+                  const updatePayload = {
+                        name: document.getElementById('editName').value.trim(),
+                        fatherName: document.getElementById('editFatherName').value.trim(),
+                        mobile: document.getElementById('editMobile').value.trim(),
+                        address: document.getElementById('editAddress').value.trim(),
+                        numMembers: numMembers,
+                        totalMembersCount: numMembers + 1,
+                        createdAt: Timestamp.fromDate(new Date(newDateTimeVal))
+                  };
+
+                  try {
+                        await updateDoc(doc(selectedDb, collectionName, id), updatePayload);
+                        document.getElementById('editModal').style.display = 'none';
+                        showToast("Record updated successfully!");
+                        loadAllRecords();
+                  } catch (err) {
+                        console.error("Update Error:", err);
+                        showToast("Failed to update record: " + err.message, true);
+                  }
+            });
+
+            // Delete Record
+            async function deleteRecord(id, dbSource) {
+                  const record = allRecords.find(r => r.id === id && r.dbSource === dbSource);
+                  const name = record ? record.name : "this record";
+                  const selectedDb = dbSource === 1 ? db1 : db2;
+                  const collectionName = record && record.collectionName ? record.collectionName : "Users";
+
+                  if (confirm(`Are you sure you want to delete "${name}" from DB-${dbSource}?`)) {
+                        try {
+                              await deleteDoc(doc(selectedDb, collectionName, id));
+                              showToast(`Record "${name}" deleted!`);
+                              loadAllRecords();
+                        } catch (err) {
+                              console.error("Delete Error:", err);
+                              showToast("Failed to delete record.", true);
+                        }
+                  }
+            }
+
+            loadAllRecords();
+      </script>
+</body>
+
+</html>

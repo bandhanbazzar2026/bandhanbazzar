@@ -134,8 +134,7 @@
                   flex-wrap: wrap;
             }
 
-            .date-input,
-            .db-select {
+            .date-input, .db-select {
                   padding: 9px 12px;
                   border: 2px solid var(--border-color);
                   border-radius: 10px;
@@ -151,8 +150,7 @@
                   font-weight: 500;
             }
 
-            .date-input:focus,
-            .db-select:focus {
+            .date-input:focus, .db-select:focus {
                   border-color: var(--primary-orange);
             }
 
@@ -714,7 +712,7 @@
                   <div class="search-box-wrapper">
                         <input type="text" id="searchInput" class="search-input"
                               placeholder="Search by Name, Mobile, Father's Name, or Address...">
-
+                        
                         <!-- Database Filter Dropdown -->
                         <select id="dbFilter" class="db-select">
                               <option value="all">All Databases</option>
@@ -750,13 +748,14 @@
                                     <th>Father's Name</th>
                                     <th>Mobile</th>
                                     <th>Address</th>
+                                    <th>Date</th>
                                     <th>Members</th>
                                     <th>Actions</th>
                               </tr>
                         </thead>
                         <tbody id="userTableBody">
                               <tr>
-                                    <td colspan="7" class="no-results">Fetching data from Firebase databases...
+                                    <td colspan="8" class="no-results">Fetching data from multiple Firebase databases...
                                     </td>
                               </tr>
                         </tbody>
@@ -771,6 +770,7 @@
                   <form id="editForm">
                         <input type="hidden" id="editDocId">
                         <input type="hidden" id="editDbSource">
+                        <input type="hidden" id="editCollectionName">
                         <div class="form-group">
                               <label>Full Name</label>
                               <input type="text" id="editName" required>
@@ -873,7 +873,7 @@
                   orderBy
             } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-            // Database 1 Config (Aapki DB1 Keys)
+            // Database 1 Config
             const firebaseConfig1 = {
                   apiKey: "AIzaSyCDfBQavrhA8XGbFYYFYCEOa8lS84f7MUU",
                   authDomain: "bandhanbazaarevent2026.firebaseapp.com",
@@ -895,7 +895,7 @@
                   measurementId: "G-P5W20J10C1"
             };
 
-            // Unique App Names Initialization
+            // Unique App Names
             const app1 = initializeApp(firebaseConfig1, "app1");
             const db1 = getFirestore(app1, 'default');
 
@@ -942,91 +942,78 @@
                   }, 3000);
             }
 
-            // Helper function: Strictly check if a document is a User record
-            function isUserRecord(docData) {
-                  if (!docData) return false;
-
-                  // Role or Type verification (exclude admin/stall/vendor)
-                  const role = String(docData.role || docData.type || docData.userType || 'user').toLowerCase();
-                  const nonUserRoles = ['admin', 'stall', 'vendor', 'organizer', 'superadmin'];
-                  if (nonUserRoles.includes(role)) return false;
-
-                  // Must have a valid Name or Mobile number to be a valid user registration
-                  const hasName = docData.name && String(docData.name).trim().length > 0;
-                  const hasMobile = docData.mobile && String(docData.mobile).trim().length > 0;
-
-                  return hasName || hasMobile;
-            }
-
-            // Safe Member Count Extraction
-            function safeMemberCount(u) {
-                  if (u.totalMembersCount && !isNaN(u.totalMembersCount)) {
-                        return parseInt(u.totalMembersCount);
-                  }
-                  const numAcc = parseInt(u.numMembers) || 0;
-                  return numAcc + 1;
-            }
-
-            // Fetch Docs from Single DB
-            async function fetchDBDocs(dbInstance, dbSourceNum) {
+            // Fetch Docs from a collection and preserve the collection source
+            async function fetchCollectionDocs(dbInstance, dbSourceNum, collectionName = "Users") {
                   try {
                         let snapshot;
                         try {
                               const q = query(
-                                    collection(dbInstance, "Users"),
+                                    collection(dbInstance, collectionName),
                                     orderBy("createdAt", "desc")
                               );
                               snapshot = await getDocs(q);
                         } catch (orderError) {
-                              console.warn(`DB-${dbSourceNum}: orderBy failed. Plain fetch used.`, orderError);
-                              snapshot = await getDocs(collection(dbInstance, "Users"));
+                              console.warn(`DB-${dbSourceNum}/${collectionName}: orderBy failed. Plain fetch used.`, orderError);
+                              snapshot = await getDocs(collection(dbInstance, collectionName));
                         }
 
-                        const users = snapshot.docs
-                              .map(documentSnapshot => ({
-                                    id: documentSnapshot.id,
-                                    dbSource: dbSourceNum,
-                                    ...documentSnapshot.data()
-                              }))
-                              .filter(isUserRecord);
+                        const users = snapshot.docs.map(documentSnapshot => ({
+                              id: documentSnapshot.id,
+                              dbSource: dbSourceNum,
+                              collectionName,
+                              ...documentSnapshot.data()
+                        }));
 
+                        console.log(`DB-${dbSourceNum}/${collectionName}: ${users.length} records fetched`);
                         return users;
                   } catch (error) {
-                        console.error(`DB-${dbSourceNum} FETCH ERROR:`, error);
+                        console.error(`DB-${dbSourceNum}/${collectionName} FETCH ERROR:`, error);
                         return [];
                   }
             }
 
-            // Fetch All Users From Both Databases
+            // Fetch Users from DB-1, plus Users and Users1 from DB-2
             async function fetchUsers() {
                   try {
                         userTableBody.innerHTML = `
                               <tr>
-                                  <td colspan="7" class="no-results">
-                                      Fetching user records from Firebase databases...
+                                  <td colspan="8" class="no-results">
+                                      Fetching data from DB-1, DB-2
                                   </td>
                               </tr>
                         `;
 
                         const results = await Promise.allSettled([
-                              fetchDBDocs(db1, 1),
-                              fetchDBDocs(db2, 2)
+                              fetchCollectionDocs(db1, 1, "Users"),
+                              fetchCollectionDocs(db2, 2, "Users"),
+                              fetchCollectionDocs(db2, 2, "Users1")
                         ]);
 
                         const users1 = results[0].status === "fulfilled" ? results[0].value : [];
                         const users2 = results[1].status === "fulfilled" ? results[1].value : [];
+                        const randomUsers = results[2].status === "fulfilled" ? results[2].value : [];
 
-                        allUsers = [...users1, ...users2];
+                        allUsers = [...users1, ...users2, ...randomUsers];
 
-                        // Sort newest first
-                        allUsers.sort((a, b) => getTimeFromDoc(b.createdAt) - getTimeFromDoc(a.createdAt));
+                        // Sort all collections together by the original entry date/time
+                        allUsers.sort((a, b) => {
+                              // Always sort by the actual registration timestamp so
+                              // DB-1 Users, DB-2 Users and DB-2
+                              // naturally interleaved when "All Databases" is selected.
+                              const timeDiff = getTimeFromDoc(b.createdAt) - getTimeFromDoc(a.createdAt);
+                              if (timeDiff !== 0) return timeDiff;
+
+                              // Deterministic tie-breaker only.
+                              return `${a.dbSource}:${a.collectionName || 'Users'}:${a.id}`
+                                    .localeCompare(`${b.dbSource}:${b.collectionName || 'Users'}:${b.id}`);
+                        });
 
                         filterAndRender();
                   } catch (error) {
                         console.error("Combined Fetch Error:", error);
                         userTableBody.innerHTML = `
                               <tr>
-                                  <td colspan="7" class="no-results" style="color:red;">
+                                  <td colspan="8" class="no-results" style="color:red;">
                                       Error loading users: ${escapeHtml(error.message)}
                                   </td>
                               </tr>
@@ -1041,6 +1028,16 @@
                   return new Date(createdAt).getTime() || 0;
             }
 
+            function formatDisplayDate(createdAt) {
+                  const timeMs = getTimeFromDoc(createdAt);
+                  if (!timeMs) return '-';
+                  return new Date(timeMs).toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                  });
+            }
+
             // Filter Users Based on Search Text, Date Range, and Selected Database
             function filterAndRender() {
                   const searchTerm = searchInput.value.trim().toLowerCase();
@@ -1052,9 +1049,10 @@
                   const endMs = endDateVal ? new Date(endDateVal + "T23:59:59.999").getTime() : null;
 
                   filteredUsers = allUsers.filter(user => {
+                        // 1. Text Search Filter
                         const name = (user.name || "").toLowerCase();
                         const fatherName = (user.fatherName || "").toLowerCase();
-                        const mobile = (user.mobile || "").toLowerCase();
+                        const mobile = String(user.mobile || "").toLowerCase();
                         const address = (user.address || "").toLowerCase();
 
                         const matchesSearch = name.includes(searchTerm) ||
@@ -1062,6 +1060,7 @@
                               mobile.includes(searchTerm) ||
                               address.includes(searchTerm);
 
+                        // 2. Date Filter
                         let matchesDate = true;
                         if (startMs || endMs) {
                               let userTime = getTimeFromDoc(user.createdAt);
@@ -1074,6 +1073,7 @@
                               }
                         }
 
+                        // 3. Database Source Filter
                         let matchesDb = true;
                         if (selectedDb !== 'all') {
                               matchesDb = String(user.dbSource) === selectedDb;
@@ -1091,46 +1091,63 @@
                   selectAllCheckbox.checked = false;
                   updateDeleteSelectedButton();
 
-                  const totalFilteredMembers = filteredUsers.reduce((sum, u) => sum + safeMemberCount(u), 0);
-                  const overallMembersCount = allUsers.reduce((sum, u) => sum + safeMemberCount(u), 0);
+                  const totalFilteredMembers = filteredUsers.reduce((sum, u) => {
+                        const count = u.totalMembersCount || ((u.numMembers || 0) + 1);
+                        return sum + count;
+                  }, 0);
 
-                  statsText.innerHTML = `Showing <strong>${filteredUsers.length}</strong> of <strong>${allUsers.length}</strong> Registrations | Total Members Count: <span class="stats-highlight">${totalFilteredMembers}</span> <small style="color:#64748B;">(Overall Total: ${overallMembersCount})</small>`;
+                  const overallMembersCount = allUsers.reduce((sum, u) => {
+                        const count = u.totalMembersCount || ((u.numMembers || 0) + 1);
+                        return sum + count;
+                  }, 0);
+
+                  // Update Stats Display Bar
+                  const hasDateFilter = Boolean(startDateInput.value || endDateInput.value);
+                  const remainingRegistrations = Math.max(0, allUsers.length - filteredUsers.length);
+                  const remainingMembers = Math.max(0, overallMembersCount - totalFilteredMembers);
+
+                  if (hasDateFilter) {
+                        statsText.innerHTML =
+                              `Showing <strong>${filteredUsers.length}</strong> of <strong>${allUsers.length}</strong> Registrations | ` +
+                              `Members in View: <span class="stats-highlight">${totalFilteredMembers}</span> ` +
+                              `<small style="color:#64748B;">(All Dates: ${overallMembersCount} members • ${remainingRegistrations} registrations / ${remainingMembers} members outside selected dates)</small>`;
+                  } else {
+                        statsText.innerHTML =
+                              `Showing <strong>${allUsers.length}</strong> of <strong>${allUsers.length}</strong> Registrations | ` +
+                              `Total Members Count: <span class="stats-highlight">${overallMembersCount}</span>`;
+                  }
 
                   if (filteredUsers.length === 0) {
-                        userTableBody.innerHTML = `<tr><td colspan="7" class="no-results">No matching user records found.</td></tr>`;
+                        userTableBody.innerHTML = `<tr><td colspan="8" class="no-results">No matching records found.</td></tr>`;
                         return;
                   }
 
-                  userTableBody.innerHTML = filteredUsers.map(user => {
-                        const numAcc = parseInt(user.numMembers) || 0;
-                        const totalMembers = safeMemberCount(user);
-
-                        return `
+                  userTableBody.innerHTML = filteredUsers.map(user => `
                         <tr>
                               <td class="checkbox-cell">
-                                    <input type="checkbox" class="user-checkbox" data-id="${user.id}" data-db="${user.dbSource}">
+                                    <input type="checkbox" class="user-checkbox" data-id="${user.id}" data-db="${user.dbSource}" data-collection="${user.collectionName || 'Users'}">
                               </td>
                               <td>
                                     <strong>${escapeHtml(user.name || '')}</strong>
-                                    <span class="badge-db badge-db${user.dbSource}">DB-${user.dbSource}</span>
+                                    <span class="badge-db badge-db${user.dbSource}">DB-${user.dbSource}</span>${user.collectionName === "Users1" ? '<span></span>' : ''}
                               </td>
                               <td>${escapeHtml(user.fatherName || '-')}</td>
                               <td>${escapeHtml(user.mobile || '-')}</td>
                               <td>${escapeHtml(user.address || '-')}</td>
-                              <td><span class="badge-members">+${numAcc} (${totalMembers} Total)</span></td>
+                              <td>${formatDisplayDate(user.createdAt)}</td>
+                              <td><span class="badge-members">+${user.numMembers || 0} (${user.totalMembersCount || (user.numMembers + 1) || 1} Total)</span></td>
                               <td>
                                     <button class="btn-action btn-pass" data-id="${user.id}">🎟️ Pass</button>
-                                    <button class="btn-action btn-edit" data-id="${user.id}" data-db="${user.dbSource}">Edit</button>
-                                    <button class="btn-action btn-delete" data-id="${user.id}" data-db="${user.dbSource}">Delete</button>
+                                    <button class="btn-action btn-edit" data-id="${user.id}" data-db="${user.dbSource}" data-collection="${user.collectionName || 'Users'}">Edit</button>
+                                    <button class="btn-action btn-delete" data-id="${user.id}" data-db="${user.dbSource}" data-collection="${user.collectionName || 'Users'}">Delete</button>
                               </td>
                         </tr>
-                  `;
-                  }).join('');
+                  `).join('');
 
                   // Attach Event Listeners to Table Buttons
                   document.querySelectorAll('.user-checkbox').forEach(cb => {
                         cb.addEventListener('change', (e) => {
-                              const key = `${e.target.getAttribute('data-db')}:${e.target.getAttribute('data-id')}`;
+                              const key = `${e.target.getAttribute('data-db')}:${e.target.getAttribute('data-collection') || 'Users'}:${e.target.getAttribute('data-id')}`;
                               if (e.target.checked) {
                                     selectedDocIds.add(key);
                               } else {
@@ -1151,7 +1168,8 @@
                         btn.addEventListener('click', (e) => {
                               const id = e.target.getAttribute('data-id');
                               const dbSource = e.target.getAttribute('data-db');
-                              openEditModal(id, dbSource);
+                              const collectionName = e.target.getAttribute('data-collection') || 'Users';
+                              openEditModal(id, dbSource, collectionName);
                         });
                   });
 
@@ -1159,7 +1177,8 @@
                         btn.addEventListener('click', (e) => {
                               const id = e.target.getAttribute('data-id');
                               const dbSource = parseInt(e.target.getAttribute('data-db'));
-                              deleteSingleUser(id, dbSource);
+                              const collectionName = e.target.getAttribute('data-collection') || 'Users';
+                              deleteSingleUser(id, dbSource, collectionName);
                         });
                   });
             }
@@ -1169,7 +1188,7 @@
                   const dataToExport = filteredUsers.length > 0 ? filteredUsers : allUsers;
 
                   if (dataToExport.length === 0) {
-                        showToast("No user data available to export!", true);
+                        showToast("No data available to export!", true);
                         return;
                   }
 
@@ -1180,21 +1199,24 @@
                         "Father's Name": user.fatherName || '',
                         "Mobile Number": user.mobile || '',
                         "Address": user.address || '',
-                        "Accompanying Members": parseInt(user.numMembers) || 0,
-                        "Total Members Count": safeMemberCount(user),
+                        "Date": user.createdAt && user.createdAt.toDate
+                              ? user.createdAt.toDate().toLocaleDateString('en-IN')
+                              : (user.createdAt ? formatDisplayDate(user.createdAt) : ''),
+                        "Accompanying Members": user.numMembers || 0,
+                        "Total Members Count": user.totalMembersCount || ((user.numMembers || 0) + 1),
                         "Registration Date": user.createdAt && user.createdAt.toDate ? user.createdAt.toDate().toLocaleString('en-IN') : ''
                   }));
 
                   const worksheet = XLSX.utils.json_to_sheet(excelData);
                   worksheet['!cols'] = [
-                        { wch: 6 }, { wch: 12 }, { wch: 22 }, { wch: 22 }, { wch: 15 },
-                        { wch: 30 }, { wch: 22 }, { wch: 20 }, { wch: 22 }
+                        { wch: 6 },  { wch: 12 }, { wch: 22 }, { wch: 22 }, { wch: 15 }, 
+                        { wch: 30 }, { wch: 14 }, { wch: 22 }, { wch: 20 }, { wch: 22 }
                   ];
 
                   const workbook = XLSX.utils.book_new();
                   XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
 
-                  const fileName = `Bandhan_Bazaar_Users_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                  const fileName = `Bandhan_Bazaar_Registrations_${new Date().toISOString().slice(0, 10)}.xlsx`;
                   XLSX.writeFile(workbook, fileName);
 
                   showToast("Excel file downloaded successfully!");
@@ -1205,7 +1227,7 @@
                   const isChecked = e.target.checked;
                   document.querySelectorAll('.user-checkbox').forEach(cb => {
                         cb.checked = isChecked;
-                        const key = `${cb.getAttribute('data-db')}:${cb.getAttribute('data-id')}`;
+                        const key = `${cb.getAttribute('data-db')}:${cb.getAttribute('data-collection') || 'Users'}:${cb.getAttribute('data-id')}`;
                         if (isChecked) {
                               selectedDocIds.add(key);
                         } else {
@@ -1226,20 +1248,28 @@
             }
 
             // Delete Single User
-            async function deleteSingleUser(id, dbSource) {
-                  const user = allUsers.find(u => u.id === id && u.dbSource === dbSource);
-                  const name = user ? user.name : "this user";
-                  const targetDb = dbSource === 1 ? db1 : db2;
+            async function deleteSingleUser(id, dbSource, collectionName = 'Users') {
+                  const user = allUsers.find(
+                        u => u.id === id &&
+                        u.dbSource === Number(dbSource) &&
+                        (u.collectionName || 'Users') === collectionName
+                  );
 
-                  if (confirm(`Are you sure you want to delete "${name}" from DB-${dbSource}?`)) {
-                        try {
-                              await deleteDoc(doc(targetDb, "Users", id));
-                              showToast(`Deleted "${name}" successfully!`);
-                              fetchUsers();
-                        } catch (err) {
-                              console.error("Delete error:", err);
-                              showToast("Failed to delete user.", true);
-                        }
+                  const name = user ? user.name : "this user";
+                  const targetDb = Number(dbSource) === 1 ? db1 : db2;
+
+                  if (!confirm(`Are you sure you want to delete "${name}" from DB-${dbSource}/${collectionName}?`)) {
+                        return;
+                  }
+
+                  try {
+                        await deleteDoc(doc(targetDb, collectionName, id));
+                        selectedDocIds.delete(`${dbSource}:${collectionName}:${id}`);
+                        showToast(`Deleted "${name}" successfully!`);
+                        fetchUsers();
+                  } catch (err) {
+                        console.error("Delete error:", err);
+                        showToast(`Failed to delete user: ${err.message || 'Unknown error'}`, true);
                   }
             }
 
@@ -1248,19 +1278,19 @@
                   const count = selectedDocIds.size;
                   if (count === 0) return;
 
-                  if (confirm(`Are you sure you want to delete all ${count} selected user records across databases?`)) {
+                  if (confirm(`Are you sure you want to delete all ${count} selected records across databases?`)) {
                         try {
                               const batch1 = writeBatch(db1);
                               const batch2 = writeBatch(db2);
                               let count1 = 0, count2 = 0;
 
                               selectedDocIds.forEach(key => {
-                                    const [dbSource, id] = key.split(':');
+                                    const [dbSource, collectionName, id] = key.split(':');
                                     if (dbSource === '1') {
-                                          batch1.delete(doc(db1, "Users", id));
+                                          batch1.delete(doc(db1, collectionName || 'Users', id));
                                           count1++;
                                     } else {
-                                          batch2.delete(doc(db2, "Users", id));
+                                          batch2.delete(doc(db2, collectionName || 'Users', id));
                                           count2++;
                                     }
                               });
@@ -1280,17 +1310,18 @@
             });
 
             // Open Edit Modal
-            function openEditModal(id, dbSource) {
-                  const user = allUsers.find(u => u.id === id && u.dbSource === Number(dbSource));
+            function openEditModal(id, dbSource, collectionName = 'Users') {
+                  const user = allUsers.find(u => u.id === id && u.dbSource === Number(dbSource) && (u.collectionName || 'Users') === collectionName);
                   if (!user) return;
 
                   document.getElementById('editDocId').value = user.id;
                   document.getElementById('editDbSource').value = user.dbSource;
+                   document.getElementById('editCollectionName').value = user.collectionName || 'Users';
                   document.getElementById('editName').value = user.name || '';
                   document.getElementById('editFatherName').value = user.fatherName || '';
                   document.getElementById('editMobile').value = user.mobile || '';
                   document.getElementById('editAddress').value = user.address || '';
-                  document.getElementById('editNumMembers').value = parseInt(user.numMembers) || 0;
+                  document.getElementById('editNumMembers').value = user.numMembers || 0;
 
                   editModal.style.display = 'flex';
             }
@@ -1305,37 +1336,46 @@
 
                   const id = document.getElementById('editDocId').value;
                   const dbSource = parseInt(document.getElementById('editDbSource').value);
+                  const collectionName = document.getElementById('editCollectionName').value || 'Users';
+
                   const name = document.getElementById('editName').value.trim();
                   const fatherName = document.getElementById('editFatherName').value.trim();
                   const mobile = document.getElementById('editMobile').value.trim();
                   const address = document.getElementById('editAddress').value.trim();
                   const numMembers = parseInt(document.getElementById('editNumMembers').value) || 0;
 
+                  if (!id || !dbSource || !name || !fatherName || !mobile || !address) {
+                        showToast("Please fill all required fields.", true);
+                        return;
+                  }
+
                   const targetDb = dbSource === 1 ? db1 : db2;
 
                   try {
-                        const userRef = doc(targetDb, "Users", id);
+                        const userRef = doc(targetDb, collectionName, id);
+
                         await updateDoc(userRef, {
-                              name: name,
-                              fatherName: fatherName,
-                              mobile: mobile,
-                              address: address,
-                              numMembers: numMembers,
+                              name,
+                              fatherName,
+                              mobile,
+                              address,
+                              numMembers,
                               totalMembersCount: numMembers + 1
                         });
 
                         editModal.style.display = 'none';
                         showToast("User details updated successfully!");
+                        selectedDocIds.clear();
                         fetchUsers();
                   } catch (err) {
-                        console.error("Update error:", err);
-                        showToast("Failed to update user.", true);
+                        console.error(`Update error for DB-${dbSource}/${collectionName}/${id}:`, err);
+                        showToast(`Failed to update user: ${err.message || 'Unknown error'}`, true);
                   }
             });
 
             // Open Entry Pass Preview Modal
             function openPassModal(id) {
-                  const user = allUsers.find(u => u.id === id);
+                  const user = filteredUsers.find(u => u.id === id) || allUsers.find(u => u.id === id);
                   if (!user) return;
 
                   currentPassUser = user;
@@ -1345,10 +1385,8 @@
                   document.getElementById('passMobile').innerText = user.mobile || '-';
                   document.getElementById('passAddress').innerText = user.address || '-';
 
-                  const total = safeMemberCount(user);
-                  const accMembers = parseInt(user.numMembers) || 0;
-
-                  document.getElementById('passTotalMembers').innerText = `${total} Person(s) (${accMembers} Guests)`;
+                  const total = user.totalMembersCount || ((user.numMembers || 0) + 1);
+                  document.getElementById('passTotalMembers').innerText = `${total} Person(s) (${(user.numMembers || 0)} Guests)`;
                   document.getElementById('passIdTag').innerText = `ID: ${user.id.slice(0, 8).toUpperCase()}`;
 
                   const qrContainer = document.getElementById('qrcodeCanvas');
@@ -1642,7 +1680,7 @@
                         const canvas = await createHDPassCanvas({
                               docId: currentPassUser.id,
                               name: currentPassUser.name || 'Visitor',
-                              numMembers: parseInt(currentPassUser.numMembers) || 0
+                              numMembers: currentPassUser.numMembers || 0
                         });
 
                         const fileName = `Bandhan_Bazaar_Pass_${(currentPassUser.name || 'Visitor').replace(/\s+/g, '_')}.pdf`;
